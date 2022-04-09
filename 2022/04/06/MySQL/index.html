@@ -21,19 +21,19 @@
     var CONFIG = {"hostname":"example.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":true},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta name="description" content="索引索引是关系数据库中对某一列或多个列的值进行预排序的数据结构，便于对数据进行定位。 例如，对于students表，如果要经常根据score列进行查询，就可以对score列创建索引： ALTER TABLE students ADD INDEX idx_score (score); 使用ADD INDEX idx_score (score)就创建了一个名称为idx_score，使用列score的">
+  <meta name="description" content="MySQL 是一个关系型数据库，它的的默认端口号是3306。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="MySQL">
 <meta property="og:url" content="http://example.com/2022/04/06/MySQL/index.html">
 <meta property="og:site_name" content="缘溪行">
-<meta property="og:description" content="索引索引是关系数据库中对某一列或多个列的值进行预排序的数据结构，便于对数据进行定位。 例如，对于students表，如果要经常根据score列进行查询，就可以对score列创建索引： ALTER TABLE students ADD INDEX idx_score (score); 使用ADD INDEX idx_score (score)就创建了一个名称为idx_score，使用列score的">
+<meta property="og:description" content="MySQL 是一个关系型数据库，它的的默认端口号是3306。">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="http://example.com/2022/04/06/MySQL/v2-d679e616dd3312da3d002d555e3c0b7c_720w.jpg">
 <meta property="og:image" content="http://example.com/2022/04/06/MySQL/image-20220407103015269.png">
 <meta property="og:image" content="http://example.com/2022/04/06/MySQL/1646831502098-89c9da04-564f-4e6e-85aa-6664203a0b20.png">
 <meta property="og:image" content="http://example.com/2022/04/06/MySQL/1647872433220-f2c141c9-1a75-43a5-9db1-55abe39f6b97-164929795888010.png">
 <meta property="article:published_time" content="2022-04-06T06:39:51.000Z">
-<meta property="article:modified_time" content="2022-04-08T08:41:22.268Z">
+<meta property="article:modified_time" content="2022-04-09T13:56:17.458Z">
 <meta property="article:author" content="Cyl">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://example.com/2022/04/06/MySQL/v2-d679e616dd3312da3d002d555e3c0b7c_720w.jpg">
@@ -131,7 +131,7 @@
   </li>
         <li class="menu-item menu-item-archives">
 
-    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">13</span></a>
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">14</span></a>
 
   </li>
       <li class="menu-item menu-item-search">
@@ -219,7 +219,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-04-08 16:41:22" itemprop="dateModified" datetime="2022-04-08T16:41:22+08:00">2022-04-08</time>
+                <time title="修改时间：2022-04-09 21:56:17" itemprop="dateModified" datetime="2022-04-09T21:56:17+08:00">2022-04-09</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -242,12 +242,14 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <span id="more"></span>
-<h1 id="索引"><a href="#索引" class="headerlink" title="索引"></a>索引</h1><p>索引是关系数据库中对某一列或多个列的值进行预排序的数据结构，便于对数据进行定位。</p>
+        <p>MySQL 是一个关系型数据库，它的的默认端口号是<strong>3306</strong>。</p>
+<span id="more"></span>
+
+<h1 id="索引"><a href="#索引" class="headerlink" title="索引"></a>索引</h1><p>索引是关系数据库中对某一列或多个列的值进行排序的数据结构，便于对数据进行查找。</p>
 <p>例如，对于students表，如果要经常根据score列进行查询，就可以对score列创建索引：</p>
-<p>ALTER TABLE students</p>
-<p>ADD INDEX idx_score (score);</p>
-<p>使用ADD INDEX idx_score (score)就创建了一个名称为idx_score，使用列score的索引。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ALTER TABLE students</span><br><span class="line"></span><br><span class="line">ADD INDEX idx_score (score);</span><br></pre></td></tr></table></figure>
+
+<p>使用 <code>ADD INDEX idx_score (score)</code> 就创建了一个名称为 idx_score，使用列 score 的索引。</p>
 <h2 id="索引有哪些优缺点？"><a href="#索引有哪些优缺点？" class="headerlink" title="索引有哪些优缺点？"></a>索引有哪些优缺点？</h2><p>优点：提高了查询效率</p>
 <p>缺点：</p>
 <ul>
@@ -257,21 +259,39 @@
 </li>
 </ul>
 <h2 id="MySQL-的索引类型"><a href="#MySQL-的索引类型" class="headerlink" title="MySQL 的索引类型"></a>MySQL 的索引类型</h2><ol>
-<li><p>从数据结构上来划分：BTree索引（B-Tree或B+Tree索引），Hash索引</p>
+<li><p>从数据结构上来划分：B 树、B+ 树、Hash</p>
 </li>
 <li><p>从应用层次来分：普通索引，唯一索引，复合索引。</p>
-<p> 普通索引：即一个索引只包含单个列，一个表可以有多个单列索引<br> 唯一索引：索引列的值必须唯一，但允许有空值<br> 复合索引：多列值组成一个索引，专门用于组合搜索，其效率大于索引合并</p>
+<ul>
+<li>普通索引：即一个索引只包含单个列，一个表可以有多个普通索引</li>
+<li>唯一索引：索引列的值必须唯一，但允许有空值</li>
+<li>复合索引：多列值组成一个索引，专门用于组合搜索，其效率大于索引合并</li>
+</ul>
 </li>
-<li><p>根据中数据的物理顺序与键值的逻辑（索引）顺序关系： 聚集索引，非聚集索引</p>
+<li><p>根据数据的物理存储顺序与键值的逻辑（索引）顺序关系： 聚集索引，非聚集索引</p>
 </li>
 </ol>
 <h2 id="索引数据结构选择-B-树的原因"><a href="#索引数据结构选择-B-树的原因" class="headerlink" title="索引数据结构选择 B+ 树的原因"></a>索引数据结构选择 B+ 树的原因</h2><p>B+ 树与 B 树相比：</p>
 <ul>
-<li><p>B+ 树的磁盘读写代价更低：B+ 树的内部节点没有关键字对应的数据信息，因此其内部节点相对 B 树更小。如果把所有同一内部节点的关键字存放在同一盘块中，那么盘块所能容纳的关键字数量也越多（相当于分叉数可以更多），一次性读入内存中可以查找的关键字也就越多，相对 IO 读写次数就降低了。</p>
+<li><p>B+ 树的磁盘读写代价更低：B+ 树的内部节点没有关键字对应的数据信息，因此其内部节点相对 B 树更小。如果把一个内部节点的关键字都存放在同一数据页中，那么一个数据页能容纳的关键字比 B 树和其他搜索树都多很多（相当于分叉数可以更多），一次性读入内存中可以查找的关键字也就越多，相对 IO 读写次数就降低了。（高度比 b树低）</p>
+</li>
+<li><p>B+ 树的高度更小：相较于 B 树 B+ 树每个内部节点存储的关键字数更多，相同数据量情况下，树的高度更小。</p>
+<ul>
+<li><p>查询数据更快；</p>
+</li>
+<li><p>磁盘读写代价更小</p>
+<p>  时间复杂度，个人认为还是 O(log2N)，底数不会更大，因为仍旧是二分查找。所以可能查询速度并不会快多少，甚至由于在内部节点里是顺序扫描而非二分查找，复杂度更大。主要还是磁盘读写次数变少。</p>
+</li>
+</ul>
+<p>  B+ 树查找速度稳定：B+所有关键字数据地址都存在叶子节点上，所以每次查找的次数都相同所以查询速度要比B树更稳定;</p>
+<p>  B+ 树适合区间查询：B+ 树所有的叶子节点数据构成了一个有序链表，适合区间查询。而 B 树若要查找区间数据，对于区间内的每个数据，都要二分搜索一次 B 树。。</p>
+<p>  B+ 树全节点遍历更快：B+ 树遍历整棵树只需要遍历所有的叶子节点即可，而不需要像 B 树一样需要对每一层进行遍历，这有利于数据库做全表扫描。</p>
 <blockquote>
+<p>MySQL 中，索引文件是存储在磁盘的，对于树结构来说，文件的数据单位是结点。因此，二分查找搜索树的过程中，每访问一个结点，都做了一次读磁盘的操作。每次从磁盘读取一个结点到内存中，与 target 进行比较，然后继续到磁盘读取下一个需要查找的结点。</p>
 <p>读写磁盘会阻塞线程，因为耗时较长。而读写内存不会阻塞。</p>
 <p>MySQL 使用磁盘存储数据，需要考虑磁盘读写性能，而 Redis 不需要</p>
 <p>IO 读写次数：每次根据孩子指针来查找磁盘元素都是一次对磁盘的读取操作。因此，实际上，树的高度越小，IO 读写次数也越小</p>
+<p>相关文章：[B+树高度](<a target="_blank" rel="noopener" href="https://www.codercto.com/a/106607.html">终极面试：InnoDB 中B+Tree索引树有多高，以及能存多少行数据？ | 码农网 (codercto.com)</a>)</p>
 </blockquote>
 <blockquote>
 <p>结点存储数据信息的方式：</p>
@@ -282,12 +302,10 @@
 <p>如果建立 score 列的索引，则结点的值为 score 字段的值，叶子结点存放数据信息，可以存放 score 对应的记录，也可以存放指向对应记录的指针</p>
 </blockquote>
 </li>
-<li><p>B+ 树的数据存储在叶子结点中，并且叶子节点构成了双向链表，适合区间查询。而 B 树若要查找区间数据，对于区间内的每个数据，都要二分搜索一次 B 树。</p>
-</li>
 </ul>
 <p>B+ 树与红黑树相比：</p>
 <ul>
-<li>虽然查找复杂度都是 O(h&#x3D;logN)，但是B+ 树是多叉树，相同结点个数情况下，B+ 树的高度比红黑树小。从O(h) 来看，B+ 树的查找效率更高。从 O(logN) 来看，实际上底数不同</li>
+<li>B+ 树的磁盘读写代价更低</li>
 <li>红黑树不适合区间查询</li>
 </ul>
 <p>B+ 树与 Hash 相比：</p>
@@ -307,7 +325,17 @@
 <p>支持区间查询：O(logN) 找到起点或终点然后遍历即可</p>
 <p>Redis 作者的话：跳表更容易实现，代码可读性好</p>
 <p>跳表的出现时间比 mysql innodb 晚</p>
-<h2 id="联合索引"><a href="#联合索引" class="headerlink" title="联合索引"></a>联合索引</h2><p>可以使用多个字段同时建立一个索引，叫做联合索引。</p>
+<h2 id="唯一索引"><a href="#唯一索引" class="headerlink" title="唯一索引"></a>唯一索引</h2><p>在设计关系数据表的时候，看上去唯一的列，例如身份证号、邮箱地址等，因为他们具有业务含义，因此不宜作为主键。但是，这些列根据业务要求，又具有唯一性约束：即不能出现两条记录存储了同一个身份证号。这个时候，就可以给该列添加一个唯一索引。例如，我们假设 students 表的 name 不能重复，设置唯一索引：</p>
+<p>ALTER TABLE students</p>
+<p>ADD UNIQUE INDEX uni_name (name);</p>
+<p>通过 <strong>UNIQUE INDEX</strong> 我们就添加了一个唯一索引。</p>
+<blockquote>
+<p>区别于唯一约束：</p>
+<p>ALTER TABLE students</p>
+<p>ADD CONSTRAINT uni_name UNIQUE (name);</p>
+<p>这种情况下，name列没有索引，但仍然具有唯一性保证。</p>
+</blockquote>
+<h2 id="联合索引"><a href="#联合索引" class="headerlink" title="联合索引"></a>联合索引</h2><p>可以使用多个字段同时建立一个索引，叫做联合索引。（等价于多维排序）</p>
 <p>ALTER TABLE students</p>
 <p>ADD INDEX idx_name_score (name, score);</p>
 <p>这里表示两个单独的索引列name和score。</p>
@@ -334,23 +362,35 @@
 <p>SELECT * FROM student WHERE cid&#x3D;1;</p>
 <p>无法返回结果。单纯的 cid 是无序的。</p>
 </blockquote>
-<h2 id="聚簇索引与非聚簇索引"><a href="#聚簇索引与非聚簇索引" class="headerlink" title="聚簇索引与非聚簇索引"></a>聚簇索引与非聚簇索引</h2><p>在 InnoDB 里，索引 B+ 树的叶子节点存储了整行数据的是主键索引，也被称之为聚簇索引，即将数据存储与索引放到了一块，找到索引也就找到了数据。</p>
-<p>聚簇索引与非聚簇索引的区别：</p>
-<p>非聚集索引与聚集索引的区别在于非聚集索引的叶子节点不存储表中的数据，而是存储该列对应的<br>主键（行号） </p>
-<p>对于InnoDB来说，想要查找数据我们还需要根据主键再去聚集索引中进行查找，这个再根据聚集<br>索引查找数据的过程，我们称为回表。第一次索引一般是顺序IO，回表的操作属于随机IO。需要回</p>
-<p>表的次数越多，即随机IO次数越多，我们就越倾向于使用全表扫描 。<br>通常情况下， 主键索引（聚簇索引）查询只会查一次，而非主键索引（非聚簇索引）需要回表查询<br>多次。当然，如果是覆盖索引的话，查一次即可<br>注意：MyISAM无论主键索引还是二级索引都是非聚簇索引，而InnoDB的主键索引是聚簇索引，二<br>级索引是非聚簇索引。我们自己建的索引基本都是非聚簇索引。</p>
+<h2 id="聚簇索引与非聚簇索引"><a href="#聚簇索引与非聚簇索引" class="headerlink" title="聚簇索引与非聚簇索引"></a>聚簇索引与非聚簇索引</h2><p>非聚集索引：索引中索引的逻辑顺序与磁盘上行的物理存储顺序不同。</p>
+<p>与聚集索引的区别在于：叶结点不存放索引对应记录全部数据，只存放对应记录的聚集索引值&#x2F;主键值。</p>
+<p>例如设非聚集索引为：username，默认聚集索引为 id。则叶结点 (username, id)</p>
+<ul>
+<li><p>从非聚集索引的节点里面可直接获得的数据：聚集索引列的值、主键值</p>
+<p>  select id, username from t1 where username &#x3D; ‘小明’</p>
+<p>  select username from t1 where username &#x3D; ‘小明’</p>
+</li>
+<li><p>从非聚集索引的节点里面不可直接获得的数据</p>
+<p>  select username, score from t1 where username &#x3D; ‘小明’</p>
+</li>
+</ul>
+<p>为了获取到 score 对应记录的其他数据，数据库会根据 id 进行聚集索引查找。这个过程叫做回表。</p>
 <h2 id="创建索引时需要注意什么？"><a href="#创建索引时需要注意什么？" class="headerlink" title="创建索引时需要注意什么？"></a>创建索引时需要注意什么？</h2><p>基本：</p>
 <ul>
 <li><p>非空字段：<strong>应该指定列为NOT NULL，除非你想存储NULL</strong>。在mysql中，含有空值的列很难进行查询优化，因为它们使得索引、索引的统计信息以及比较运算更加复杂。你应该用0、一个特殊的值或者一个空串代替空值；</p>
 </li>
-<li><p>字段取值差异大的列放到联合索引的前面：可以通过 count() 函数查看字段的差异值，返回值越大说明字段的唯一值越多字段的离散程度高；索引的效率取决于索引列的值是否散列，即该列的值如果越互不相同，那么索引效率越高。</p>
+<li><p>字段取值差异大的列作为索引列：可以通过 COUNT(DISTINCT 字段名) 函数查看字段取值的个数。索引的效率取决于索引列的值是否散列，即该列的值如果越互不相同，那么索引效率越高。</p>
 </li>
-<li><p>索引字段越小越好：数据库的数据存储以页为单位一页存储的数据越多一次IO操作获取的数据越大效率越高。</p>
+<li><p>索引字段越小越好：数据库的数据存储以页为单位，一页存储的数据越多，一次 IO 操作获取的数据越大效率越高。</p>
 </li>
 <li><p>避免索引失效的发生。</p>
 </li>
 </ul>
-<p>对于联合索引，将查询需求频繁或者字段取值差异大的列放在前面。</p>
+<p>对于联合索引</p>
+<ul>
+<li>将查询需求频繁或者字段取值差异大的列放在前面。</li>
+<li>字段取值差异大的列作为索引列时，放到联合索引的前面</li>
+</ul>
 <h3 id="索引失效"><a href="#索引失效" class="headerlink" title="索引失效"></a>索引失效</h3><p>索引失效，即查询语句用到了索引列，但是无法用到已经建立的索引。</p>
 <ul>
 <li><p>计算导致索引失效。包括使用函数、运算符。以使用运算符为例</p>
@@ -362,7 +402,7 @@
 <li><p>类型不一致导致索引失效。</p>
 <p>  SELECT * FROM student  WHERE name &#x3D; ABC，ABC 不是字符串</p>
 </li>
-<li><p>OR引起的索引失效 </p>
+<li><p>OR 引起的索引失效 </p>
 <p>  如果 OR 连接的是同一个字段，那么索引不会失效，反之索引失效。</p>
 <p>  SELECT * FROM <code>user</code> WHERE <code>name</code> &#x3D; ‘张三’ OR height &#x3D; ‘175’;</p>
 </li>
@@ -372,24 +412,55 @@
 <p>第三范式：任何非主属性不依赖于其它非主属性。</p>
 <h2 id="MySQL-存储引擎"><a href="#MySQL-存储引擎" class="headerlink" title="MySQL 存储引擎"></a>MySQL 存储引擎</h2><p>与 MyISAM 相比，InnoDB</p>
 <ul>
-<li>支持行级锁（默认），加锁粒度小，并发度高。但加锁的开销也最大，加锁慢</li>
-<li>支持事务</li>
-<li>支持崩溃恢复，恢复的过程依赖于 redo log 。</li>
-<li>采用聚簇索引，叶子结点存储行记录，可直接获得数据（非聚簇索引要跳转）。</li>
+<li><p>支持行级锁（默认），加锁粒度小，并发度高。但加锁的开销也最大，加锁慢</p>
+<blockquote>
+<p>默认情况下，表锁和行锁都是自动获得的， 不需要额外的命令。</p>
+</blockquote>
+</li>
+<li><p>支持事务</p>
+</li>
+<li><p>支持崩溃恢复，恢复的过程依赖于 redo log 。</p>
+</li>
+<li><p>采用聚簇索引，叶子结点存储行记录，可直接获得数据（非聚簇索引要跳转）。</p>
+</li>
+<li><p>InnoDB 支持外键，而 MyISAM 不支持</p>
+</li>
 </ul>
-<p>InnoDB 支持外键，而 MyISAM 不支持</p>
-<p>Innodb 不支持全文索引，而 MyISAM 支持全文索引，查询效率上 MyISAM 要高；<br>InnoDB 不保存表的具体行数，MyISAM 用一个变量保存了整个表的行数。</p>
-<h2 id="超键、候选键、主键、外键"><a href="#超键、候选键、主键、外键" class="headerlink" title="超键、候选键、主键、外键"></a>超键、候选键、主键、外键</h2><p>超键：在关系中能唯一标识元组的属性集称为关系模式的超键。一个属性可以为作为一个超键，多个属性组合在一起也可以作为一个超键。超键包含候选键和主键。</p>
-<p>候选键：是最小超键，即没有冗余元素的超键。</p>
-<p>主键：数据库表中对储存数据对象予以唯一和完整标识的数据列或属性的组合。一个数据列只能有一个主键，且主键的取值不能缺失，即不能为空值。</p>
-<p>外键：在一个表中存在的另一个表的主键称此表的外键。</p>
-<h2 id="SQL-约束"><a href="#SQL-约束" class="headerlink" title="SQL 约束"></a>SQL 约束</h2><p>NOT NULL: 字段内容不能为空（NULL）。</p>
-<p>UNIQUE: 字段内容不能重复，一个表允许有多个 Unique 约束。</p>
-<p>PRIMARY KEY: 字段内容不能重复，但它在一个表只允许出现一个。</p>
-<p>FOREIGN KEY: 用于预防破坏表之间连接的动作，也能防止非法数据插入外键列，因为它必须是它指向的那个表中的值之一。</p>
-<p>CHECK: 用于控制字段的值范围。</p>
-<p>MySQL中 in 和 exists 区别<br>MySQL中的in语句是把外表和内表作hash 连接，而exists语句是对外表作loop循环，每次loop循环再对<br>内表进行查询。一直大家都认为exists比in语句的效率要高，这种说法其实是不准确的。这个是要区分环<br>境的。<br>如果查询的两个表大小相当，那么用in和exists差别不大。<br>如果两个表中一个较小，一个是大表，则子查询表大的用exists，子查询表小的用in。<br>not in 和not exists：如果查询语句使用了not in，那么内外表都进行全表扫描，没有用到索引；而not<br>extsts的子查询依然能用到表上的索引。所以无论那个表大，用not exists都比not in要快。</p>
-<p>drop、delete与truncate的区别<br>三者都表示删除，但是三者有一些差别：</p>
+<h2 id="超键、候选键、主键、外键"><a href="#超键、候选键、主键、外键" class="headerlink" title="超键、候选键、主键、外键"></a>超键、候选键、主键、外键</h2><p>超键：在关系中能唯一标识元组的属性集称为关系模式的超键。一个属性可以作为一个超键，多个属性组合在一起也可以作为一个超键。超键包含候选键和主键。</p>
+<p>候选键：是最小超键（最小的属性集），即没有冗余元素的超键。</p>
+<h3 id="主键"><a href="#主键" class="headerlink" title="主键"></a>主键</h3><p>对于关系表，有个很重要的约束，就是任意两条记录不能重复。不能重复不是指两条记录不完全相同，而是指能够通过某个字段唯一区分出不同的记录，这个字段被称为主键。</p>
+<p>对主键的要求，最关键的一点是：记录一旦插入到表中，主键最好不要再修改，因为主键是用来唯一定位记录的，修改了主键，会造成一系列的影响。</p>
+<p>由于主键的作用十分重要，如何选取主键会对业务开发产生重要影响。如果我们以学生的身份证号作为主键，似乎能唯一定位记录。然而，身份证号也是一种业务场景，如果身份证号升位了，或者需要变更，作为主键，不得不修改的时候，就会对业务产生严重影响。</p>
+<p>所以，<strong>选取主键的一个基本原则</strong>是：不使用任何业务相关的字段作为主键。</p>
+<p>因此，身份证号、手机号、邮箱地址这些看上去可以唯一的字段，均不可用作主键。</p>
+<p>作为主键最好是完全业务无关的字段，<strong>我们一般把这个字段命名为 id。常见的可作为 id 字段的类型有</strong>：</p>
+<ol>
+<li><p>自增整数类型：数据库在插入数据时自动为每一条记录分配一个自增整数，这样我们就完全不用担心主键重复，也不用自己预先生成主键；</p>
+</li>
+<li><p>全局唯一 GUID 类型：使用一种全局唯一的字符串作为主键，类似 8f55d96b-8acc-4636-8cb8-76bf8abc2f57。GUID 算法通过网卡 MAC 地址、时间戳和随机数保证任意计算机在任意时间生成的字符串都是不同的，大部分编程语言都内置了 GUID 算法。</p>
+</li>
+</ol>
+<blockquote>
+<p>主键不能为 NULL</p>
+</blockquote>
+<h3 id="外键"><a href="#外键" class="headerlink" title="外键"></a>外键</h3><p>在一个表中存在的另一个表的主键称此表的外键。</p>
+<p>在 students 表中，通过 class_id 字段，可以把数据与另一张表关联起来，这种列称为外键。</p>
+<p>外键并不是通过定义列名实现的，而是通过定义外键约束实现的：</p>
+<p>ALTER TABLE students</p>
+<p>ADD CONSTRAINT fk_class_id</p>
+<p>FOREIGN KEY (class_id)</p>
+<p>REFERENCES classes (id);</p>
+<p>fk，即 FOREIGN KEY，表示外键。外键约束的名称为 fk_class_id，FOREIGN KEY (class_id)指定了 students 表的class_id 字段作为外键，REFERENCES classes (id) 指定了这个外键将关联到 classes 表的 id 列（即 <strong>classes 表的主键</strong>）。</p>
+<blockquote>
+<p> 通过定义外键约束，关系数据库可以保证无法插入无效的数据。即如果 classes 表不存在 id&#x3D;99 的记录，students 表就无法插入 class_id&#x3D;99 的记录。</p>
+<p>由于外键约束会降低数据库的性能，通常并不设置外键约束，而是仅靠应用程序自身来保证逻辑的正确性。</p>
+</blockquote>
+<h2 id="SQL-约束"><a href="#SQL-约束" class="headerlink" title="SQL 约束"></a>SQL 约束</h2><p>NOT NULL：字段内容不能为空（NULL）。</p>
+<p>UNIQUE：字段内容不能重复，一个表允许有多个 Unique 约束。</p>
+<p>PRIMARY KEY&#x2F;主键：字段内容不能重复，但它在一个表只允许出现一个。</p>
+<p>FOREIGN KEY&#x2F;外键：用于预防破坏表之间连接的动作，也能防止非法数据插入外键列，因为它必须是它指向的那个表中的值之一。</p>
+<p>CHECK：用于控制字段的值范围。</p>
+<h2 id="drop、delete-与-truncate-的区别"><a href="#drop、delete-与-truncate-的区别" class="headerlink" title="drop、delete 与 truncate 的区别"></a>drop、delete 与 truncate 的区别</h2><p>三者都表示删除，但是三者有一些差别：</p>
 <p><img src="/2022/04/06/MySQL/image-20220407103015269.png"></p>
 <h1 id="事务"><a href="#事务" class="headerlink" title="事务"></a>事务</h1><p>何为事务？一言蔽之，事务是逻辑上的一组操作，要么都执行，要么都不执行。<br>假如小明要给小红转账 1000 元，这个转账会涉及到两个关键操作就是：</p>
 <ol>
@@ -408,7 +479,7 @@
 <ul>
 <li><p>MySQL InnoDB 引擎使用 redo log（重做日志） 保证事务的持久性，使用 undo log（回滚日志） 来保证事务的原子性。redo log 记录的是修改了缓存池数据页的所有命令，undo log 记录的是某个事务中所更新记录的历史版本</p>
 </li>
-<li><p>MySQL InnoDB 引擎通过锁机制、MVCC（多版本并发控制） 等手段来保证事务的隔离性（ 默认支持的隔离级别是 REPEATABLE-READ ）。</p>
+<li><p>MySQL InnoDB 引擎通过锁机制、MVCC（多版本并发控制） 等手段来保证事务的隔离性（ 默认支持的隔离级别是 REPEATABLE-READ）。</p>
 </li>
 <li><p>保证了事务的持久性、原子性、隔离性之后，一致性才能得到保障。</p>
 </li>
@@ -419,15 +490,12 @@
 <p>更新表数据的时候，也是如此，发现 Buffer Pool 里存在要更新的数据，就直接在 Buffer Pool 里更新。然后会把“在某个数据页上做了什么修改”记录到重做日志缓存（redo log buffer）里，接着刷盘到 redo log 文件里。</p>
 <p><img src="/2022/04/06/MySQL/1646831502098-89c9da04-564f-4e6e-85aa-6664203a0b20.png" alt="redo log 生成过程"></p>
 <p>redo log 记录了数据的修改，因此可以根据日志内容恢复数据。通过刷盘，将缓存中的 redo log buffer 更新到硬盘中的 redo log 文件，这样即使数据库出现故障，redo log 也不会丢失，从而实现了持久化。</p>
-<p>数据在硬盘的 paga cache 中，这个过程称之为<strong>write</strong>，数据真正持久化到磁盘这个过程称之为<strong>fsync</strong>。</p>
+<p>是否需要更新数据？</p>
 <blockquote>
-<p>在MySQL中，为了提高数据库的性能，MySQL采用了WAL（Write-Ahead Logging）机制，即在实际写数据前，先把修改的数据记到日志文件中。MySQL的写数据是写硬盘数据，与 redis 不同，redis的写数据指的是写内存。</p>
-<p>这样做的原因在于，磁盘读写速度慢。磁盘定位数据的过程可能会是磁盘的随机读，随机读的过程是非常慢的。</p>
-<p>WAL机制，主要的操作是先写日志，先在一个日志中记录了MySQL要对硬盘中的存储MySQL数据的数据页中的数据进行什么样的更改，等到Mysql空闲的时候再进行同步操作到硬盘中。</p>
-<p>同样是操作磁盘，为什么写日志比直接改数据会更加高效？</p>
-<p>答案在于写日志是顺序写，直接改磁盘是随机写。所以同样是写，它们写的速度有着天壤之别。这也是WAL的另外一个好处。</p>
+<p>在MySQL中，为了提高数据库的性能，MySQL 采用了 WAL（Write-Ahead Logging）机制，即在实际写数据前，先把修改的数据记到日志文件中。MySQL 的写数据是写硬盘数据，与 redis 不同，redis 的写数据指的是写内存。</p>
+<p>这样做的原因在于，磁盘读写速度慢。</p>
 </blockquote>
-<h3 id="undo-log"><a href="#undo-log" class="headerlink" title="undo log"></a>undo log</h3><p>undo log 能保证事务的原子性，和实现 MVCC（多版本并发控制）</p>
+<h3 id="undo-log"><a href="#undo-log" class="headerlink" title="undo log"></a>undo log</h3><p>undo log 能实现回滚，保证事务的原子性，和实现 MVCC（多版本并发控制）</p>
 <p>对于 InnoDB ，聚簇索引记录中包含 3 个隐藏的列：</p>
 <ul>
 <li>ROW ID：隐藏的自增 ID，如果表没有主键，InnoDB 会自动按 ROW ID 产生一个聚集索引树。</li>
@@ -448,16 +516,20 @@
 <p>实现 MVCC：其它事务此时（即事务未提交时）若需要查询，根据回滚指针查询 undo log 中这行数据的上一个历史版本。（由于记录的隐藏字段没有加排他锁，所以可以访问回滚指针）。MVCC 最大的好处是读不加锁，读写不冲突，极大地增加了 MySQL 的并发性。</p>
 <h3 id="bin-log"><a href="#bin-log" class="headerlink" title="bin log"></a>bin log</h3><p>MySQL的 binlog 是记录所有数据库表结构变更（例如 CREATE、ALTER TABLE）以及表数据修改（INSERT、UPDATE、DELETE）的二进制日志。</p>
 <p>binlog 有三种格式：</p>
-<p>statement： 基于 SQL 语句的模式，某些语句和函数如 UUID, LOAD DATA INFILE 等在复制过程可能导致数据不一致甚至出错。</p>
-<p>row： 基于行的模式，记录的是行的变化，很安全。但是 binlog 会比其他两种模式大很多，在一些大表中清除大量数据时在 binlog 中会生成很多条语句，可能导致从库延迟变大。</p>
-<p>mixed： 混合模式，根据语句来选用是 statement 还是 row 模式。</p>
+<ul>
+<li>statement： 基于 SQL 语句的模式，某些语句和函数如 UUID, LOAD DATA INFILE 等在复制过程可能导致数据不一致甚至出错。</li>
+<li>row： 基于行的模式，记录的是行的变化，很安全，但是文件大小会比其他两种模式大很多</li>
+<li>mixed： 混合模式，根据语句来选用是 statement 还是 row 模式。</li>
+</ul>
 <h4 id="bin-log-与-redo-log-的区别"><a href="#bin-log-与-redo-log-的区别" class="headerlink" title="bin log 与 redo log 的区别"></a>bin log 与 redo log 的区别</h4><ol>
 <li>binlog是MySQL数据库的上层产生的，任何存储引擎对于数据库的更改都会产生二进制日志。redo log是在InnoDB存储引擎层产生</li>
 <li>两种日志记录的内容形式不同。MySQL的binlog是逻辑日志，其记录是对应的SQL语句。而innodb存储引擎层面的重做日志是物理日志。</li>
 <li>两种日志与记录写入磁盘的时间点不同，二进制日志只在事务提交完成后进行一次写入。而innodb存储引擎的重做日志在事务进行中不断地被写入，并日志不是随事务提交的顺序进行写入的。</li>
 </ol>
-<p>二进制日志仅在事务提交时记录，并且对于每一个事务，仅在事务提交时记录，并且对于每一个事务，仅包含对应事务的一个日志。而对于innodb存储引擎的重做日志，由于其记录是物理操作日志，因此每个事务对应多个日志条目，并且事务的重做日志写入是并发的，并非在事务提交时写入，其在文件中记录的顺序并非是事务开始的顺序。</p>
-<p>第四：binlog不是循环使用，在写满或者重启之后，会生成新的binlog文件，redo log是循环使用。</p>
+<p>并且对于每一个事务，仅包含对应事务的一个日志。而对于innodb存储引擎的重做日志，由于其记录是物理操作日志，因此每个事务对应多个日志条目，并且事务的重做日志写入是并发的，并非在事务提交时写入，其在文件中记录的顺序并非是事务开始的顺序。</p>
+<ol start="4">
+<li>binlog不是循环使用，在写满或者重启之后，会生成新的binlog文件，redo log是循环使用。</li>
+</ol>
 <h2 id="并发事务带来哪些问题？"><a href="#并发事务带来哪些问题？" class="headerlink" title="并发事务带来哪些问题？"></a>并发事务带来哪些问题？</h2><p>脏读（Dirty Read）。一个事务会读到另一个事务更新后但未提交的数据，如果另一个事务回滚，那么当前事务读到的数据就是脏数据</p>
 <p>不可重复读（Unrepeatable read）：在一个事务内，多次读同一数据，读取的数据不一致。</p>
 <p>幻读（Phantom read）: 幻读与不可重复读类似。它发生在一个事务（T1）读取了几行数据，接着另一个并发事务（T2）插入了一些数据时。在随后的查询中，第一个事务（T1）就会发现多了一些原本不存在的记录，就好像发生了幻觉一样，所以称为幻读。</p>
@@ -501,10 +573,13 @@
 </tbody></table>
 <p><strong>隔离级别与锁的关系</strong></p>
 <p>修改数据都会加写锁&#x2F;排他锁</p>
-<p>在Read Uncommitted级别下，读取数据不需要加共享锁，这样就不会跟被修改的数据上的排他锁冲突</p>
+<p>在 Read Uncommitted 级别下，读取数据不需要加共享锁，这样就不会跟被修改的数据上的排他锁冲突</p>
 <p>在Read Committed级别下，读操作需要加共享锁，但是在语句执行完以后释放共享锁；</p>
 <p>在Repeatable Read级别下，读操作需要加共享锁，但是在事务提交之前并不释放共享锁，也就是必须等待事务执行完毕以后才释放共享锁。</p>
 <p>SERIALIZABLE 是限制性最强的隔离级别，因为该级别锁定整个范围的键，并一直持有锁，直到事务完成。</p>
+<h1 id="锁"><a href="#锁" class="headerlink" title="锁"></a>锁</h1><p>对于 UPDATE、 DELETE 和 INSERT 语句， InnoDB<br>会自动给涉及数据集加排他锁（X)；</p>
+<p>对于普通 SELECT 语句，InnoDB 不会加任何锁；</p>
+<p>InnoDB 行锁是通过给索引上的索引项加锁来实现的，这一点 MySQL 与 Oracle 不同，后者是通过在数据块中对相应数据行加锁来实现的。InnoDB 这种行锁实现特点意味着：只有通过索引条件检索数据，InnoDB 才使用行级锁，否则，InnoDB 将使用表锁！</p>
 <h1 id="分库分表"><a href="#分库分表" class="headerlink" title="分库分表"></a>分库分表</h1><h2 id="为什么要分库分表？"><a href="#为什么要分库分表？" class="headerlink" title="为什么要分库分表？"></a>为什么要分库分表？</h2><p>分表</p>
 <p>单表数据量太大，会极大影响 sql执行的性能。</p>
 <p>分表就是把一个表的数据放到多个表中，然后查询的时候你就查一个表。比如按照用户 id 来分表，将一个用户的数据就放在一个表中。然后操作的时候你对一个用户就操作那个表就好了。这样可以控制每个表的数据量在可控的范围内，比如每个表就固定在 200 万以内。</p>
@@ -600,7 +675,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%B4%A2%E5%BC%95"><span class="nav-number">1.</span> <span class="nav-text">索引</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%B4%A2%E5%BC%95%E6%9C%89%E5%93%AA%E4%BA%9B%E4%BC%98%E7%BC%BA%E7%82%B9%EF%BC%9F"><span class="nav-number">1.1.</span> <span class="nav-text">索引有哪些优缺点？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#MySQL-%E7%9A%84%E7%B4%A2%E5%BC%95%E7%B1%BB%E5%9E%8B"><span class="nav-number">1.2.</span> <span class="nav-text">MySQL 的索引类型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%B4%A2%E5%BC%95%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E9%80%89%E6%8B%A9-B-%E6%A0%91%E7%9A%84%E5%8E%9F%E5%9B%A0"><span class="nav-number">1.3.</span> <span class="nav-text">索引数据结构选择 B+ 树的原因</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%81%94%E5%90%88%E7%B4%A2%E5%BC%95"><span class="nav-number">1.4.</span> <span class="nav-text">联合索引</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%80%E5%B7%A6%E5%89%8D%E7%BC%80%E5%8E%9F%E5%88%99"><span class="nav-number">1.4.1.</span> <span class="nav-text">最左前缀原则</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%81%9A%E7%B0%87%E7%B4%A2%E5%BC%95%E4%B8%8E%E9%9D%9E%E8%81%9A%E7%B0%87%E7%B4%A2%E5%BC%95"><span class="nav-number">1.5.</span> <span class="nav-text">聚簇索引与非聚簇索引</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%9B%E5%BB%BA%E7%B4%A2%E5%BC%95%E6%97%B6%E9%9C%80%E8%A6%81%E6%B3%A8%E6%84%8F%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="nav-number">1.6.</span> <span class="nav-text">创建索引时需要注意什么？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%B4%A2%E5%BC%95%E5%A4%B1%E6%95%88"><span class="nav-number">1.6.1.</span> <span class="nav-text">索引失效</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#MySQL-%E5%9F%BA%E7%A1%80"><span class="nav-number">2.</span> <span class="nav-text">MySQL 基础</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E5%BA%93%E7%9A%84%E4%B8%89%E8%8C%83%E5%BC%8F"><span class="nav-number">2.1.</span> <span class="nav-text">数据库的三范式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#MySQL-%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E"><span class="nav-number">2.2.</span> <span class="nav-text">MySQL 存储引擎</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%B6%85%E9%94%AE%E3%80%81%E5%80%99%E9%80%89%E9%94%AE%E3%80%81%E4%B8%BB%E9%94%AE%E3%80%81%E5%A4%96%E9%94%AE"><span class="nav-number">2.3.</span> <span class="nav-text">超键、候选键、主键、外键</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#SQL-%E7%BA%A6%E6%9D%9F"><span class="nav-number">2.4.</span> <span class="nav-text">SQL 约束</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BA%8B%E5%8A%A1"><span class="nav-number">3.</span> <span class="nav-text">事务</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#ACID-%E7%89%B9%E6%80%A7"><span class="nav-number">3.1.</span> <span class="nav-text">ACID 特性</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8B%E5%8A%A1%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86-x2F-%E5%A6%82%E4%BD%95%E4%BF%9D%E8%AF%81-ACID"><span class="nav-number">3.2.</span> <span class="nav-text">事务的实现原理&#x2F;如何保证 ACID</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#redo-log"><span class="nav-number">3.2.1.</span> <span class="nav-text">redo log</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#undo-log"><span class="nav-number">3.2.2.</span> <span class="nav-text">undo log</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#bin-log"><span class="nav-number">3.2.3.</span> <span class="nav-text">bin log</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#bin-log-%E4%B8%8E-redo-log-%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="nav-number">3.2.3.1.</span> <span class="nav-text">bin log 与 redo log 的区别</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B9%B6%E5%8F%91%E4%BA%8B%E5%8A%A1%E5%B8%A6%E6%9D%A5%E5%93%AA%E4%BA%9B%E9%97%AE%E9%A2%98%EF%BC%9F"><span class="nav-number">3.3.</span> <span class="nav-text">并发事务带来哪些问题？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8B%E5%8A%A1%E9%9A%94%E7%A6%BB%E7%BA%A7%E5%88%AB"><span class="nav-number">3.4.</span> <span class="nav-text">事务隔离级别</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8"><span class="nav-number">4.</span> <span class="nav-text">分库分表</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8%EF%BC%9F"><span class="nav-number">4.1.</span> <span class="nav-text">为什么要分库分表？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9E%82%E7%9B%B4%E6%8B%86%E5%88%86%E5%92%8C%E6%B0%B4%E5%B9%B3%E6%8B%86%E5%88%86"><span class="nav-number">4.2.</span> <span class="nav-text">垂直拆分和水平拆分</span></a></li></ol></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%B4%A2%E5%BC%95"><span class="nav-number">1.</span> <span class="nav-text">索引</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%B4%A2%E5%BC%95%E6%9C%89%E5%93%AA%E4%BA%9B%E4%BC%98%E7%BC%BA%E7%82%B9%EF%BC%9F"><span class="nav-number">1.1.</span> <span class="nav-text">索引有哪些优缺点？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#MySQL-%E7%9A%84%E7%B4%A2%E5%BC%95%E7%B1%BB%E5%9E%8B"><span class="nav-number">1.2.</span> <span class="nav-text">MySQL 的索引类型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%B4%A2%E5%BC%95%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E9%80%89%E6%8B%A9-B-%E6%A0%91%E7%9A%84%E5%8E%9F%E5%9B%A0"><span class="nav-number">1.3.</span> <span class="nav-text">索引数据结构选择 B+ 树的原因</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%94%AF%E4%B8%80%E7%B4%A2%E5%BC%95"><span class="nav-number">1.4.</span> <span class="nav-text">唯一索引</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%81%94%E5%90%88%E7%B4%A2%E5%BC%95"><span class="nav-number">1.5.</span> <span class="nav-text">联合索引</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%80%E5%B7%A6%E5%89%8D%E7%BC%80%E5%8E%9F%E5%88%99"><span class="nav-number">1.5.1.</span> <span class="nav-text">最左前缀原则</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%81%9A%E7%B0%87%E7%B4%A2%E5%BC%95%E4%B8%8E%E9%9D%9E%E8%81%9A%E7%B0%87%E7%B4%A2%E5%BC%95"><span class="nav-number">1.6.</span> <span class="nav-text">聚簇索引与非聚簇索引</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%9B%E5%BB%BA%E7%B4%A2%E5%BC%95%E6%97%B6%E9%9C%80%E8%A6%81%E6%B3%A8%E6%84%8F%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="nav-number">1.7.</span> <span class="nav-text">创建索引时需要注意什么？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%B4%A2%E5%BC%95%E5%A4%B1%E6%95%88"><span class="nav-number">1.7.1.</span> <span class="nav-text">索引失效</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#MySQL-%E5%9F%BA%E7%A1%80"><span class="nav-number">2.</span> <span class="nav-text">MySQL 基础</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E5%BA%93%E7%9A%84%E4%B8%89%E8%8C%83%E5%BC%8F"><span class="nav-number">2.1.</span> <span class="nav-text">数据库的三范式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#MySQL-%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E"><span class="nav-number">2.2.</span> <span class="nav-text">MySQL 存储引擎</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%B6%85%E9%94%AE%E3%80%81%E5%80%99%E9%80%89%E9%94%AE%E3%80%81%E4%B8%BB%E9%94%AE%E3%80%81%E5%A4%96%E9%94%AE"><span class="nav-number">2.3.</span> <span class="nav-text">超键、候选键、主键、外键</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%BB%E9%94%AE"><span class="nav-number">2.3.1.</span> <span class="nav-text">主键</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A4%96%E9%94%AE"><span class="nav-number">2.3.2.</span> <span class="nav-text">外键</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#SQL-%E7%BA%A6%E6%9D%9F"><span class="nav-number">2.4.</span> <span class="nav-text">SQL 约束</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#drop%E3%80%81delete-%E4%B8%8E-truncate-%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="nav-number">2.5.</span> <span class="nav-text">drop、delete 与 truncate 的区别</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BA%8B%E5%8A%A1"><span class="nav-number">3.</span> <span class="nav-text">事务</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#ACID-%E7%89%B9%E6%80%A7"><span class="nav-number">3.1.</span> <span class="nav-text">ACID 特性</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8B%E5%8A%A1%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86-x2F-%E5%A6%82%E4%BD%95%E4%BF%9D%E8%AF%81-ACID"><span class="nav-number">3.2.</span> <span class="nav-text">事务的实现原理&#x2F;如何保证 ACID</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#redo-log"><span class="nav-number">3.2.1.</span> <span class="nav-text">redo log</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#undo-log"><span class="nav-number">3.2.2.</span> <span class="nav-text">undo log</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#bin-log"><span class="nav-number">3.2.3.</span> <span class="nav-text">bin log</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#bin-log-%E4%B8%8E-redo-log-%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="nav-number">3.2.3.1.</span> <span class="nav-text">bin log 与 redo log 的区别</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B9%B6%E5%8F%91%E4%BA%8B%E5%8A%A1%E5%B8%A6%E6%9D%A5%E5%93%AA%E4%BA%9B%E9%97%AE%E9%A2%98%EF%BC%9F"><span class="nav-number">3.3.</span> <span class="nav-text">并发事务带来哪些问题？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8B%E5%8A%A1%E9%9A%94%E7%A6%BB%E7%BA%A7%E5%88%AB"><span class="nav-number">3.4.</span> <span class="nav-text">事务隔离级别</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%94%81"><span class="nav-number">4.</span> <span class="nav-text">锁</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8"><span class="nav-number">5.</span> <span class="nav-text">分库分表</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8%EF%BC%9F"><span class="nav-number">5.1.</span> <span class="nav-text">为什么要分库分表？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9E%82%E7%9B%B4%E6%8B%86%E5%88%86%E5%92%8C%E6%B0%B4%E5%B9%B3%E6%8B%86%E5%88%86"><span class="nav-number">5.2.</span> <span class="nav-text">垂直拆分和水平拆分</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -616,7 +691,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">13</span>
+          <span class="site-state-item-count">14</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
