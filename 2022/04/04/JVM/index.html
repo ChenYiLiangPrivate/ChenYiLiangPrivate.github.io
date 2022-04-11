@@ -30,6 +30,9 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="http://example.com/2022/04/04/JVM/1647436365919-9cd662d0-1aa3-4501-902e-59dcd6095c3d.png">
 <meta property="og:image" content="http://example.com/2022/04/04/JVM/webp.webp">
+<meta property="og:image" content="http://example.com/2022/04/04/JVM/method-area-1.6.291acb6f.png">
+<meta property="og:image" content="http://example.com/2022/04/04/JVM/method-area-jdk1.7.d852e1fb.png">
+<meta property="og:image" content="http://example.com/2022/04/04/JVM/method-area-jdk1.8.f83a79be.png">
 <meta property="og:image" content="http://example.com/2022/04/04/JVM/331425-20160621125941772-1913742708.png">
 <meta property="og:image" content="http://example.com/2022/04/04/JVM/1647438628208-03b39124-9351-4ff0-ab47-61df7698891e.png">
 <meta property="og:image" content="http://example.com/2022/04/04/JVM/1647436415158-62c57e47-e0c6-43d3-ae19-f7bb65c339dc.png">
@@ -42,7 +45,7 @@
 <meta property="og:image" content="http://example.com/2022/04/04/JVM/1647432020975-d07110a4-443c-44a4-b3b1-be12ac618e08.png">
 <meta property="og:image" content="http://example.com/2022/04/04/JVM/1647432336054-17d3daab-8419-4f7e-9a18-0968c1ad7cb8.png">
 <meta property="article:published_time" content="2022-04-04T02:58:42.000Z">
-<meta property="article:modified_time" content="2022-04-08T08:28:16.949Z">
+<meta property="article:modified_time" content="2022-04-11T02:19:08.942Z">
 <meta property="article:author" content="Cyl">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://example.com/2022/04/04/JVM/1647436365919-9cd662d0-1aa3-4501-902e-59dcd6095c3d.png">
@@ -135,12 +138,12 @@
   </li>
         <li class="menu-item menu-item-categories">
 
-    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">4</span></a>
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">5</span></a>
 
   </li>
         <li class="menu-item menu-item-archives">
 
-    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">14</span></a>
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">15</span></a>
 
   </li>
       <li class="menu-item menu-item-search">
@@ -228,7 +231,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-04-08 16:28:16" itemprop="dateModified" datetime="2022-04-08T16:28:16+08:00">2022-04-08</time>
+                <time title="修改时间：2022-04-11 10:19:08" itemprop="dateModified" datetime="2022-04-11T10:19:08+08:00">2022-04-11</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -298,10 +301,35 @@
 <p>new 一个对象，对象实例存放在堆中，对象的引用存放在栈中。</p>
 <p>Java 堆是垃圾收集器管理的主要区域，因此也被称作GC 堆（Garbage Collected Heap）。</p>
 <h2 id="方法区"><a href="#方法区" class="headerlink" title="方法区"></a>方法区</h2><p>它用于存储已被虚拟机加载的类信息（Class 文件）、常量、静态变量、即时编译器（JIT compiler）编译后的代码等数据。</p>
+<p>方法表、字段表被放在方法区。根据运行时常量池的符号引用解析找到方法区中的方法和字段。</p>
 <h3 id="运行时常量池"><a href="#运行时常量池" class="headerlink" title="运行时常量池"></a>运行时常量池</h3><p>运行时常量池（Runtime Constant Pool）是方法区的一部分。</p>
-<p>Class 文件中除了有类的版本、字段、方法、接口等描述信息外，还有一项信息是常量池（Constant Pool），用于存放编译期生成的符号引用，这部分内容将在类加载阶段存放到方法区的运行时常量池中。在类的解析阶段还会将这些符号引用翻译为直接引用，用翻译出来的直接引用替换原本的符号引用。</p>
-<p>运行时常量池相对于 class 常量池一大特征就是具有动态性。在运行时可以通过代码生成常量并将其放入运行时常量池中，这种特性被用的最多的就是 String.intern()。</p>
-<p>对于静态变量，它的引用是存储在方法区的，但是它指向的对象还是在堆中创建的，比如:static int i &#x3D; 1; &#x2F;&#x2F;1这个值是存储在方法区static Object o &#x3D; new SomeObject(); &#x2F;&#x2F;o这个引用是存储在方法区,但是SomeObject()这个对象却是存储在堆中的</p>
+<p>Class 文件中有一项信息是常量池（Constant Pool），用于存放编译期生成的符号引用，这部分内容将在类加载阶段存放到方法区中，它的存放区域也叫做运行时常量池。在类的解析阶段还会将这些符号引用翻译为直接引用，用翻译出来的直接引用替换原本的符号引用。</p>
+<h3 id="方法区结构的变化"><a href="#方法区结构的变化" class="headerlink" title="方法区结构的变化"></a>方法区结构的变化</h3><p><img src="/2022/04/04/JVM/method-area-1.6.291acb6f.png" alt="方法区-jdk1.6"></p>
+<p><img src="/2022/04/04/JVM/method-area-jdk1.7.d852e1fb.png" alt="方法区-jdk1.7"></p>
+<p><img src="/2022/04/04/JVM/method-area-jdk1.8.f83a79be.png" alt="方法区-jdk1.8"></p>
+<ol>
+<li><p>JDK1.7 之前，运行时常量池包含字符串常量池，运行时常量池和静态变量存放在方法区，此时 HotSpot 虚拟机对方法区的实现为永久代。</p>
+<blockquote>
+<p>在堆中创建字符串常量对应的 String 实例，它的引用存储在方法区的字符串常量池</p>
+<p>如果静态变量是基本类型数据，如 static int i &#x3D; 1; 1 这个值存储在方法去，如果静态变量是一个对象，在堆中创建静态变量的实例，它的引用存储在方法区</p>
+</blockquote>
+</li>
+<li><p>JDK1.7 运行时常量池中的字符串常量池被拿到了堆中、静态变量被拿到了堆中，此时 HotSpot 虚拟机对方法区的实现为永久代 。</p>
+<blockquote>
+<p><strong>字符串常量池物理上存放在堆中，但逻辑上还是属于方法区</strong></p>
+<p>为什么要将字符串常量池移动到堆中？</p>
+<p>主要是因为永久代的 GC 回收效率太低，只有在 Full GC 的时候才会进行回收。Java 程序中通常会有大量的被创建的字符串等待回收，将字符串常量池放到堆中，能够更高效及时地回收字符串内存。</p>
+</blockquote>
+</li>
+<li><p>JDK1.8 HotSpot 移除了永久代用元空间（Metaspace）取而代之，这时候字符串常量池和静态变量还在堆, 运行时常量池还在方法区，只不过方法区的实现从永久代变成了元空间（Metaspace）</p>
+<blockquote>
+<p>元空间的出现是为了解决突出的类和类加载器元数据过多导致的OOM问题。元空间里面存放的是类的元数据，这样加载多少类的元数据就不由 <code>MaxPermSize</code> 控制了, 而由系统的实际可用空间来控制，这样能加载的类就更多了。</p>
+</blockquote>
+</li>
+</ol>
+<h3 id="基本类型包装类对象常量池"><a href="#基本类型包装类对象常量池" class="headerlink" title="基本类型包装类对象常量池"></a>基本类型包装类对象常量池</h3><p>java 中基本类型的包装类的大部分都实现了常量池技术，这些类是：</p>
+<p>Byte、Short、Integer、Long、Character、Boolean。</p>
+<p>另外上面这 5 种整型的包装类也只是在对应值小于等于 127 时才可使用对象常量池。</p>
 <h1 id="JVM-调优"><a href="#JVM-调优" class="headerlink" title="JVM 调优"></a>JVM 调优</h1><h2 id="JVM-调优命令"><a href="#JVM-调优命令" class="headerlink" title="JVM 调优命令"></a>JVM 调优命令</h2><ul>
 <li><p>jps：JVM Process Status Tool，显示指定系统内所有的 HotSpot 虚拟机进程。</p>
 </li>
@@ -342,11 +370,27 @@
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">     #2 Methodref X.bar:()V</span><br><span class="line">     /                     \</span><br><span class="line">#3 Class X       #17 NameAndType bar:()V</span><br><span class="line">    |                /             \</span><br><span class="line">#18 Utf8 X    #13 Utf8 bar     #6 Utf8 ()V</span><br></pre></td></tr></table></figure>
 
 <p>总而言之，Class 文件里的符号引用实际上是：带有类型（tag） &#x2F; 结构（符号间引用层次）的字符串。</p>
+<p>将方法的符号引用解析为直接引用：</p>
 <p>JVM在类加载的时候会把 Class 文件转化为<strong>方法区</strong>的运行时数据结构。例如说类的元数据记录在 ClassClass 结构体里，每个方法的元数据记录在各自的 methodblock 结构体里。</p>
 <p>在刚加载好一个类的时候，Class文件里的常量池和每个方法的字节码（Code属性）会被基本原样的拷贝到内存里先放着，也就是说仍然处于使用“符号引用”的状态；直到真的要被使用到的时候才会被解析（resolve）为直接引用。</p>
-<p>为什么要带类型？</p>
-<p>这些结构体应该在方法去</p>
-<p>通过Methodref所记录的class_index找到类名，进一步找到被调用方法的类的ClassClass结构体；然后通过name_and_type_index找到方法名和方法描述符，到ClassClass结构体上记录的方法列表里找到匹配的那个methodblock；最终把找到的methodblock的指针写回到常量池项#2里。</p>
+<p>假定我们要第一次执行到 foo() 方法里调用 bar() 方法的那条 invokevirtual 指令了。</p>
+<p>此时JVM会发现该指令尚未被解析，所以会先去解析。</p>
+<p>通过其操作数所记录的常量池下标 0x0002，找到常量池项 #2，发现该常量池项也尚未被解析，于是进一步去解析该项。解析过程为：</p>
+<p>通过 Methodref 所记录的 class_index 找到类名，进一步找到被调用方法的类的 ClassClass 结构体（类的符号引用是否在加载后就变成了直接引用？）；然后通过 name_and_type_index 找到方法名和方法描述符，到ClassClass 结构体上记录的方法列表里找到匹配的那个 methodblock；最终把找到的 methodblock 的指针写回到常量池项 #2 里。</p>
+<p>也就是说，原本常量池项 #2 在类加载后的运行时常量池里的内容跟 Class 文件里的一致，是：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[00 03] [00 11]</span><br></pre></td></tr></table></figure>
+
+<p>小细节，tag 被放到了别的地方。而在解析后，假设找到的 methodblock 地址是 0x45762300，那么常量池项 #2的内容会变为：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[00 23 76 45]</span><br></pre></td></tr></table></figure>
+
+<p>这样，以后再查询到常量池项 #2 时，里面就不再是一个符号引用，而是一个能直接找到 Java 方法元数据的直接引用了。</p>
+<p>解析好常量池项 #2 之后回到 invokevirtual 指令的解析。回顾一下，在解析前那条指令的内容是：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[B6] [00 02]</span><br></pre></td></tr></table></figure>
+
+<p>而在解析后，这块代码被改写为：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[D6] [06] [01]</span><br></pre></td></tr></table></figure>
+
+<p>其中 opcode 部分从 invokevirtual 改写为 invokevirtual_quick，表示该指令已经解析完毕。原本存储操作数的 2字节空间现在分别存了 2 个 1 字节信息，第一个是虚方法表的下标（vtable index），第二个是方法的参数个数。这两项信息都由前面解析常量池项 #2 得到的 methodblock 读取而来。</p>
 <p>可以看到，方法表各个方法按序排列，并且每个方法具有该方法的详细信息，包括 code，即字节码指令，后面被加载到方法区</p>
 <h1 id="类加载过程"><a href="#类加载过程" class="headerlink" title="类加载过程"></a>类加载过程</h1><ul>
 <li><p>主要三步：加载 -&gt; 连接 -&gt; 初始化。连接过程又可分为三步：验证 -&gt; 准备 -&gt; 解析。</p>
@@ -389,11 +433,11 @@
 <blockquote>
 <p>《Java虚拟机规范》之中并未规定解析阶段发生的具体时间，只要求了在执行 ane-warray、checkcast、getfield、getstatic、instanceof、invokedynamic、invokeinterface、invoke-special、invokestatic、invokevirtual、ldc、ldc_w、ldc2_w、multianewarray、new、putfield 和 putstatic 这17个<strong>用于操作符号引用的字节码指令</strong>之前，先对它们所使用的符号引用进行解析。所以虚拟机实现可以根据需要来自行判断，到底是在类被加载器加载时就对常量池中的符号引用进行解析，还是等到一个符号引用将要被使用前才去解析它。</p>
 </blockquote>
-<h2 id="初始化"><a href="#初始化" class="headerlink" title="初始化"></a>初始化</h2><p> <clinit> () 方法是编译之后自动生成的。初始化阶段是执行初始化方法 <clinit> ()方法的过程，是类加载的最后一步，这一步 JVM 才开始真正执行类中定义的 Java 程序代码（字节码）。</clinit></clinit></p>
-<p>虚拟机会保证一个类的 <clinit>() 方法在多线程环境中被正确地加锁、同步，如果多个线程同时去初始化一个类，那么只会有一个线程去执行这个类的 <clinit>() 方法，其他线程都需要阻塞等待，直到活动线程执行<clinit>() 方法完毕。</clinit></clinit></clinit></p>
-<p>需要注意的是，其他线程虽然会被阻塞，但如果执行 <clinit>() 方法后，其他线程唤醒之后不会再次进入<clinit>() 方法。同一个加载器下，一个类型只会初始化一次。（这与一般的 Synchronized 方法有显著区别）</clinit></clinit></p>
+<h2 id="初始化"><a href="#初始化" class="headerlink" title="初始化"></a>初始化</h2><p>&lt;clinit&gt;() 方法是编译之后自动生成的。初始化阶段是执行初始化方法 &lt;clinit&gt;() 的过程，是类加载的最后一步，这一步 JVM 才开始真正执行类中定义的 Java 程序代码（字节码）。</p>
+<p>虚拟机会保证一个类的 &lt;clinit&gt;() 方法在多线程环境中被正确地加锁、同步，如果多个线程同时去初始化一个类，那么只会有一个线程去执行这个类的 &lt;clinit&gt;() 方法，其他线程都需要阻塞等待，直到活动线程执行 &lt;clinit&gt;() 方法完毕。</p>
+<p>需要注意的是，其他线程虽然会被阻塞，但当活动线程执行 &lt;clinit&gt;() 方法后，其他线程被唤醒之后不会再次执行&lt;clinit&gt;() 方法。同一个加载器下，一个类型只会初始化一次。（这与一般的 Synchronized 方法有显著区别）</p>
 <blockquote>
-<p><init> 是实例构造器，对非静态变量初始化，而  <clinit> 是类构造器，对静态变量，静态代码块进行初始化。</clinit></init></p>
+<p>&lt;init&gt; 是实例构造器，对非静态变量初始化，而  &lt;clinit&gt; 是类构造器，对静态变量，静态代码块进行初始化。</p>
 </blockquote>
 <h1 id="类加载器"><a href="#类加载器" class="headerlink" title="类加载器"></a>类加载器</h1><p>JVM 中内置了三个重要的 ClassLoader，除了 BootstrapClassLoader 其他类加载器均由 Java 实现且全部继承自java.lang.ClassLoader：</p>
 <ol>
@@ -421,7 +465,7 @@
 <p>类元数据：加载阶段生成的”<strong>方法区</strong>的运行时数据结构“</p>
 <p>类型指针：不是 Class 对象的引用</p>
 </blockquote>
-<h3 id="5-执行-init-方法"><a href="#5-执行-init-方法" class="headerlink" title="5 执行 init 方法"></a>5 执行 init 方法</h3><p>在上面工作都完成之后，从虚拟机的视角来看，一个新的对象已经产生了，但从 Java 程序的视角来看，对象创建才刚开始，<init> 方法还没有执行，所有的字段都还为零。所以一般来说，执行 new 指令之后会接着执行 <init> 方法，把对象按照程序员的意愿进行初始化，这样一个真正可用的对象才算完全产生出来。</init></init></p>
+<h3 id="5-执行-init-方法"><a href="#5-执行-init-方法" class="headerlink" title="5 执行 init 方法"></a>5 执行 init 方法</h3><p>在上面工作都完成之后，从虚拟机的视角来看，一个新的对象已经产生了，但从 Java 程序的视角来看，对象创建才刚开始，&lt;init&gt; 方法还没有执行，所有的字段都还为零。所以一般来说，执行 new 指令之后会接着执行 &lt;init&gt; 方法，把对象按照程序员的意愿进行初始化，这样一个真正可用的对象才算完全产生出来。</p>
 <h2 id="对象的内存布局"><a href="#对象的内存布局" class="headerlink" title="对象的内存布局"></a>对象的内存布局</h2><p>在 Hotspot 虚拟机中，对象在内存中的布局可以分为 3 块区域：对象头、实例数据和对齐填充。</p>
 <p>Hotspot 虚拟机的对象头包括两部分信息，第一部分用于存储对象自身的运行时数据（哈希码、GC 分代年龄、锁状态标志等等），另一部分是类型指针，即对象指向它的类元数据的指针，虚拟机通过这个指针来确定这个对象是哪个类的实例。</p>
 <p>实例数据部分是对象真正存储的有效信息，也是在程序中所定义的各种类型的字段内容。</p>
@@ -503,20 +547,26 @@
 <li>Survivor 区内存不足会发生担保分配，超过指定大小的对象直接进入老年代。</li>
 <li>老年代空间不足，进行Full GC，Full GC 清理整个内存堆，包括年轻代和老年代。</li>
 </ul>
-<h3 id="空间担保分配"><a href="#空间担保分配" class="headerlink" title="空间担保分配"></a>空间担保分配</h3><p>是因为新生代采用复制收集算法，假如大量对象在 Minor GC 后仍然存活，而 Survivor To 空间是比较小的，不足以实现复制，这时就需要老年代进行分配担保，把Survivor无法容纳的对象放到老年代。</p>
-<p>如果发现老年代也放不下这些对象了，那怎么处理呢？其实JVM有一个老年代空间分配担保机制来保证对象能够进入老年代。</p>
-<p>JDK 6 Update 24 之前，在发生 Minor GC 之前，虚拟机必须先检查老年代最大可用的连续空间是否大于新生代所有对象总空间，如果这个条件成立，那这一次 Minor GC 可以确保是安全的。如果不成立，则虚拟机会先查看 <code>-XX:HandlePromotionFailure</code> 参数的设置值是否允许担保失败(Handle Promotion Failure);如果允许，那会继续检查老年代最大可用的连续空间是否大于历次晋升到老年代对象的平均大小，如果大于，将尝试进行一次 Minor GC，尽管这次 Minor GC 是有风险的;如果小于，或者 <code>-XX: HandlePromotionFailure</code> 设置不允许冒险，那这时就要改为进行一次 Full GC。</p>
-<p>在允许担保失败并尝试进行YoungGC后，可能会出现三种情况：<br>① YoungGC后，存活对象小于survivor大小，此时存活对象进入survivor区中<br>② YoungGC后，存活对象大于survivor大小，但是小于老年大可用空间大小，此时直接进入老年<br>代。<br>③ YoungGC后，存活对象大于survivor大小，也大于老年大可用空间大小，老年代也放不下这些<br>对象了，此时就会发生“Handle Promotion Failure”，就触发了 Full GC。如果 Full GC后，老年代<br>还是没有足够的空间，此时就会发生OOM内存溢出了。</p>
+<h3 id="空间担保分配"><a href="#空间担保分配" class="headerlink" title="空间担保分配"></a>空间担保分配</h3><p>是因为新生代采用复制收集算法，假如大量对象在 Minor GC 后仍然存活，而 Survivor To 空间是比较小的，不足以实现复制，这时就需要老年代进行分配担保，把 Survivor 无法容纳的对象放到老年代。</p>
+<p>JVM 使用空间分配担保机制来用来让对象进入老年代。</p>
+<p>JDK 6 Update 24 之前，在<strong>发生 Minor GC 之前</strong>，虚拟机必须先检查老年代最大可用的连续空间是否大于新生代所有对象总空间，如果这个条件成立，那这一次 Minor GC 可以确保是安全的。</p>
+<p>如果不成立，则虚拟机会先查看 <code>-XX:HandlePromotionFailure</code> 参数，该参数表示是否允许担保失败。如果允许，继续检查老年代最大可用的连续空间是否大于历次晋升到老年代对象的平均大小，如果大于，将尝试进行一次 Minor GC，尽管这次 Minor GC 是有风险的；如果小于，或者 <code>-XX: HandlePromotionFailure</code> 设置不允许担保失败，那这时就要改为进行一次 Full GC。</p>
+<p>在允许担保失败并尝试进行 Minor GC 后，可能会出现三种情况：</p>
+<ul>
+<li>Minor GC 后，存活对象小于 survivor to 大小，此时存活对象进入 survivor to 区中</li>
+<li>Minor GC 后，存活对象大于 survivor to 大小，但是小于老年代可用空间大小，此时直接进入老年代。</li>
+<li>Minor GC 后，存活对象大于 survivor to 大小，也大于老年代可用空间大小，发生“Handle Promotion Failure”，担保分配失败，会触发 Full GC。如果 Full GC 后，老年代还是没有足够的空间，此时就会发生OOM内存溢出了。</li>
+</ul>
 <p>JDK 6 Update 24 之后的规则变为只要老年代的连续空间大于新生代对象总大小或者历次晋升的平均大小，就会进行 Minor GC，否则将进行 Full GC。</p>
 <h3 id="Minor-GC-和-Full-GC"><a href="#Minor-GC-和-Full-GC" class="headerlink" title="Minor GC 和 Full GC"></a>Minor GC 和 Full GC</h3><p>Minor GC：新生代的 GC。触发条件：当 Eden 区满时，触发 Minor GC。</p>
-<p>Full GC: 整个堆的 GC，包括新生代、老年代和永久代（在 JDK 1.8及以后，永久代被移除，换为metaspace 元空间）。触发条件：</p>
+<p>Full GC: 整个堆的 GC，包括新生代、老年代<strong>和永久代</strong>（注意 Full GC 会清理方法区。在 JDK 1.8及以后，永久代被移除，换为 metaspace 元空间）。触发条件：</p>
+<p>在<strong>发生 Minor GC 之前</strong>，虚拟机检查发现老年代最大可用的连续空间 &lt; 新生代所有对象总空间：</p>
 <ul>
-<li>通过Minor GC后进入老年代的平均大小大于老年代的可用内存。如果发现统计数据说之前Minor GC的平均晋升大小比目前old gen剩余的空间大，则不会触发Minor GC而是转为触发full GC。</li>
-<li>老年代空间不够分配新的内存（或永久代空间不足，但只是JDK1.7有的，这也是用元空间来取代永<br>  久代的原因，可以减少Full GC的频率，减少GC负担，提升其效率）</li>
-<li>由Eden区、From Space区向To Space区复制时，对象大小大于To Space可用内存，则把该对象转<br>  存到老年代，且老年代的可用内存小于该对象大小。</li>
-<li>调用System.gc时，系统建议执行Full GC，但是不必然执行</li>
+<li>允许担保分配失败并且老年代最大可用的连续空间大于历次晋升到老年代对象的平均大小：在 Minor GC 后，存活对象大于 survivor to 大小，也大于老年代可用空间大小，触发 Full GC</li>
+<li>不允许担保分配失败，触发 Full GC</li>
 </ul>
-<p>Full GC 清理整个堆，需要 stop the world 的时间更长</p>
+<p>Full GC 清理堆和方法区，需要 stop the world 的时间更长</p>
+<p>老年代空间不够分配新的内存（或永久代空间不足，但只是JDK1.7有的，这也是用元空间来取代永<br>久代的原因，可以减少Full GC的频率，减少GC负担，提升其效率）</p>
 <h2 id="垃圾收集器"><a href="#垃圾收集器" class="headerlink" title="垃圾收集器"></a>垃圾收集器</h2><p>Serial、ParNew：新生代采用标记-复制算法，老年代采用标记-整理算法。</p>
 <p>CMS：标记-清除算法</p>
 <h3 id="Serial-收集器"><a href="#Serial-收集器" class="headerlink" title="Serial 收集器"></a>Serial 收集器</h3><p>Serial（串行）收集器。它的 “单线程” 的意义不仅仅意味着它只会使用一条垃圾收集线程去完成垃圾收集工作，更重要的是它在进行垃圾收集工作的时候必须暂停其他所有的工作线程（ “Stop The World” ），直到它收集结束。</p>
@@ -560,8 +610,8 @@
       <i class="fa fa-chevron-left"></i> 死锁
     </a></div>
       <div class="post-nav-item">
-    <a href="/2022/04/04/Java-basis/" rel="next" title="Java basis">
-      Java basis <i class="fa fa-chevron-right"></i>
+    <a href="/2022/04/05/Redis/" rel="next" title="Redis">
+      Redis <i class="fa fa-chevron-right"></i>
     </a></div>
     </div>
       </footer>
@@ -621,7 +671,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Java-%E5%86%85%E5%AD%98%E5%8C%BA%E5%9F%9F"><span class="nav-number">1.</span> <span class="nav-text">Java 内存区域</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%A8%8B%E5%BA%8F%E8%AE%A1%E6%95%B0%E5%99%A8"><span class="nav-number">1.1.</span> <span class="nav-text">程序计数器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E6%A0%88"><span class="nav-number">1.2.</span> <span class="nav-text">Java 虚拟机栈</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A0%88%E5%B8%A7"><span class="nav-number">1.2.1.</span> <span class="nav-text">栈帧</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%B1%80%E9%83%A8%E5%8F%98%E9%87%8F%E8%A1%A8%EF%BC%88Local-Variable-Table%EF%BC%89"><span class="nav-number">1.2.1.1.</span> <span class="nav-text">局部变量表（Local Variable Table）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%93%8D%E4%BD%9C%E6%95%B0%E6%A0%88%EF%BC%88Operand-Stack%EF%BC%89"><span class="nav-number">1.2.1.2.</span> <span class="nav-text">操作数栈（Operand Stack）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8A%A8%E6%80%81%E9%93%BE%E6%8E%A5%EF%BC%88Dynamic-Linking%EF%BC%89"><span class="nav-number">1.2.1.3.</span> <span class="nav-text">动态链接（Dynamic Linking）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AE%8C%E6%88%90%E5%87%BA%E5%8F%A3%EF%BC%88Return-Address%EF%BC%8C%E4%B9%9F%E5%8F%AB%E5%81%9A%E8%BF%94%E5%9B%9E%E5%9C%B0%E5%9D%80-%EF%BC%89"><span class="nav-number">1.2.1.4.</span> <span class="nav-text">完成出口（Return Address，也叫做返回地址 ）</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%AC%E5%9C%B0%E6%96%B9%E6%B3%95%E6%A0%88"><span class="nav-number">1.3.</span> <span class="nav-text">本地方法栈</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A0%86"><span class="nav-number">1.4.</span> <span class="nav-text">堆</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%B9%E6%B3%95%E5%8C%BA"><span class="nav-number">1.5.</span> <span class="nav-text">方法区</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%90%E8%A1%8C%E6%97%B6%E5%B8%B8%E9%87%8F%E6%B1%A0"><span class="nav-number">1.5.1.</span> <span class="nav-text">运行时常量池</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#JVM-%E8%B0%83%E4%BC%98"><span class="nav-number">2.</span> <span class="nav-text">JVM 调优</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#JVM-%E8%B0%83%E4%BC%98%E5%91%BD%E4%BB%A4"><span class="nav-number">2.1.</span> <span class="nav-text">JVM 调优命令</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%B1%BB%E6%96%87%E4%BB%B6%E7%BB%93%E6%9E%84"><span class="nav-number">3.</span> <span class="nav-text">类文件结构</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%B1%BB%E5%8A%A0%E8%BD%BD%E8%BF%87%E7%A8%8B"><span class="nav-number">4.</span> <span class="nav-text">类加载过程</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8A%A0%E8%BD%BD"><span class="nav-number">4.1.</span> <span class="nav-text">加载</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%AA%8C%E8%AF%81"><span class="nav-number">4.2.</span> <span class="nav-text">验证</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%87%86%E5%A4%87"><span class="nav-number">4.3.</span> <span class="nav-text">准备</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A7%A3%E6%9E%90"><span class="nav-number">4.4.</span> <span class="nav-text">解析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="nav-number">4.5.</span> <span class="nav-text">初始化</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%B1%BB%E5%8A%A0%E8%BD%BD%E5%99%A8"><span class="nav-number">5.</span> <span class="nav-text">类加载器</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%8C%E4%BA%B2%E5%A7%94%E6%B4%BE%E6%A8%A1%E5%9E%8B"><span class="nav-number">5.1.</span> <span class="nav-text">双亲委派模型</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AF%B9%E8%B1%A1"><span class="nav-number">6.</span> <span class="nav-text">对象</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AF%B9%E8%B1%A1%E7%9A%84%E5%88%9B%E5%BB%BA"><span class="nav-number">6.1.</span> <span class="nav-text">对象的创建</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%A3%80%E6%9F%A5"><span class="nav-number">6.1.1.</span> <span class="nav-text">1 类加载检查</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E5%88%86%E9%85%8D%E5%86%85%E5%AD%98"><span class="nav-number">6.1.2.</span> <span class="nav-text">2 分配内存</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E5%88%9D%E5%A7%8B%E5%8C%96%E9%9B%B6%E5%80%BC"><span class="nav-number">6.1.3.</span> <span class="nav-text">3 初始化零值</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-%E8%AE%BE%E7%BD%AE%E5%AF%B9%E8%B1%A1%E5%A4%B4"><span class="nav-number">6.1.4.</span> <span class="nav-text">4 设置对象头</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-%E6%89%A7%E8%A1%8C-init-%E6%96%B9%E6%B3%95"><span class="nav-number">6.1.5.</span> <span class="nav-text">5 执行 init 方法</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AF%B9%E8%B1%A1%E7%9A%84%E5%86%85%E5%AD%98%E5%B8%83%E5%B1%80"><span class="nav-number">6.2.</span> <span class="nav-text">对象的内存布局</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AF%B9%E8%B1%A1%E7%9A%84%E8%AE%BF%E9%97%AE%E5%AE%9A%E4%BD%8D"><span class="nav-number">6.3.</span> <span class="nav-text">对象的访问定位</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E7%AE%97%E6%B3%95"><span class="nav-number">7.</span> <span class="nav-text">垃圾收集算法</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A0%87%E8%AE%B0-%E6%B8%85%E9%99%A4%E7%AE%97%E6%B3%95"><span class="nav-number">7.1.</span> <span class="nav-text">标记-清除算法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A0%87%E8%AE%B0-%E5%A4%8D%E5%88%B6%E7%AE%97%E6%B3%95"><span class="nav-number">7.2.</span> <span class="nav-text">标记-复制算法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A0%87%E8%AE%B0-%E6%95%B4%E7%90%86%E7%AE%97%E6%B3%95"><span class="nav-number">7.3.</span> <span class="nav-text">标记-整理算法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%86%E4%BB%A3%E6%94%B6%E9%9B%86%E7%AE%97%E6%B3%95"><span class="nav-number">7.4.</span> <span class="nav-text">分代收集算法</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#JVM-%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6"><span class="nav-number">8.</span> <span class="nav-text">JVM 垃圾回收</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%A4%E6%96%AD%E5%AF%B9%E8%B1%A1%E6%98%AF%E5%90%A6%E5%AD%98%E6%B4%BB"><span class="nav-number">8.1.</span> <span class="nav-text">判断对象是否存活</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BC%95%E7%94%A8%E8%AE%A1%E6%95%B0%E6%B3%95"><span class="nav-number">8.1.1.</span> <span class="nav-text">引用计数法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%AF%E8%BE%BE%E6%80%A7%E5%88%86%E6%9E%90%E7%AE%97%E6%B3%95"><span class="nav-number">8.1.2.</span> <span class="nav-text">可达性分析算法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BC%BA%E5%BC%95%E7%94%A8%E3%80%81%E8%BD%AF%E5%BC%95%E7%94%A8%E3%80%81%E5%BC%B1%E5%BC%95%E7%94%A8%E3%80%81%E8%99%9A%E5%BC%95%E7%94%A8"><span class="nav-number">8.1.3.</span> <span class="nav-text">强引用、软引用、弱引用、虚引用</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%A4%E6%96%AD%E4%B8%80%E4%B8%AA%E7%B1%BB%E6%98%AF%E6%97%A0%E7%94%A8%E7%9A%84%E7%B1%BB"><span class="nav-number">8.2.</span> <span class="nav-text">判断一个类是无用的类</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#JVM-%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E8%BF%87%E7%A8%8B"><span class="nav-number">8.3.</span> <span class="nav-text">JVM 垃圾回收过程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A9%BA%E9%97%B4%E6%8B%85%E4%BF%9D%E5%88%86%E9%85%8D"><span class="nav-number">8.3.1.</span> <span class="nav-text">空间担保分配</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Minor-GC-%E5%92%8C-Full-GC"><span class="nav-number">8.3.2.</span> <span class="nav-text">Minor GC 和 Full GC</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8"><span class="nav-number">8.4.</span> <span class="nav-text">垃圾收集器</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Serial-%E6%94%B6%E9%9B%86%E5%99%A8"><span class="nav-number">8.4.1.</span> <span class="nav-text">Serial 收集器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ParNew-%E6%94%B6%E9%9B%86%E5%99%A8"><span class="nav-number">8.4.2.</span> <span class="nav-text">ParNew 收集器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#CMS-%E6%94%B6%E9%9B%86%E5%99%A8"><span class="nav-number">8.4.3.</span> <span class="nav-text">CMS 收集器</span></a></li></ol></li></ol></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Java-%E5%86%85%E5%AD%98%E5%8C%BA%E5%9F%9F"><span class="nav-number">1.</span> <span class="nav-text">Java 内存区域</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%A8%8B%E5%BA%8F%E8%AE%A1%E6%95%B0%E5%99%A8"><span class="nav-number">1.1.</span> <span class="nav-text">程序计数器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Java-%E8%99%9A%E6%8B%9F%E6%9C%BA%E6%A0%88"><span class="nav-number">1.2.</span> <span class="nav-text">Java 虚拟机栈</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A0%88%E5%B8%A7"><span class="nav-number">1.2.1.</span> <span class="nav-text">栈帧</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%B1%80%E9%83%A8%E5%8F%98%E9%87%8F%E8%A1%A8%EF%BC%88Local-Variable-Table%EF%BC%89"><span class="nav-number">1.2.1.1.</span> <span class="nav-text">局部变量表（Local Variable Table）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%93%8D%E4%BD%9C%E6%95%B0%E6%A0%88%EF%BC%88Operand-Stack%EF%BC%89"><span class="nav-number">1.2.1.2.</span> <span class="nav-text">操作数栈（Operand Stack）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8A%A8%E6%80%81%E9%93%BE%E6%8E%A5%EF%BC%88Dynamic-Linking%EF%BC%89"><span class="nav-number">1.2.1.3.</span> <span class="nav-text">动态链接（Dynamic Linking）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AE%8C%E6%88%90%E5%87%BA%E5%8F%A3%EF%BC%88Return-Address%EF%BC%8C%E4%B9%9F%E5%8F%AB%E5%81%9A%E8%BF%94%E5%9B%9E%E5%9C%B0%E5%9D%80-%EF%BC%89"><span class="nav-number">1.2.1.4.</span> <span class="nav-text">完成出口（Return Address，也叫做返回地址 ）</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%AC%E5%9C%B0%E6%96%B9%E6%B3%95%E6%A0%88"><span class="nav-number">1.3.</span> <span class="nav-text">本地方法栈</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A0%86"><span class="nav-number">1.4.</span> <span class="nav-text">堆</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%B9%E6%B3%95%E5%8C%BA"><span class="nav-number">1.5.</span> <span class="nav-text">方法区</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%90%E8%A1%8C%E6%97%B6%E5%B8%B8%E9%87%8F%E6%B1%A0"><span class="nav-number">1.5.1.</span> <span class="nav-text">运行时常量池</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%96%B9%E6%B3%95%E5%8C%BA%E7%BB%93%E6%9E%84%E7%9A%84%E5%8F%98%E5%8C%96"><span class="nav-number">1.5.2.</span> <span class="nav-text">方法区结构的变化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E6%9C%AC%E7%B1%BB%E5%9E%8B%E5%8C%85%E8%A3%85%E7%B1%BB%E5%AF%B9%E8%B1%A1%E5%B8%B8%E9%87%8F%E6%B1%A0"><span class="nav-number">1.5.3.</span> <span class="nav-text">基本类型包装类对象常量池</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#JVM-%E8%B0%83%E4%BC%98"><span class="nav-number">2.</span> <span class="nav-text">JVM 调优</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#JVM-%E8%B0%83%E4%BC%98%E5%91%BD%E4%BB%A4"><span class="nav-number">2.1.</span> <span class="nav-text">JVM 调优命令</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%B1%BB%E6%96%87%E4%BB%B6%E7%BB%93%E6%9E%84"><span class="nav-number">3.</span> <span class="nav-text">类文件结构</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%B1%BB%E5%8A%A0%E8%BD%BD%E8%BF%87%E7%A8%8B"><span class="nav-number">4.</span> <span class="nav-text">类加载过程</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8A%A0%E8%BD%BD"><span class="nav-number">4.1.</span> <span class="nav-text">加载</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%AA%8C%E8%AF%81"><span class="nav-number">4.2.</span> <span class="nav-text">验证</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%87%86%E5%A4%87"><span class="nav-number">4.3.</span> <span class="nav-text">准备</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A7%A3%E6%9E%90"><span class="nav-number">4.4.</span> <span class="nav-text">解析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="nav-number">4.5.</span> <span class="nav-text">初始化</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%B1%BB%E5%8A%A0%E8%BD%BD%E5%99%A8"><span class="nav-number">5.</span> <span class="nav-text">类加载器</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%8C%E4%BA%B2%E5%A7%94%E6%B4%BE%E6%A8%A1%E5%9E%8B"><span class="nav-number">5.1.</span> <span class="nav-text">双亲委派模型</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AF%B9%E8%B1%A1"><span class="nav-number">6.</span> <span class="nav-text">对象</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AF%B9%E8%B1%A1%E7%9A%84%E5%88%9B%E5%BB%BA"><span class="nav-number">6.1.</span> <span class="nav-text">对象的创建</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%A3%80%E6%9F%A5"><span class="nav-number">6.1.1.</span> <span class="nav-text">1 类加载检查</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E5%88%86%E9%85%8D%E5%86%85%E5%AD%98"><span class="nav-number">6.1.2.</span> <span class="nav-text">2 分配内存</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E5%88%9D%E5%A7%8B%E5%8C%96%E9%9B%B6%E5%80%BC"><span class="nav-number">6.1.3.</span> <span class="nav-text">3 初始化零值</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-%E8%AE%BE%E7%BD%AE%E5%AF%B9%E8%B1%A1%E5%A4%B4"><span class="nav-number">6.1.4.</span> <span class="nav-text">4 设置对象头</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-%E6%89%A7%E8%A1%8C-init-%E6%96%B9%E6%B3%95"><span class="nav-number">6.1.5.</span> <span class="nav-text">5 执行 init 方法</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AF%B9%E8%B1%A1%E7%9A%84%E5%86%85%E5%AD%98%E5%B8%83%E5%B1%80"><span class="nav-number">6.2.</span> <span class="nav-text">对象的内存布局</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AF%B9%E8%B1%A1%E7%9A%84%E8%AE%BF%E9%97%AE%E5%AE%9A%E4%BD%8D"><span class="nav-number">6.3.</span> <span class="nav-text">对象的访问定位</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E7%AE%97%E6%B3%95"><span class="nav-number">7.</span> <span class="nav-text">垃圾收集算法</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A0%87%E8%AE%B0-%E6%B8%85%E9%99%A4%E7%AE%97%E6%B3%95"><span class="nav-number">7.1.</span> <span class="nav-text">标记-清除算法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A0%87%E8%AE%B0-%E5%A4%8D%E5%88%B6%E7%AE%97%E6%B3%95"><span class="nav-number">7.2.</span> <span class="nav-text">标记-复制算法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A0%87%E8%AE%B0-%E6%95%B4%E7%90%86%E7%AE%97%E6%B3%95"><span class="nav-number">7.3.</span> <span class="nav-text">标记-整理算法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%86%E4%BB%A3%E6%94%B6%E9%9B%86%E7%AE%97%E6%B3%95"><span class="nav-number">7.4.</span> <span class="nav-text">分代收集算法</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#JVM-%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6"><span class="nav-number">8.</span> <span class="nav-text">JVM 垃圾回收</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%A4%E6%96%AD%E5%AF%B9%E8%B1%A1%E6%98%AF%E5%90%A6%E5%AD%98%E6%B4%BB"><span class="nav-number">8.1.</span> <span class="nav-text">判断对象是否存活</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BC%95%E7%94%A8%E8%AE%A1%E6%95%B0%E6%B3%95"><span class="nav-number">8.1.1.</span> <span class="nav-text">引用计数法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%AF%E8%BE%BE%E6%80%A7%E5%88%86%E6%9E%90%E7%AE%97%E6%B3%95"><span class="nav-number">8.1.2.</span> <span class="nav-text">可达性分析算法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BC%BA%E5%BC%95%E7%94%A8%E3%80%81%E8%BD%AF%E5%BC%95%E7%94%A8%E3%80%81%E5%BC%B1%E5%BC%95%E7%94%A8%E3%80%81%E8%99%9A%E5%BC%95%E7%94%A8"><span class="nav-number">8.1.3.</span> <span class="nav-text">强引用、软引用、弱引用、虚引用</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%A4%E6%96%AD%E4%B8%80%E4%B8%AA%E7%B1%BB%E6%98%AF%E6%97%A0%E7%94%A8%E7%9A%84%E7%B1%BB"><span class="nav-number">8.2.</span> <span class="nav-text">判断一个类是无用的类</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#JVM-%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E8%BF%87%E7%A8%8B"><span class="nav-number">8.3.</span> <span class="nav-text">JVM 垃圾回收过程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A9%BA%E9%97%B4%E6%8B%85%E4%BF%9D%E5%88%86%E9%85%8D"><span class="nav-number">8.3.1.</span> <span class="nav-text">空间担保分配</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Minor-GC-%E5%92%8C-Full-GC"><span class="nav-number">8.3.2.</span> <span class="nav-text">Minor GC 和 Full GC</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E5%99%A8"><span class="nav-number">8.4.</span> <span class="nav-text">垃圾收集器</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Serial-%E6%94%B6%E9%9B%86%E5%99%A8"><span class="nav-number">8.4.1.</span> <span class="nav-text">Serial 收集器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ParNew-%E6%94%B6%E9%9B%86%E5%99%A8"><span class="nav-number">8.4.2.</span> <span class="nav-text">ParNew 收集器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#CMS-%E6%94%B6%E9%9B%86%E5%99%A8"><span class="nav-number">8.4.3.</span> <span class="nav-text">CMS 收集器</span></a></li></ol></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -637,14 +687,14 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">14</span>
+          <span class="site-state-item-count">15</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/categories/">
           
-        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-count">5</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
   </nav>

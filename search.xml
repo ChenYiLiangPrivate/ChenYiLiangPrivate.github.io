@@ -6,25 +6,78 @@
     <content><![CDATA[<p>同步、锁机制</p>
 <span id="more"></span>
 
-<p>线程同步的方式<br>1、临界区：拥有临界区的线程可以访问被保护起来的资源或代码段，<br>2、事件：事件机制，则允许一个线程在处理完一个任务后，主动唤醒另外一个线程执行任务。<br>3、互斥量：互斥对象和临界区对象非常相似，只是其允许在进程间使用，而临界区只限制与同一进程的<br>各个线程之间使用，但是更节省资源，更有效率。<br>4、信号量：当需要一个计数器来限制可以使用某共享资源的线程数目时（多个资源整体作为一个共享资源），可以使用“信号量”对象。<br>区别：<br>互斥量可以跨越进程使用，临界区不行，但创建互斥量需要的资源更多，所以如果只为了在进程内部是用的话使用临界区会带来速度上的优势并能够减少资源占用量。因为互斥量是跨进程的互斥量一旦被创建，就可以通过名字打开它。<br>互斥量，信号量，事件都可以实现不同进程的线程同步操作</p>
-<p>什么是上下文切换?<br>线程在执行过程中会有自己的运行条件和状态（也称上下文），比如程序计数器，栈信息等。当出现如下情况的时候，线程会从占用 CPU 状态中退出。<br>● 发生系统调用，主动让出 CPU，比如调用了 sleep(), wait() 等。调用了阻塞类型的系统中断，比如请求 IO，线程被阻塞。<br>● 时间片用完，因为操作系统要防止一个线程或者进程长时间占用CPU导致其他线程或者进程饿死。</p>
 <p>多线程&#x2F;多进程的目的：</p>
 <p>对于单 CPU 来说，只是提供一种程序同时执行的错觉。</p>
 <p>对于单 CPU 来说，如果没有 IO 阻塞操作（即读取磁盘操作），单线程执行多个任务，总时间更短，因为多线程单CPU无法并发执行，会导致线程切换，带来额外开销；如果有 IO 阻塞操作，多线程可以利用阻塞时间，因此多线程可能更快，应该综合考虑阻塞时间的利用和线程切换的消耗，看哪个大</p>
 <p>多线程&#x2F;多进程可以利用多 CPU</p>
-<p>Redis没有IO阻塞操作，因此设计成了单线程。（抛弃了并发的效率）</p>
-<p>其一是机器内存大小，内存大小关系到Redis存储的数据量其二是网络带宽，这点我仔细说一下Redis客户端执行一条命令分为四个过程：发送命令、命令排队、命令执行、返回结果</p>
-<p>而其中发送命令+返回结果这一过程被称为Round Trip Time（RTT，往返时间）</p>
-<p>Redis的客户端和服务端可能部署在不同的机器上。例如客户端在北京，Redis服务端在上海，两地直线距离约为1300公里，那么1次RTT时间&#x3D;1300×2&#x2F;（300000×2&#x2F;3）&#x3D;13毫秒（光在真空中传输速度为每秒30万公里，这里假设光纤为光速的2&#x2F;3），那么客户端在1秒内大约只能执行80次左右的命令，这就和Redis的高并发高吞吐特性背道而驰啦！所以一般情况下，都是就近部署！</p>
 <h1 id="锁"><a href="#锁" class="headerlink" title="锁"></a>锁</h1><p><img src="/2022/04/07/Concurrency/1647569931834-e7d0bf33-43a6-4c34-8a33-8be6345076d0.jpeg" alt="思维导图"></p>
 <h3 id="1-乐观锁-VS-悲观锁"><a href="#1-乐观锁-VS-悲观锁" class="headerlink" title="1 乐观锁 VS 悲观锁"></a><strong>1 乐观锁 VS 悲观锁</strong></h3><p>悲观锁适合写操作多的场景，先加锁可以保证写操作时数据正确。</p>
 <p>乐观锁适合读操作多的场景，不加锁的特点能够使其读操作的性能大幅提升。</p>
-<h3 id="2-自旋锁-VS-适应性自旋锁"><a href="#2-自旋锁-VS-适应性自旋锁" class="headerlink" title="2 自旋锁 VS 适应性自旋锁"></a><strong>2 自旋锁 VS 适应性自旋锁</strong></h3><p>在许多场景中，同步资源的锁定时间很短（同步代码块执行需要的时间很短），为了这一小段时间去切换线程，线程挂起和恢复现场的花费可能会让系统得不偿失。</p>
+<h2 id="2-自旋锁-VS-适应性自旋锁"><a href="#2-自旋锁-VS-适应性自旋锁" class="headerlink" title="2 自旋锁 VS 适应性自旋锁"></a><strong>2 自旋锁 VS 适应性自旋锁</strong></h2><p>在许多场景中，同步资源的锁定时间很短（同步代码块执行需要的时间很短），为了这一小段时间去切换线程，线程挂起和恢复现场的花费可能会让系统得不偿失。</p>
 <p>如果有<strong>多个处理器</strong>，能够让两个或以上的线程同时执行，我们就可以让后面那个请求锁的线程不放弃CPU 的执行时间，看看持有锁的线程是否很快就会释放锁。而为了让当前线程“稍等一下”，我们需让当前线程进行自旋，如果在自旋完成后前面锁定同步资源的线程已经释放了锁，那么当前线程就可以不必阻塞而是直接获取同步资源，从而避免切换线程的开销。这就是自旋锁。</p>
 <p>自旋锁本身是有缺点的，它不能代替阻塞。自旋等待虽然避免了线程切换的开销，但它要占用处理器时间。</p>
 <p>自适应意味着自旋的时间（次数）不再固定，而是由前一次在同一个锁上的自旋时间及锁的拥有者的状态来决定。如果在同一个锁对象上，自旋等待刚刚成功获得过锁，并且持有锁的线程正在运行中，那么虚拟机就会认为这次自旋也是很有可能再次成功，进而它将允许自旋等待持续相对更长的时间。如果对于某个锁，自旋很少成功获得过，那在以后尝试获取这个锁时将可能省略掉自旋过程，直接阻塞线程，避免浪费处理器资源。</p>
+<h3 id="自旋锁的实现"><a href="#自旋锁的实现" class="headerlink" title="自旋锁的实现"></a>自旋锁的实现</h3><p>自旋锁基于硬件原语实现，这是因为硬件原语可以原子地获取表示锁状态的计数器。包括测试并设置指令（test-and-set）、比较并交换指令（compare-and-swap）和获取并增加指令（fetch-and-add）。</p>
+<h4 id="失败的尝试"><a href="#失败的尝试" class="headerlink" title="失败的尝试"></a>失败的尝试</h4><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">typedef struct lock_t &#123; </span><br><span class="line">	int flag; // 0 -&gt; lock is available, 1 -&gt; held </span><br><span class="line">&#125;lock_t; </span><br><span class="line"></span><br><span class="line">void init(lock_t *mutex) &#123;</span><br><span class="line">	mutex-&gt;flag = 0; </span><br><span class="line">&#125;</span><br><span class="line">void lock(lock_t *mutex) &#123; </span><br><span class="line">    while (mutex-&gt;flag == 1) </span><br><span class="line">    	; // spin-wait (do nothing)，自旋，即不断扫描锁的状态</span><br><span class="line">	mutex-&gt;flag = 1;</span><br><span class="line">&#125;</span><br><span class="line">void unlock(lock_t *mutex) &#123; </span><br><span class="line">	mutex-&gt;flag = 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如下的执行过程将导致两个线程都进入到临界区，不会有一个处于自旋等待状态。<strong>失败的原因是：获取并更新锁状态的操作不是原子的</strong></p>
+<p><img src="/2022/04/07/Concurrency/1643699387182-83e08ca1-3a9f-40df-8bf7-d66a1145ab15.png" alt="image.png"></p>
+<h4 id="测试并设置指令（test-and-set）"><a href="#测试并设置指令（test-and-set）" class="headerlink" title="测试并设置指令（test-and-set）"></a>测试并设置指令（test-and-set）</h4><figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">TestAndSet</span><span class="params">(<span class="type">int</span> *old_ptr, <span class="type">int</span> new)</span> &#123; </span><br><span class="line">    <span class="type">int</span> old = *old_ptr; <span class="comment">// fetch old value at old_ptr </span></span><br><span class="line">    *old_ptr = new;    <span class="comment">// store &#x27;new&#x27; into old_ptr </span></span><br><span class="line">    <span class="keyword">return</span> old;        <span class="comment">// return the old value </span></span><br><span class="line">&#125; </span><br></pre></td></tr></table></figure>
+
+<p>TestAndSet() 返回 old_ptr 指向的旧值，同时更新 old_ptr 为 new。由于这些代码是原子地执行，所以我们把这条指令叫作“测试<strong>并</strong>设置”。</p>
+<p>用测试并设置指令实现自旋锁的方式如下</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">typedef struct lock_t &#123; </span><br><span class="line">	int flag; </span><br><span class="line">&#125; lock_t;</span><br><span class="line"></span><br><span class="line">void lock(lock_t *lock) &#123; </span><br><span class="line">    while (TestAndSet(&amp;lock-&gt;flag, 1) == 1) </span><br><span class="line">    	;spin-wait (do nothing)</span><br><span class="line">&#125;</span><br><span class="line">void unlock(lock_t *lock) &#123;</span><br><span class="line">    lock-&gt;flag = 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="比较并交换指令（compare-and-swap）"><a href="#比较并交换指令（compare-and-swap）" class="headerlink" title="比较并交换指令（compare-and-swap）"></a>比较并交换指令（compare-and-swap）</h4><figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">CompareAndSwap</span><span class="params">(<span class="type">int</span> *ptr, <span class="type">int</span> expected, <span class="type">int</span> new)</span> &#123; </span><br><span class="line">    <span class="type">int</span> actual = *ptr; </span><br><span class="line">    <span class="keyword">if</span> (actual == expected) </span><br><span class="line">    	*ptr = new; </span><br><span class="line">    <span class="keyword">return</span> actual; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>CompareAndSwap() 检测 ptr 指向的内存单元的值是否和 expected 相等；如果是，更新 ptr 所指的值为新值。否则，什么也不做。并返回操作之后 ptr 指向的内存单元的值。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">void lock(lock_t *lock) &#123; </span><br><span class="line">    while (CompareAndSwap(&amp;lock-&gt;flag, 0, 1) == 1) </span><br><span class="line">    	;spin-wait (do nothing)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="获取并增加指令（fetch-and-add）"><a href="#获取并增加指令（fetch-and-add）" class="headerlink" title="获取并增加指令（fetch-and-add）"></a>获取并增加指令（fetch-and-add）</h4><p>获取并增加指令（fetch-and-add）能原子地返回特定地址的旧值，并且让该值自增一</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">FetchAndAdd</span><span class="params">(<span class="type">int</span> *ptr)</span> &#123; </span><br><span class="line">    <span class="type">int</span> old = *ptr; </span><br><span class="line">    *ptr = old + <span class="number">1</span>; </span><br><span class="line">    <span class="keyword">return</span> old; </span><br><span class="line">&#125; </span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">lock_t</span> &#123;</span> </span><br><span class="line">    <span class="type">int</span> ticket; </span><br><span class="line">    <span class="type">int</span> turn; </span><br><span class="line">&#125; <span class="type">lock_t</span>; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">lock_init</span><span class="params">(<span class="type">lock_t</span> *lock)</span> &#123; </span><br><span class="line">    lock-&gt;ticket = <span class="number">0</span>; </span><br><span class="line">    lock-&gt;turn   = <span class="number">0</span>; </span><br><span class="line">&#125; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">lock</span><span class="params">(<span class="type">lock_t</span> *lock)</span> &#123; </span><br><span class="line">    <span class="type">int</span> myturn = FetchAndAdd(&amp;lock-&gt;ticket); </span><br><span class="line">    <span class="keyword">while</span> (lock-&gt;turn != myturn) </span><br><span class="line">    	; <span class="comment">// spin </span></span><br><span class="line">&#125; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">unlock</span><span class="params">(<span class="type">lock_t</span> *lock)</span> &#123; </span><br><span class="line">	FetchAndAdd(&amp;lock-&gt;turn); </span><br><span class="line">&#125; </span><br></pre></td></tr></table></figure>
+
+<p>ticket 锁用了 ticket 和 turn 变量来构建锁。基本操作也很简单：如果线程希望获取锁，首先对一个 ticket 值执行一个原子的获取并相加指令。这个值作为该线程的顺位，即 myturn。根据全局共享的 lock-&gt;turn 变量，当某一个线程的（myturn &#x3D;&#x3D; turn）时，则轮到这个线程进入临界区。unlock 则是增加 turn，从而下一个等待线程可以<br>进入临界区。 </p>
+<p>不同于之前的方法：本方法能够保证所有线程都能抢到锁。只要一个线程获得了ticket值，它最终会被调度。之前的方法则不会保证（存在饥饿问题）。比如基于测试并设置的方法，一个线程有可能一直自旋，即使其他线程在获取和释放锁。</p>
+<h3 id="自旋锁的问题"><a href="#自旋锁的问题" class="headerlink" title="自旋锁的问题"></a>自旋锁的问题</h3><p>以两个线程运行在单处理器上为例，当一个线程（线程0）持有锁时，被中断。第二个线程（线程1）去获取锁，发现锁已经被持有。因此，它就开始自旋，直到，时钟中断产生，操作系统切换线程，线程 0 重新运行，它释放锁。下一次轮到线程1 时，线程 1 不需要继续自旋了，它获取了锁。</p>
+<p>也就是说，一个线程会一直自旋检查一个不会改变的值，浪费掉整个时间片！如果有 N个线程去竞争一个锁，情<br>况会更糟糕。同样的场景下，会浪费 N−1 个时间片。即便有多个处理器并发，也有这个问题。</p>
+<p>自旋等待其他线程释放锁的时候会浪费时间。尤其是在单处理器上，一个等待线程等待的目标线程甚至无法运行（至少在上下文切换之前）（处于自旋等待的线程占用 CPU，导致目标线程根本无法运行，也不可能释放锁，一个线程会一直自旋检查一个不会改变的值，浪费掉整个时间片）</p>
+<h3 id="自旋锁的优化"><a href="#自旋锁的优化" class="headerlink" title="自旋锁的优化"></a>自旋锁的优化</h3><h4 id="在要自旋的时候，放弃CPU"><a href="#在要自旋的时候，放弃CPU" class="headerlink" title="在要自旋的时候，放弃CPU"></a>在要自旋的时候，放弃CPU</h4><p>如下是测试并设置指令结合让出 CPU 实现的锁</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">void init() &#123; </span><br><span class="line">	flag = 0; </span><br><span class="line">&#125; </span><br><span class="line"></span><br><span class="line">void lock() &#123; </span><br><span class="line">    while (TestAndSet(&amp;flag, 1) == 1) </span><br><span class="line">    	yield(); // give up the CPU </span><br><span class="line">&#125; </span><br><span class="line"></span><br><span class="line">void unlock() &#123; </span><br><span class="line">	flag = 0; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这种方法中，我们假定操作系统提供<strong>原语</strong> yield()，线程可以调用它主动放弃 CPU，让其他线程运行。线程可以处于 3 种状态之一（运行、就绪和阻塞）。yield() 系统调用能够让运行（running）态变为就绪（ready）态，从而允许其他线程运行。因此，让出线程本质上取消调度（deschedules）了它自己。</p>
+<p>用上下文切换的成本替代了时间片运行和上下文切换的成本。也就是删除了时间片运行这一项</p>
+<p>考虑在单 CPU 上运行两个线程。在这个例子中，基于 yield 的方法十分有效。一个线程调用 lock()，发现锁被占用时，让出 CPU，另外一个线程运行，完成临界区。在这个简单的例子中，让出方法工作得非常好。 </p>
+<p>现在来考虑多个线程（例如 100 个）反复竞争一把锁的情况。在这种情况下，一个线程持有锁，在释放锁之前被抢占，其他 99 个线程分别调用 lock()，发现锁被抢占，然后让出 CPU。假定采用某种轮转调度程序，这 99 个线程会一直处于运行—让出这种模式，直到持有锁的线程再次运行。虽然比原来的浪费99 个时间片的自旋方案要好，但这种方法仍然成本很高，上下文切换的成本是实实在在的，因此浪费很大。 也就是说，上下文切换的成本还在</p>
+<p>更糟的是，我们还没有考虑饿死的问题。一个线程可能一直处于让出的循环，而其他线程反复进出临界区。</p>
+<p>使用队列：休眠替代自旋</p>
+<p>前面一些方法的真正问题是存在太多的偶然性。调度程序决定如何调度。如果调度不合理，线程或者一直自旋（第一种方法），或者立刻让出 CPU（第二种方法）。无论哪种方法，都可能造成浪费，也能防止饿死。</p>
+<p>也就是说，它们一直在被调度运行，实际上这不是必要的。只有当锁能够获取才需要被调度。</p>
+<p>我们必须显式地施加某种控制，决定锁释放时，谁能抢到锁。为了做到这一点，我们需要操作系统的更多支持，并需要一个队列来保存等待锁的线程。 </p>
+<p>简单起见，我们利用Solaris 提供的支持，它提供了两个调用：</p>
+<p>park()能够让调用线程休眠 休眠被唤醒后，会从 lock() 中 park() 下一条语句继续执行</p>
+<p>unpark(threadID)则会唤醒 threadID 标识的线程。</p>
+<p>可以用这两个调用来实现锁，让调用者在获取不到锁时睡眠，在锁可用时被唤醒。我们来看看图 28.8 中的代码，理解这组原语的一种可能用法。</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">lock_t</span> &#123;</span> </span><br><span class="line">    <span class="type">int</span> flag; </span><br><span class="line">    <span class="type">int</span> guard; </span><br><span class="line">    <span class="type">queue_t</span> *q; </span><br><span class="line">&#125;<span class="type">lock_t</span>; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">lock_init</span><span class="params">(<span class="type">lock_t</span> *m)</span> &#123; </span><br><span class="line">    m-&gt;flag  = <span class="number">0</span>; </span><br><span class="line">    m-&gt;guard = <span class="number">0</span>; </span><br><span class="line">   queue_init(m-&gt;q); </span><br><span class="line">&#125; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">lock</span><span class="params">(<span class="type">lock_t</span> *m)</span> &#123; </span><br><span class="line">   <span class="keyword">while</span> (TestAndSet(&amp;m-&gt;guard, <span class="number">1</span>) == <span class="number">1</span>) </span><br><span class="line">       ; </span><br><span class="line">   <span class="keyword">if</span> (m-&gt;flag == <span class="number">0</span>) &#123; </span><br><span class="line">       m-&gt;flag = <span class="number">1</span>; <span class="comment">// lock is acquired </span></span><br><span class="line">       m-&gt;guard = <span class="number">0</span>; </span><br><span class="line">   &#125; <span class="keyword">else</span> &#123; </span><br><span class="line">       queue_add(m-&gt;q, gettid()); </span><br><span class="line">       m-&gt;guard = <span class="number">0</span>; </span><br><span class="line">       park(); </span><br><span class="line">   &#125; </span><br><span class="line">&#125; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">unlock</span><span class="params">(<span class="type">lock_t</span> *m)</span> &#123; </span><br><span class="line">   <span class="keyword">while</span> (TestAndSet(&amp;m-&gt;guard, <span class="number">1</span>) == <span class="number">1</span>) </span><br><span class="line">       ; </span><br><span class="line">   <span class="keyword">if</span> (queue_empty(m-&gt;q)) </span><br><span class="line">       m-&gt;flag = <span class="number">0</span>; <span class="comment">// 释放锁 </span></span><br><span class="line">   <span class="keyword">else</span> </span><br><span class="line">       unpark(queue_remove(m-&gt;q)); <span class="comment">// hold lock (for next thread!) </span></span><br><span class="line">   m-&gt;guard = <span class="number">0</span>; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们将之前的测试并设置和等待队列结合，实现了一个更高性能的锁。其次，我们通过队列来控制谁会获得锁，避免饿死。</p>
+<p>讨论，从第一个线程获取锁开始。当 T1 先执行 lock的while，原子执行，它将guard设为1，因此在T1 执行lock的ifelse之前，各个线程会在while自旋，即便被调度也卡在while。当 T1 执行if块之后（m-&gt;guard被设为0），设T2最先被调度，在TestAndSet()处它将检测到m-&gt;guard为0，并原子地将m-&gt;guard设为1，这导致在T2执行else块之前，其他线程执行lock会自旋。当T2走到else里，会再次将m-&gt;guard设为0，然后进入队列并休眠。当 T2 执行if块之后（具体地来说是m-&gt;guard被设为0之后），设T3最先被调度，T3会经过和T2类似的过程。</p>
+<blockquote>
+<p>如果m-&gt;guard &#x3D; 0; 和 park(); 互换，park后被休眠，无法执行m-&gt;guard &#x3D; 0;  其他线程一直被锁住</p>
+</blockquote>
+<p>当 T1 要释放锁，如果队列不为空，它会唤醒队头的线程，同时 flag 保持为1</p>
+<blockquote>
+<p>不需要置flag&#x3D;0，也不能置其为0，因为被唤醒的线程会在park后的位置继续执行，它不会倒回去执行flag&#x3D;1</p>
+</blockquote>
+<p>唤醒&#x2F;等待竞争（wakeup&#x2F;waiting race）：</p>
+<p>考虑两个线程的情况。假设一个线程A将要park，在这之前，它已被加入等待队列（队列只有它）。这时切换到持有锁的线程B。持有锁的线程B会执行unpark。这导致线程B从队列中被移除，然后被唤醒。然而，线程B继续执行，会执行park，陷入休眠。</p>
+<p>由于线程B已经不在队列中，它永远无法被唤醒（可能，如果操作系统不处理这种不在调度队列且一直休眠的线程）。</p>
+<p>Solaris 通过增加了第三个系统调用separk()来解决这一问题。通过setpark()，一个线程表明自己马上要 park。如果刚好另一个线程被调度，并且调用了 unpark，那么后续的 park调用就会直接返回，而不是一直睡眠。lock()调用可以做一点小修改：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line">queue_add(m-&gt;q, gettid()); </span><br><span class="line">setpark(); </span><br><span class="line">m-&gt;guard = <span class="number">0</span>; </span><br></pre></td></tr></table></figure>
+
+
+
 <h3 id="3-公平锁-VS-非公平锁"><a href="#3-公平锁-VS-非公平锁" class="headerlink" title="3 公平锁 VS 非公平锁"></a><strong>3 公平锁 VS 非公平锁</strong></h3><p>公平锁：</p>
-<p>多个线程按照申请锁的顺序来获取锁，线程直接进入队列中排队，队列中的第一个线程才能获得锁。</p>
+<p>多个线程按照申请锁的顺序来获取锁，线程直接进入队列中排队，每次唤醒队头线程，让它获得锁。</p>
 <p>优点是等待锁的线程不会饿死。缺点是与比非公平锁相比，唤起线程的开销大，因为新的线程都是先被阻塞再被唤醒。</p>
 <p>非公平锁：</p>
 <p>新的线程直接尝试获取锁，如果此时锁刚好可用，那么这个线程可以无需阻塞直接获取到锁，获取不到才会到等待队列的队尾等待。</p>
@@ -126,9 +179,59 @@
   <entry>
     <title>I/O 模型</title>
     <url>/2022/04/07/I-O-model/</url>
-    <content><![CDATA[<span id="more"></span>
-<p> select、poll 和 epoll 之间的区别</p>
+    <content><![CDATA[<p>五种IO模型，分别是：阻塞IO、非阻塞IO、多路复用IO、信号驱动IO以及异步IO。</p>
+<span id="more"></span>
+
+<p>阻塞IO模型</p>
+<p>最传统的一种IO模型，即在读写数据过程中会发生阻塞现象。</p>
+<p><img src="/2022/04/07/I-O-model/1068826-20170514141900066-500353710.png" alt="img"></p>
+<p>当用户线程发出IO请求之后，内核会去查看数据是否就绪，如果没有就绪就会等待数据就绪，而用户线程就会处于阻塞状态，用户线程交出CPU。<strong>当数据就绪之后，内核会将数据拷贝到用户线程，并返回结果给用户线程，用户线程才能解除阻塞状态。</strong> </p>
+<p>典型的阻塞IO模型的例子为：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">data = socket.read(); </span><br></pre></td></tr></table></figure>
+
+<p>非阻塞IO模型</p>
+<p>当用户线程发起一个read操作后，并不需要等待，而是马上就得到了一个结果。如果结果是一个error时，它就知道数据还没有准备好，于是它可以再次发送read操作。一旦内核中的数据准备好了，并且又再次收到了用户线程的请求，那么它马上就将数据拷贝到了用户线程，然后返回。</p>
+<p><img src="/2022/04/07/I-O-model/1068826-20170514142359222-677058307.png" alt="img"></p>
+<p> 所以事实上，在非阻塞IO模型中，用户线程需要不断地询问内核数据是否就绪（自旋），也就说非阻塞IO不会交出CPU，而会一直占用CPU。</p>
+<p>典型的非阻塞IO模型一般如下：</p>
+<pre><code> while(true)&#123; 
+     data = socket.read(); 
+     if(data!= error)&#123; 
+         处理数据 
+         break; 
+     &#125; 
+ &#125; 
+</code></pre>
+<p>多路复用IO模型</p>
+<p>在多路复用IO模型中，会有一个线程不断去轮询多个socket的状态，只有当socket真正有读写事件时，才真正调用实际的IO读写操作。因为在多路复用IO模型中，只需要<strong>使用一个线程就可以管理多个socket</strong>，系统不需要建立新的进程或者线程，也不必维护这些线程和进程，并且只有<strong>在真正有socket读写事件进行时，才会使用IO资源</strong>，所以它大大减少了资源占用。</p>
+<img src="/2022/04/07/I-O-model/1068826-20170514143622722-640397005.png" alt="img" style="zoom:150%;">
+
+<p>在Java NIO中，是通过selector.select()去查询每个通道是否有到达事件，如果没有事件，则一直阻塞在那里，因此这种方式<strong>会导致用户线程的阻塞</strong>。</p>
+<p>多路复用IO为何比非阻塞IO模型的效率高是因为在非阻塞IO中，不断地询问socket状态是通过用户线程去进行的（会造成 CPU 模式切换），而在多路复用IO中，轮询每个socket状态是内核在进行的。</p>
+<p>不过要注意的是，多路复用IO模型是通过轮询的方式来检测是否有事件到达，并且对到达的事件逐一进行响应。因此对于多路复用IO模型来说，一旦事件响应体很大，那么就会导致后续的事件迟迟得不到处理，并且会影响新的事件轮询。</p>
+<p>信号驱动IO模型</p>
+<p>在信号驱动IO模型中，当用户线程发起一个IO请求操作，会给对应的socket注册一个信号函数，然后用户线程会继续执行，当内核数据就绪时会发送一个信号给用户线程，用户线程接收到信号之后，便在信号函数中调用IO读写操作（调用socket.read()）来进行实际的IO请求操作。</p>
+<p>调用socket.read() 仍旧会阻塞用户线程，只不过相比阻塞IO模型，阻塞时间少去了等待数据的时间</p>
+<p>异步IO模型</p>
+<p>异步IO模型是最理想的IO模型，在异步IO模型中，当用户线程发起read操作之后，立刻就可以开始去做其它的事。而另一方面，从内核的角度，当它收到一个asynchronous read之后，它会立刻返回，说明read请求已经成功发起了，因此不会对用户线程产生任何block。然后，内核会等待数据准备完成，然后将数据拷贝到用户线程，当这一切都完成之后，内核会给用户线程发送一个信号，告诉它read操作完成了。也就说用户线程完全不需要知道实际的整个IO操作是如何进行的，只需要先发起一个请求，当接收内核返回的成功信号时表示IO操作已经完成，可以直接去使用数据了。</p>
+<p>相比信号驱动IO模型。在异步IO模型中，IO操作的两个阶段都不会阻塞用户线程，这两个阶段都是由内核自动完成，然后发送一个信号告知用户线程操作已完成。用户线程中不需要再次调用IO函数进行具体的读写。</p>
+<p>注意，异步IO是需要操作系统的底层支持，在Java 7中，提供了Asynchronous IO。</p>
+<blockquote>
+<p>前面四种IO模型实际上都属于同步IO，只有最后一种是真正的异步IO，因为无论是多路复用IO还是信号驱动模型，IO操作的第2个阶段都会引起用户线程阻塞，也就是内核进行数据拷贝的过程都会让用户线程阻塞。</p>
+</blockquote>
+<p>select、poll 和 epoll 之间的区别</p>
 <p>（1）select：时间复杂度 O(n)<br>select 仅仅知道有 I&#x2F;O 事件发生，但并不知道是哪几个流，所以只能无差别轮询所有流，找出能读出数<br>据或者写入数据的流，并对其进行操作。所以 select 具有 O(n) 的无差别轮询复杂度，同时处理的流越<br>多，无差别轮询时间就越长。<br>（2）poll：时间复杂度 O(n)<br>poll 本质上和 select 没有区别，它将用户传入的数组拷贝到内核空间，然后查询每个 fd 对应的设备状<br>态，但是它没有最大连接数的限制，原因是它是基于链表来存储的。<br>（3）epoll：时间复杂度 O(1)<br>epoll 可以理解为 event poll，不同于忙轮询和无差别轮询，epoll 会把哪个流发生了怎样的 I&#x2F;O 事件通<br>知我们。所以说 epoll 实际上是事件驱动（每个事件关联上 fd）的（触发式）。</p>
+<p>你在大学读书，你的朋友来找你：</p>
+<ul>
+<li><p>select版宿管阿姨，就会带着你的朋友挨个房间找，直到找到你</p>
+</li>
+<li><p>epoll版阿姨，会先记下每位同学房间号， 你的朋友来时，只需告诉你的朋友你住在哪个房间即可，无需亲自带着你朋友满大楼找人</p>
+</li>
+<li><p>select 基于轮询机制</p>
+</li>
+<li><p>epoll基于操作系统支持的I&#x2F;O通知机制 epoll支持水平触发和边沿触发两种模式。</p>
+</li>
+</ul>
 ]]></content>
       <categories>
         <category>操作系统</category>
@@ -184,10 +287,35 @@
 <p>new 一个对象，对象实例存放在堆中，对象的引用存放在栈中。</p>
 <p>Java 堆是垃圾收集器管理的主要区域，因此也被称作GC 堆（Garbage Collected Heap）。</p>
 <h2 id="方法区"><a href="#方法区" class="headerlink" title="方法区"></a>方法区</h2><p>它用于存储已被虚拟机加载的类信息（Class 文件）、常量、静态变量、即时编译器（JIT compiler）编译后的代码等数据。</p>
+<p>方法表、字段表被放在方法区。根据运行时常量池的符号引用解析找到方法区中的方法和字段。</p>
 <h3 id="运行时常量池"><a href="#运行时常量池" class="headerlink" title="运行时常量池"></a>运行时常量池</h3><p>运行时常量池（Runtime Constant Pool）是方法区的一部分。</p>
-<p>Class 文件中除了有类的版本、字段、方法、接口等描述信息外，还有一项信息是常量池（Constant Pool），用于存放编译期生成的符号引用，这部分内容将在类加载阶段存放到方法区的运行时常量池中。在类的解析阶段还会将这些符号引用翻译为直接引用，用翻译出来的直接引用替换原本的符号引用。</p>
-<p>运行时常量池相对于 class 常量池一大特征就是具有动态性。在运行时可以通过代码生成常量并将其放入运行时常量池中，这种特性被用的最多的就是 String.intern()。</p>
-<p>对于静态变量，它的引用是存储在方法区的，但是它指向的对象还是在堆中创建的，比如:static int i &#x3D; 1; &#x2F;&#x2F;1这个值是存储在方法区static Object o &#x3D; new SomeObject(); &#x2F;&#x2F;o这个引用是存储在方法区,但是SomeObject()这个对象却是存储在堆中的</p>
+<p>Class 文件中有一项信息是常量池（Constant Pool），用于存放编译期生成的符号引用，这部分内容将在类加载阶段存放到方法区中，它的存放区域也叫做运行时常量池。在类的解析阶段还会将这些符号引用翻译为直接引用，用翻译出来的直接引用替换原本的符号引用。</p>
+<h3 id="方法区结构的变化"><a href="#方法区结构的变化" class="headerlink" title="方法区结构的变化"></a>方法区结构的变化</h3><p><img src="/2022/04/04/JVM/method-area-1.6.291acb6f.png" alt="方法区-jdk1.6"></p>
+<p><img src="/2022/04/04/JVM/method-area-jdk1.7.d852e1fb.png" alt="方法区-jdk1.7"></p>
+<p><img src="/2022/04/04/JVM/method-area-jdk1.8.f83a79be.png" alt="方法区-jdk1.8"></p>
+<ol>
+<li><p>JDK1.7 之前，运行时常量池包含字符串常量池，运行时常量池和静态变量存放在方法区，此时 HotSpot 虚拟机对方法区的实现为永久代。</p>
+<blockquote>
+<p>在堆中创建字符串常量对应的 String 实例，它的引用存储在方法区的字符串常量池</p>
+<p>如果静态变量是基本类型数据，如 static int i &#x3D; 1; 1 这个值存储在方法去，如果静态变量是一个对象，在堆中创建静态变量的实例，它的引用存储在方法区</p>
+</blockquote>
+</li>
+<li><p>JDK1.7 运行时常量池中的字符串常量池被拿到了堆中、静态变量被拿到了堆中，此时 HotSpot 虚拟机对方法区的实现为永久代 。</p>
+<blockquote>
+<p><strong>字符串常量池物理上存放在堆中，但逻辑上还是属于方法区</strong></p>
+<p>为什么要将字符串常量池移动到堆中？</p>
+<p>主要是因为永久代的 GC 回收效率太低，只有在 Full GC 的时候才会进行回收。Java 程序中通常会有大量的被创建的字符串等待回收，将字符串常量池放到堆中，能够更高效及时地回收字符串内存。</p>
+</blockquote>
+</li>
+<li><p>JDK1.8 HotSpot 移除了永久代用元空间（Metaspace）取而代之，这时候字符串常量池和静态变量还在堆, 运行时常量池还在方法区，只不过方法区的实现从永久代变成了元空间（Metaspace）</p>
+<blockquote>
+<p>元空间的出现是为了解决突出的类和类加载器元数据过多导致的OOM问题。元空间里面存放的是类的元数据，这样加载多少类的元数据就不由 <code>MaxPermSize</code> 控制了, 而由系统的实际可用空间来控制，这样能加载的类就更多了。</p>
+</blockquote>
+</li>
+</ol>
+<h3 id="基本类型包装类对象常量池"><a href="#基本类型包装类对象常量池" class="headerlink" title="基本类型包装类对象常量池"></a>基本类型包装类对象常量池</h3><p>java 中基本类型的包装类的大部分都实现了常量池技术，这些类是：</p>
+<p>Byte、Short、Integer、Long、Character、Boolean。</p>
+<p>另外上面这 5 种整型的包装类也只是在对应值小于等于 127 时才可使用对象常量池。</p>
 <h1 id="JVM-调优"><a href="#JVM-调优" class="headerlink" title="JVM 调优"></a>JVM 调优</h1><h2 id="JVM-调优命令"><a href="#JVM-调优命令" class="headerlink" title="JVM 调优命令"></a>JVM 调优命令</h2><ul>
 <li><p>jps：JVM Process Status Tool，显示指定系统内所有的 HotSpot 虚拟机进程。</p>
 </li>
@@ -228,11 +356,27 @@
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">     #2 Methodref X.bar:()V</span><br><span class="line">     /                     \</span><br><span class="line">#3 Class X       #17 NameAndType bar:()V</span><br><span class="line">    |                /             \</span><br><span class="line">#18 Utf8 X    #13 Utf8 bar     #6 Utf8 ()V</span><br></pre></td></tr></table></figure>
 
 <p>总而言之，Class 文件里的符号引用实际上是：带有类型（tag） &#x2F; 结构（符号间引用层次）的字符串。</p>
+<p>将方法的符号引用解析为直接引用：</p>
 <p>JVM在类加载的时候会把 Class 文件转化为<strong>方法区</strong>的运行时数据结构。例如说类的元数据记录在 ClassClass 结构体里，每个方法的元数据记录在各自的 methodblock 结构体里。</p>
 <p>在刚加载好一个类的时候，Class文件里的常量池和每个方法的字节码（Code属性）会被基本原样的拷贝到内存里先放着，也就是说仍然处于使用“符号引用”的状态；直到真的要被使用到的时候才会被解析（resolve）为直接引用。</p>
-<p>为什么要带类型？</p>
-<p>这些结构体应该在方法去</p>
-<p>通过Methodref所记录的class_index找到类名，进一步找到被调用方法的类的ClassClass结构体；然后通过name_and_type_index找到方法名和方法描述符，到ClassClass结构体上记录的方法列表里找到匹配的那个methodblock；最终把找到的methodblock的指针写回到常量池项#2里。</p>
+<p>假定我们要第一次执行到 foo() 方法里调用 bar() 方法的那条 invokevirtual 指令了。</p>
+<p>此时JVM会发现该指令尚未被解析，所以会先去解析。</p>
+<p>通过其操作数所记录的常量池下标 0x0002，找到常量池项 #2，发现该常量池项也尚未被解析，于是进一步去解析该项。解析过程为：</p>
+<p>通过 Methodref 所记录的 class_index 找到类名，进一步找到被调用方法的类的 ClassClass 结构体（类的符号引用是否在加载后就变成了直接引用？）；然后通过 name_and_type_index 找到方法名和方法描述符，到ClassClass 结构体上记录的方法列表里找到匹配的那个 methodblock；最终把找到的 methodblock 的指针写回到常量池项 #2 里。</p>
+<p>也就是说，原本常量池项 #2 在类加载后的运行时常量池里的内容跟 Class 文件里的一致，是：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[00 03] [00 11]</span><br></pre></td></tr></table></figure>
+
+<p>小细节，tag 被放到了别的地方。而在解析后，假设找到的 methodblock 地址是 0x45762300，那么常量池项 #2的内容会变为：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[00 23 76 45]</span><br></pre></td></tr></table></figure>
+
+<p>这样，以后再查询到常量池项 #2 时，里面就不再是一个符号引用，而是一个能直接找到 Java 方法元数据的直接引用了。</p>
+<p>解析好常量池项 #2 之后回到 invokevirtual 指令的解析。回顾一下，在解析前那条指令的内容是：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[B6] [00 02]</span><br></pre></td></tr></table></figure>
+
+<p>而在解析后，这块代码被改写为：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[D6] [06] [01]</span><br></pre></td></tr></table></figure>
+
+<p>其中 opcode 部分从 invokevirtual 改写为 invokevirtual_quick，表示该指令已经解析完毕。原本存储操作数的 2字节空间现在分别存了 2 个 1 字节信息，第一个是虚方法表的下标（vtable index），第二个是方法的参数个数。这两项信息都由前面解析常量池项 #2 得到的 methodblock 读取而来。</p>
 <p>可以看到，方法表各个方法按序排列，并且每个方法具有该方法的详细信息，包括 code，即字节码指令，后面被加载到方法区</p>
 <h1 id="类加载过程"><a href="#类加载过程" class="headerlink" title="类加载过程"></a>类加载过程</h1><ul>
 <li><p>主要三步：加载 -&gt; 连接 -&gt; 初始化。连接过程又可分为三步：验证 -&gt; 准备 -&gt; 解析。</p>
@@ -275,11 +419,11 @@
 <blockquote>
 <p>《Java虚拟机规范》之中并未规定解析阶段发生的具体时间，只要求了在执行 ane-warray、checkcast、getfield、getstatic、instanceof、invokedynamic、invokeinterface、invoke-special、invokestatic、invokevirtual、ldc、ldc_w、ldc2_w、multianewarray、new、putfield 和 putstatic 这17个<strong>用于操作符号引用的字节码指令</strong>之前，先对它们所使用的符号引用进行解析。所以虚拟机实现可以根据需要来自行判断，到底是在类被加载器加载时就对常量池中的符号引用进行解析，还是等到一个符号引用将要被使用前才去解析它。</p>
 </blockquote>
-<h2 id="初始化"><a href="#初始化" class="headerlink" title="初始化"></a>初始化</h2><p> <clinit> () 方法是编译之后自动生成的。初始化阶段是执行初始化方法 <clinit> ()方法的过程，是类加载的最后一步，这一步 JVM 才开始真正执行类中定义的 Java 程序代码（字节码）。</clinit></clinit></p>
-<p>虚拟机会保证一个类的 <clinit>() 方法在多线程环境中被正确地加锁、同步，如果多个线程同时去初始化一个类，那么只会有一个线程去执行这个类的 <clinit>() 方法，其他线程都需要阻塞等待，直到活动线程执行<clinit>() 方法完毕。</clinit></clinit></clinit></p>
-<p>需要注意的是，其他线程虽然会被阻塞，但如果执行 <clinit>() 方法后，其他线程唤醒之后不会再次进入<clinit>() 方法。同一个加载器下，一个类型只会初始化一次。（这与一般的 Synchronized 方法有显著区别）</clinit></clinit></p>
+<h2 id="初始化"><a href="#初始化" class="headerlink" title="初始化"></a>初始化</h2><p>&lt;clinit&gt;() 方法是编译之后自动生成的。初始化阶段是执行初始化方法 &lt;clinit&gt;() 的过程，是类加载的最后一步，这一步 JVM 才开始真正执行类中定义的 Java 程序代码（字节码）。</p>
+<p>虚拟机会保证一个类的 &lt;clinit&gt;() 方法在多线程环境中被正确地加锁、同步，如果多个线程同时去初始化一个类，那么只会有一个线程去执行这个类的 &lt;clinit&gt;() 方法，其他线程都需要阻塞等待，直到活动线程执行 &lt;clinit&gt;() 方法完毕。</p>
+<p>需要注意的是，其他线程虽然会被阻塞，但当活动线程执行 &lt;clinit&gt;() 方法后，其他线程被唤醒之后不会再次执行&lt;clinit&gt;() 方法。同一个加载器下，一个类型只会初始化一次。（这与一般的 Synchronized 方法有显著区别）</p>
 <blockquote>
-<p><init> 是实例构造器，对非静态变量初始化，而  <clinit> 是类构造器，对静态变量，静态代码块进行初始化。</clinit></init></p>
+<p>&lt;init&gt; 是实例构造器，对非静态变量初始化，而  &lt;clinit&gt; 是类构造器，对静态变量，静态代码块进行初始化。</p>
 </blockquote>
 <h1 id="类加载器"><a href="#类加载器" class="headerlink" title="类加载器"></a>类加载器</h1><p>JVM 中内置了三个重要的 ClassLoader，除了 BootstrapClassLoader 其他类加载器均由 Java 实现且全部继承自java.lang.ClassLoader：</p>
 <ol>
@@ -307,7 +451,7 @@
 <p>类元数据：加载阶段生成的”<strong>方法区</strong>的运行时数据结构“</p>
 <p>类型指针：不是 Class 对象的引用</p>
 </blockquote>
-<h3 id="5-执行-init-方法"><a href="#5-执行-init-方法" class="headerlink" title="5 执行 init 方法"></a>5 执行 init 方法</h3><p>在上面工作都完成之后，从虚拟机的视角来看，一个新的对象已经产生了，但从 Java 程序的视角来看，对象创建才刚开始，<init> 方法还没有执行，所有的字段都还为零。所以一般来说，执行 new 指令之后会接着执行 <init> 方法，把对象按照程序员的意愿进行初始化，这样一个真正可用的对象才算完全产生出来。</init></init></p>
+<h3 id="5-执行-init-方法"><a href="#5-执行-init-方法" class="headerlink" title="5 执行 init 方法"></a>5 执行 init 方法</h3><p>在上面工作都完成之后，从虚拟机的视角来看，一个新的对象已经产生了，但从 Java 程序的视角来看，对象创建才刚开始，&lt;init&gt; 方法还没有执行，所有的字段都还为零。所以一般来说，执行 new 指令之后会接着执行 &lt;init&gt; 方法，把对象按照程序员的意愿进行初始化，这样一个真正可用的对象才算完全产生出来。</p>
 <h2 id="对象的内存布局"><a href="#对象的内存布局" class="headerlink" title="对象的内存布局"></a>对象的内存布局</h2><p>在 Hotspot 虚拟机中，对象在内存中的布局可以分为 3 块区域：对象头、实例数据和对齐填充。</p>
 <p>Hotspot 虚拟机的对象头包括两部分信息，第一部分用于存储对象自身的运行时数据（哈希码、GC 分代年龄、锁状态标志等等），另一部分是类型指针，即对象指向它的类元数据的指针，虚拟机通过这个指针来确定这个对象是哪个类的实例。</p>
 <p>实例数据部分是对象真正存储的有效信息，也是在程序中所定义的各种类型的字段内容。</p>
@@ -389,20 +533,26 @@
 <li>Survivor 区内存不足会发生担保分配，超过指定大小的对象直接进入老年代。</li>
 <li>老年代空间不足，进行Full GC，Full GC 清理整个内存堆，包括年轻代和老年代。</li>
 </ul>
-<h3 id="空间担保分配"><a href="#空间担保分配" class="headerlink" title="空间担保分配"></a>空间担保分配</h3><p>是因为新生代采用复制收集算法，假如大量对象在 Minor GC 后仍然存活，而 Survivor To 空间是比较小的，不足以实现复制，这时就需要老年代进行分配担保，把Survivor无法容纳的对象放到老年代。</p>
-<p>如果发现老年代也放不下这些对象了，那怎么处理呢？其实JVM有一个老年代空间分配担保机制来保证对象能够进入老年代。</p>
-<p>JDK 6 Update 24 之前，在发生 Minor GC 之前，虚拟机必须先检查老年代最大可用的连续空间是否大于新生代所有对象总空间，如果这个条件成立，那这一次 Minor GC 可以确保是安全的。如果不成立，则虚拟机会先查看 <code>-XX:HandlePromotionFailure</code> 参数的设置值是否允许担保失败(Handle Promotion Failure);如果允许，那会继续检查老年代最大可用的连续空间是否大于历次晋升到老年代对象的平均大小，如果大于，将尝试进行一次 Minor GC，尽管这次 Minor GC 是有风险的;如果小于，或者 <code>-XX: HandlePromotionFailure</code> 设置不允许冒险，那这时就要改为进行一次 Full GC。</p>
-<p>在允许担保失败并尝试进行YoungGC后，可能会出现三种情况：<br>① YoungGC后，存活对象小于survivor大小，此时存活对象进入survivor区中<br>② YoungGC后，存活对象大于survivor大小，但是小于老年大可用空间大小，此时直接进入老年<br>代。<br>③ YoungGC后，存活对象大于survivor大小，也大于老年大可用空间大小，老年代也放不下这些<br>对象了，此时就会发生“Handle Promotion Failure”，就触发了 Full GC。如果 Full GC后，老年代<br>还是没有足够的空间，此时就会发生OOM内存溢出了。</p>
+<h3 id="空间担保分配"><a href="#空间担保分配" class="headerlink" title="空间担保分配"></a>空间担保分配</h3><p>是因为新生代采用复制收集算法，假如大量对象在 Minor GC 后仍然存活，而 Survivor To 空间是比较小的，不足以实现复制，这时就需要老年代进行分配担保，把 Survivor 无法容纳的对象放到老年代。</p>
+<p>JVM 使用空间分配担保机制来用来让对象进入老年代。</p>
+<p>JDK 6 Update 24 之前，在<strong>发生 Minor GC 之前</strong>，虚拟机必须先检查老年代最大可用的连续空间是否大于新生代所有对象总空间，如果这个条件成立，那这一次 Minor GC 可以确保是安全的。</p>
+<p>如果不成立，则虚拟机会先查看 <code>-XX:HandlePromotionFailure</code> 参数，该参数表示是否允许担保失败。如果允许，继续检查老年代最大可用的连续空间是否大于历次晋升到老年代对象的平均大小，如果大于，将尝试进行一次 Minor GC，尽管这次 Minor GC 是有风险的；如果小于，或者 <code>-XX: HandlePromotionFailure</code> 设置不允许担保失败，那这时就要改为进行一次 Full GC。</p>
+<p>在允许担保失败并尝试进行 Minor GC 后，可能会出现三种情况：</p>
+<ul>
+<li>Minor GC 后，存活对象小于 survivor to 大小，此时存活对象进入 survivor to 区中</li>
+<li>Minor GC 后，存活对象大于 survivor to 大小，但是小于老年代可用空间大小，此时直接进入老年代。</li>
+<li>Minor GC 后，存活对象大于 survivor to 大小，也大于老年代可用空间大小，发生“Handle Promotion Failure”，担保分配失败，会触发 Full GC。如果 Full GC 后，老年代还是没有足够的空间，此时就会发生OOM内存溢出了。</li>
+</ul>
 <p>JDK 6 Update 24 之后的规则变为只要老年代的连续空间大于新生代对象总大小或者历次晋升的平均大小，就会进行 Minor GC，否则将进行 Full GC。</p>
 <h3 id="Minor-GC-和-Full-GC"><a href="#Minor-GC-和-Full-GC" class="headerlink" title="Minor GC 和 Full GC"></a>Minor GC 和 Full GC</h3><p>Minor GC：新生代的 GC。触发条件：当 Eden 区满时，触发 Minor GC。</p>
-<p>Full GC: 整个堆的 GC，包括新生代、老年代和永久代（在 JDK 1.8及以后，永久代被移除，换为metaspace 元空间）。触发条件：</p>
+<p>Full GC: 整个堆的 GC，包括新生代、老年代<strong>和永久代</strong>（注意 Full GC 会清理方法区。在 JDK 1.8及以后，永久代被移除，换为 metaspace 元空间）。触发条件：</p>
+<p>在<strong>发生 Minor GC 之前</strong>，虚拟机检查发现老年代最大可用的连续空间 &lt; 新生代所有对象总空间：</p>
 <ul>
-<li>通过Minor GC后进入老年代的平均大小大于老年代的可用内存。如果发现统计数据说之前Minor GC的平均晋升大小比目前old gen剩余的空间大，则不会触发Minor GC而是转为触发full GC。</li>
-<li>老年代空间不够分配新的内存（或永久代空间不足，但只是JDK1.7有的，这也是用元空间来取代永<br>  久代的原因，可以减少Full GC的频率，减少GC负担，提升其效率）</li>
-<li>由Eden区、From Space区向To Space区复制时，对象大小大于To Space可用内存，则把该对象转<br>  存到老年代，且老年代的可用内存小于该对象大小。</li>
-<li>调用System.gc时，系统建议执行Full GC，但是不必然执行</li>
+<li>允许担保分配失败并且老年代最大可用的连续空间大于历次晋升到老年代对象的平均大小：在 Minor GC 后，存活对象大于 survivor to 大小，也大于老年代可用空间大小，触发 Full GC</li>
+<li>不允许担保分配失败，触发 Full GC</li>
 </ul>
-<p>Full GC 清理整个堆，需要 stop the world 的时间更长</p>
+<p>Full GC 清理堆和方法区，需要 stop the world 的时间更长</p>
+<p>老年代空间不够分配新的内存（或永久代空间不足，但只是JDK1.7有的，这也是用元空间来取代永<br>久代的原因，可以减少Full GC的频率，减少GC负担，提升其效率）</p>
 <h2 id="垃圾收集器"><a href="#垃圾收集器" class="headerlink" title="垃圾收集器"></a>垃圾收集器</h2><p>Serial、ParNew：新生代采用标记-复制算法，老年代采用标记-整理算法。</p>
 <p>CMS：标记-清除算法</p>
 <h3 id="Serial-收集器"><a href="#Serial-收集器" class="headerlink" title="Serial 收集器"></a>Serial 收集器</h3><p>Serial（串行）收集器。它的 “单线程” 的意义不仅仅意味着它只会使用一条垃圾收集线程去完成垃圾收集工作，更重要的是它在进行垃圾收集工作的时候必须暂停其他所有的工作线程（ “Stop The World” ），直到它收集结束。</p>
@@ -438,6 +588,7 @@
     <content><![CDATA[<p>Java 并发机制</p>
 <span id="more"></span>
 
+<p>线程同步的方式<br>1、临界区：拥有临界区的线程可以访问被保护起来的资源或代码段，<br>2、事件：事件机制，则允许一个线程在处理完一个任务后，主动唤醒另外一个线程执行任务。<br>3、互斥量：互斥对象和临界区对象非常相似，只是其允许在进程间使用，而临界区只限制与同一进程的<br>各个线程之间使用，但是更节省资源，更有效率。<br>4、信号量：当需要一个计数器来限制可以使用某共享资源的线程数目时（多个资源整体作为一个共享资源），可以使用“信号量”对象。<br>互斥量，信号量，事件都可以实现不同进程的线程同步操作</p>
 <h1 id="创建线程"><a href="#创建线程" class="headerlink" title="创建线程"></a>创建线程</h1><p>创建线程实例一般有两种方法：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">//继承 Thread 类并重写 run()</span><br><span class="line">public class MyThread extends Thread &#123;</span><br><span class="line">@Override</span><br><span class="line">    public void run()&#123;</span><br><span class="line">        System.out.println(&quot;MyThread running&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">MyThread myThread = newMyThread();</span><br><span class="line">myThread.start();</span><br><span class="line"></span><br><span class="line">// 实现 Runnable 接口并重写 run()</span><br><span class="line">public class MyRunnable implements Runnable&#123;</span><br><span class="line">@Override</span><br><span class="line">    public void run()&#123;</span><br><span class="line">        System.out.println(&quot;MyRunnable running&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">// 在 Thread  类的构造函数中传入 MyRunnable  的实例对象</span><br><span class="line">Thread thread = newThread(new MyRunnable());</span><br><span class="line">thread.start();</span><br></pre></td></tr></table></figure>
 
@@ -531,8 +682,8 @@
 <li>可见性：保证共享变量的修改能够及时可见，Synchronized 块内部的共享变量或者 Synchronized 方法内部用到的共享变量都会保证可见性；</li>
 <li>有序性：有效解决重排序问题，即 “一个unlock操作先行发生(happen-before)于后面对同一个锁的lock操作”</li>
 </ol>
-<h2 id="锁优化"><a href="#锁优化" class="headerlink" title="锁优化"></a>锁优化</h2><p>Java 6 之后官方从 JVM 层面（体现在对象头）对 synchronized 进行优化。如自旋锁、适应性自旋锁、锁消除、锁粗化、偏向锁、轻量级锁等技术来减少锁操作的开销。</p>
-<p>所以目前锁一共有4种状态，级别从低到高依次是：无锁、偏向锁、轻量级锁和重量级锁。锁状态只能升级不能降级。（锁膨胀）</p>
+<h2 id="锁优化"><a href="#锁优化" class="headerlink" title="锁优化"></a>锁优化</h2><p>Java 6 之后官方从 JVM 层面（体现在对象头）对 synchronized 进行优化。如自旋锁、适应性自旋锁、锁消除、锁粗化、锁膨胀等技术来减少锁操作的开销。</p>
+<p>锁膨胀：锁一共有4种状态，级别从低到高依次是：无锁、偏向锁、轻量级锁和重量级锁。锁状态只能升级不能降级。</p>
 <p>无锁：实现方式是 CAS</p>
 <p>偏向锁</p>
 <p>在大多数情况下，锁总是由同一线程多次获得，不存在多线程竞争，所以出现了偏向锁。其目标就是在只有一个线程执行同步代码块时能够提高性能。</p>
@@ -638,6 +789,7 @@
 <h2 id="execute-和-submit-比较"><a href="#execute-和-submit-比较" class="headerlink" title="execute() 和 submit() 比较"></a>execute() 和 submit() 比较</h2><p>execute() 用于提交不需要返回值的任务，所以无法判断任务是否被线程池成功执行；</p>
 <p>submit() 用于提交需要返回值的任务。线程池会返回一个Future 对象，表示异步计算的结果。通过这个对象可以判断任务是否执行成功，并且可以通过 get() 方法来获取返回值，get() 方法会阻塞当前线程直到任务完成，get() 也可以设置阻塞时间，在一定时间后立即返回，这时候有可能任务没有执行完。</p>
 <h1 id="AQS"><a href="#AQS" class="headerlink" title="AQS"></a>AQS</h1><p>AQS 底层是由同步队列 + 条件队列联手组成，同步队列管理着获取不到锁的线程的排队和释放，<br>条件队列是在一定场景下，对同步队列的补充，比如获得锁的线程从空队列中拿数据，肯定是拿不<br>到数据的，这时候条件队列就会管理该线程，使该线程阻塞</p>
+<p>个人认为，是monitor在 API 层面的映射</p>
 ]]></content>
       <categories>
         <category>Java</category>
@@ -789,20 +941,9 @@
       </categories>
   </entry>
   <entry>
-    <title>Java basis</title>
-    <url>/2022/04/04/Java-basis/</url>
-    <content><![CDATA[<span id="more"></span>
-<p>基本类型    大小    取值范围    装箱基本类型<br>int    4个字节    -2^31 ~ 2^31-1    Integer<br>char    2个字节         Character<br>byte    1个字节    -2^7 ~ 2^7-1    Byte<br>short    2个字节    -2^15 ~ 2^15-1    Short<br>long    8个字节    -2^63 ~ 2^63-1    Long<br>float    4个字节         Float<br>double    8个字节         Double<br>boolean    1或者4个字节    true ~ false    Boolean</p>
-<p>引用&#x2F;地址：根据系统位数决定</p>
-]]></content>
-      <categories>
-        <category>Java</category>
-      </categories>
-  </entry>
-  <entry>
-    <title>JavaPractice</title>
+    <title>Java 多线程基础实践</title>
     <url>/2022/04/05/JavaPractice/</url>
-    <content><![CDATA[<p>Java 多线程实践基础案例</p>
+    <content><![CDATA[<p>Java 多线程基础实践</p>
 <span id="more"></span>
 
 <h1 id="多线程共享变量"><a href="#多线程共享变量" class="headerlink" title="多线程共享变量"></a>多线程共享变量</h1><p>在多线程访问共享对象和数据时候大致可以分为两大类。</p>
@@ -825,9 +966,10 @@
 <p>下面的count是否要改成volatile?</p>
 <p>由于对print对象加锁，因此由Synchronized 和 ReentrantLock 保证了print对象，包括它的count属性的可见性</p>
 <h2 id="1-Synchronized"><a href="#1-Synchronized" class="headerlink" title="1 Synchronized"></a>1 Synchronized</h2><h3 id="1-1-互斥"><a href="#1-1-互斥" class="headerlink" title="1.1 互斥"></a>1.1 互斥</h3><p>如果只执行线程A，并且改写代码如下：</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public void PrintA()&#123;</span><br><span class="line">        // 循环打印2轮</span><br><span class="line">		for (int j = 0; j &lt; 2; )&#123;</span><br><span class="line">            synchronized(this)&#123;</span><br><span class="line">            	System.out.println(&quot;x&quot;);</span><br><span class="line">                while(num == 1)&#123;</span><br><span class="line">                	</span><br><span class="line">                //打印3次</span><br><span class="line">                for (int i = 0; i &lt; 3; i++) &#123; </span><br><span class="line">                    System.out.println(&quot;A&quot;);  </span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                //打印A线程执行完，设置num=2，则</span><br><span class="line">                num = 2;  </span><br><span class="line">                </span><br><span class="line">                ++j; // 注意把 ++j 移到这里</span><br><span class="line">            &#125;</span><br><span class="line">            &#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">public class Main &#123;</span><br><span class="line">	public static void main(String[] args) throws InterruptedException &#123;</span><br><span class="line">		</span><br><span class="line">		int num = 1;//当前正在执行线程的标记。初值为1，让线程 A 先执行</span><br><span class="line">		ABCPrint print = new ABCPrint(num); // print对象作为不同线程的共享变量，不同线程获取print对象的锁从而实现同步。主要包括：互斥地修改共享变量 print.num，互斥地打印</span><br><span class="line">		</span><br><span class="line">		Thread threadA = new Thread(new RunnableA(print));</span><br><span class="line">		</span><br><span class="line">		threadA.start();</span><br><span class="line">		</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line">class RunnableA implements Runnable&#123;</span><br><span class="line">	private ABCPrint print;</span><br><span class="line">	public RunnableA(ABCPrint print) &#123;</span><br><span class="line">		super();</span><br><span class="line">		this.print = print;	</span><br><span class="line">	&#125;</span><br><span class="line"> </span><br><span class="line">	@Override</span><br><span class="line">	public void run() &#123;		</span><br><span class="line">		print.PrintA();</span><br><span class="line">		</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line">class ABCPrint &#123;</span><br><span class="line">	private int num;//当前正在执行线程的标记</span><br><span class="line">	public ABCPrint(int num) &#123;</span><br><span class="line">		super();</span><br><span class="line">		this.num = num;</span><br><span class="line">	&#125;</span><br><span class="line">	public void PrintA()&#123;</span><br><span class="line">        // 循环打印2轮</span><br><span class="line">		for (int j = 0; j &lt; 2; )&#123;</span><br><span class="line">            synchronized(this)&#123;</span><br><span class="line">            	System.out.println(&quot;x&quot;);</span><br><span class="line">                while(num == 1)&#123;</span><br><span class="line">                	</span><br><span class="line">                //打印3次</span><br><span class="line">                for (int i = 0; i &lt; 3; i++) &#123; </span><br><span class="line">                    System.out.println(&quot;A&quot;);  </span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                //打印A线程执行完，设置num=2，则</span><br><span class="line">                num = 2;  </span><br><span class="line">                </span><br><span class="line">                ++j; // 注意把 ++j 移到这里</span><br><span class="line">            &#125;</span><br><span class="line">            &#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p>为什么会无线输出”x”？</p>
+<p>因为 j 没变！！</p>
 <p>如果把++j移回for()里</p>
 <p>久会输出</p>
 <p>x<br>A<br>A<br>A<br>y<br>x</p>
@@ -1245,7 +1387,7 @@
       </categories>
   </entry>
   <entry>
-    <title>可靠数据传输/rdt 协议</title>
+    <title>可靠数据传输（rdt）协议</title>
     <url>/2022/04/09/Reliable-transmission/</url>
     <content><![CDATA[<p>可靠数据传输协议（reliable data transfer protocol）</p>
 <span id="more"></span>
@@ -1426,9 +1568,9 @@
 <p>为什么虚拟地址空间切换会比较耗时</p>
 <p>当进程切换后页表也要进行切换，页表切换后 TLB 就失效了，页表缓存失效导致命中率降低，那么虚拟地址转换为物理地址就会变慢，表现出来的就是程序运行会变慢，而线程切换则不会导致TLB失效，因为线程无需切换地址空间。</p>
 <p>内核和用户程序共享地址空间：发生系统调用时进行的是模式切换而非进程切换。</p>
-<p>不同的进程共享内核空间：进程A切换到进程B时把进程信息PCBA压入内核栈，进程B切换到进程C时把进程信息PCBB压入内核栈，然后要恢复的时候依次从内核栈弹出PCBB、PCBA。同一个内核栈。用户空间通过页表切换（页表信息也可当作处于PCB中），而内核空间不会。</p>
+<p>不同的进程共享内核空间，但是不同进程的内核栈应该是分开的，就像不同线程的线程栈是分开的。不同的进程执行过程中操作系统的状态是不同的：进程A切换到进程B时把进程信息PCBA压入内核栈A，进程B切换到进程C时把进程信息PCBB压入内核栈B。</p>
+<p>内核空间应该有额外的信息来记录各个进程的内核栈？</p>
 <p>在执行系统调用陷入内核之后，这些内核代码所使用的栈并不是原先用户空间中的栈，而是一个内核空间的栈，这个称作进程的内核栈。</p>
-<p>用户空间通过异常&#x2F;中断进入内核空间的时候都需要保存现场，也就是保存发生异常&#x2F;中断时的所有通用寄存器的值到每个进程特有的进程内核栈（一块内存），然后将即将执行的进程的寄存器的值从另一块内存中恢复到相应寄存器中（区分内存和CPU寄存器）。</p>
 <h3 id="进程切换"><a href="#进程切换" class="headerlink" title="进程切换"></a>进程切换</h3><p>调度：进程是资源管理的基本单位，线程是程序执行的基本单位。</p>
 <p>系统开销：创建或撤销进程时，系统都要为之分配或回收系统资源，如内存空间，I&#x2F;O设备等，OS所付出的开销显著大于在创建或撤销线程时的开销，进程切换的开销也远大于线程切换的开销</p>
 <p>进程切换分两步：</p>
@@ -1555,7 +1697,7 @@
 </blockquote>
 <p>页面置换算法的主要目标是使页面置换频率最低（也可以说缺页率最低）</p>
 <p><strong>局部页面置换</strong>：置换页面的选择范围仅限于 当前进程 占用的物理页面内（进程内）</p>
-<p><strong>最佳</strong>（OPT, Optimal replacement algorithm）</p>
+<p><strong>最佳置换</strong>（OPT, Optimal replacement algorithm）</p>
 <p>所选择的被换出的页面将是最长时间内不再被访问，通常可以保证获得最低的缺页率。</p>
 <p>是一种理论上的算法，因为无法知道一个页面多长时间不再被访问。</p>
 <p>举例：一个系统为某进程分配了三个物理块，并有如下页面引用序列：</p>
@@ -2318,6 +2460,129 @@
 ]]></content>
       <categories>
         <category>计算机网络</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>Redis</title>
+    <url>/2022/04/05/Redis/</url>
+    <content><![CDATA[<p>Redis 是一个 Key-Value 类型的内存数据库</p>
+<ul>
+<li>纯内存操作，读写性能极高。但容量也受到内存大小的限制</li>
+<li>支持数据持久化</li>
+<li>数据结构丰富。string、list、hash、set、zset、bitmap</li>
+<li>支持多种集群方式。</li>
+<li>支持事务</li>
+</ul>
+<span id="more"></span>
+
+<p>为什么要用缓存</p>
+<p>从高并发上来说：直接操作缓存能够承受的请求（QPS）是远远大于直接访问数据库的</p>
+<p>从高性能上来说：用户第一次访问数据库中的某些数据。因为是从硬盘上读取的所以这个过程会比较慢。将该用户访问的数据存在缓存中，下一次再访问这些数据的时候就可以直接从缓存中获取了。操作缓存就是直接操作内存，所以速度相当快。</p>
+<p>使用缓存的问题：数据库和缓存的一致性问题。</p>
+<p>写 ：先更新 DB，然后直接删除 cache 。</p>
+<p>理论上可能会出现数据不一致的问题，不过概率非常小，因为缓存的写入速度比数据库的写入速度快很多。</p>
+<p>先更新 DB，再删除 cache，则数据不一致的的持续时间就是删除 cache 花费的时间，很短</p>
+<p>先删除缓存，再改 DB，则数据不一致的的持续时间就是改 DB 的时间，较长，可能由于并发事务带来数据不一致的问题</p>
+<p>Redis 除了做缓存，还能做什么？</p>
+<ul>
+<li><p>业务场景 ：比如通过 bitmap 统计活跃用户、通过 sorted set 维护排行榜。</p>
+</li>
+<li><p>限流 ：一般是通过 Redis + Lua 脚本的方式来实现限流。虽然 redis 官方没有直接提供限流相应的API，但却支持了 Lua 脚本的功能，可以使用它实现令牌桶或漏桶算法。</p>
+<blockquote>
+<p>令牌桶<br>系统会维护一个令牌（token）桶，以一个恒定的速度往桶里放入令牌（token），这时如果有请求进来想要被处理，则需要先从桶里获取一个令牌（token）<br>漏桶<br>把水比作是请求，漏桶比作是系统处理能力极限，限制流入水的速率 &lt;&#x3D; 漏水的速率。</p>
+</blockquote>
+<blockquote>
+<p>相比Redis事务，Lua脚本的优点：</p>
+<ul>
+<li>减少网络开销：使用 Lua 脚本，无需向 Redis 发送多次请求，执行一次即可，减少网络传输</li>
+<li>原子操作：Redis 将整个 Lua 脚本作为一个命令执行，原子，无需担心并发，经常用来执行事务，而不使用 redis 本身的事务功能</li>
+<li>复用：Lua 脚本一旦执行，会永久保存 Redis 中,，其他客户端可复用</li>
+</ul>
+</blockquote>
+</li>
+<li><p>分布式锁：通常情况下，基于 Redisson 来实现分布式锁。</p>
+</li>
+</ul>
+<p>采用 I&#x2F;O 多路复用机制处理大量客户端的 Socket 请求，这是基于非阻塞的 I&#x2F;O 模型。</p>
+<p>Redis 没有 IO 阻塞操作，因此设计成了单线程。（抛弃了并发的效率）。Redis 的效率主要与两个因素有关：</p>
+<p>其一是机器内存大小，内存大小关系到 Redis 存储的数据量；</p>
+<p>其二是网络带宽。</p>
+<p>Redis 客户端执行一条命令分为四个过程：发送命令、命令排队、命令执行、返回结果。从发送命令到收到返回的结果，这段时间被称为 Round Trip Time（RTT，往返时间）</p>
+<p>Redis 的客户端和服务端可能部署在不同的机器上。例如客户端在北京，Redis 服务端在上海，两地直线距离约为1300 公里，那么 1 次 RTT &#x3D;1300×2&#x2F;（300000×2&#x2F;3）&#x3D;13毫秒（光在真空中传输速度为每秒30万公里，这里假设光纤为光速的2&#x2F;3），那么客户端在 1 秒内大约只能执行 80 次左右的命令，这就和 Redis 的高并发高吞吐特性背道而驰啦！所以一般情况下，都是就近部署！</p>
+<p>Redis6.0 之后引入了多线程，目的是为了提高网络 IO 读写性能。随着互联网的飞速发展，互联网业务系统所要处理的线上流量越来越大，Redis 的单线程模式会导致系统消耗很多 CPU 时间在网络 I&#x2F;O 上从而降低吞吐量。（虽然不会阻塞，但占用大量 CPU 时间）。因此，在网络数据的读写操作上使用多线程，提高网络 IO 读写性能，但执行命令仍然是单线程顺序执行。</p>
+]]></content>
+      <categories>
+        <category>数据库</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>动态规划</title>
+    <url>/2022/04/07/dp/</url>
+    <content><![CDATA[<p>各种问题的递推思路和递推表达式</p>
+<span id="more"></span>
+
+<h1 id="背包问题"><a href="#背包问题" class="headerlink" title="背包问题"></a>背包问题</h1><p>后续的扩展需阅读<a href="https://zhuanlan.zhihu.com/p/139368825">背包九讲</a></p>
+<h2 id="1-01-背包问题"><a href="#1-01-背包问题" class="headerlink" title="1 01 背包问题"></a>1 01 背包问题</h2><p>有 n 个可待选择的物品，每个物品只有一件，它们都有各自的重量和价值。</p>
+<p>设 weights &#x3D; [1,2,3]，values &#x3D; [4,5,6]</p>
+<p><strong>基本问题1：用这 n 个物品，能组成的所有重量</strong></p>
+<p>设 f(w, i) 表示用前 i 个物品能得到重量 w，递推图如下：</p>
+<p><img src="/2022/04/07/dp/image-20220410162156883.png" alt="image-20220410162156883"></p>
+<p>f(w, i) 值为 T&#x2F;F，表示是否能组成重量 w。</p>
+<p><strong>限制重量：即限制 w 维度的范围</strong></p>
+<p><strong>基本问题2：用这 n 个物品，能组成的所有重量和对应的价值集合</strong></p>
+<p>令 f(w, i) 为重量对应的价值集合，之所以是集合，是因为 f(w, i) 可以由多个 f(?, i-1) 递推得到。由于状态值是集合，即 f(w, i) 对应一组数，从空间上，可以把这组数画到第三维。</p>
+<p>因此，可以定义 f(w, v, i) 表示用前 i 个物品能得到重量 w，且价值为 v。</p>
+<p><strong>基本问题3：用这 n 个物品，能组成的所有重量和对应的最大价值</strong></p>
+<p>根据基本问题2，可以求出所有的 f(w, v, i)，记录各个 (w, i) 取值的最大 v 即可。</p>
+<p>更好的做法是，定义 f(w, i) 表示用前 i 个物品得到重量 w 时的最大价值，f(w, i) 满足最优子结构性质。在这种情况下，递推表示式为：<br>$$<br>f[w][i] &#x3D; max(f[w][i-1], f[w-weights[i]][i-1] + values[i])<br>$$<br>即不选或者选第 i 个物品。</p>
+<p>根据递推式对应的递推图，容易知道，只需要两列空间。为了优化为一列空间，可以让递推过程为：每次从 f(W, i) 往 f(0, i) 更新，这样，每次递推的时候，对于 max 中的第二项，可以保证它是 i-1 的结果，没有被 i 的结果填充。空间复杂度优化，时间复杂度没有优化。</p>
+<h3 id="相关题目"><a href="#相关题目" class="headerlink" title="相关题目"></a>相关题目</h3><p><a href="https://leetcode-cn.com/problems/partition-equal-subset-sum/">分割等和子集</a></p>
+<p><a href="https://leetcode-cn.com/problems/last-stone-weight-ii/">最后一块石头的重量 II</a></p>
+<p><a href="https://leetcode-cn.com/problems/ones-and-zeroes/">一和零</a></p>
+<p>等效为 01 背包问题：strs 即可选择的物品数组，每个物品的属性有：字符串中 0 的个数、字符串中 1 的个数</p>
+<p>根据基本问题3 进行推广，这里应该定义 f(i, j, k) 表示用前 i 个物品得到 j 个 0 和 k 个 1 时的最大子集长度。</p>
+<p>递推式为：<br>$$<br>dp[i][j][k]&#x3D;\left{\begin{matrix}<br>dp[i-1][j][k] &amp; j&lt;zeros \ or \ k&lt;ones\<br>max(dp[i-1][j][k],dp[i-1][j-zeros][k-ones]+1) &amp; j\geq zeros \ and\ k\geqslant ones<br>\end{matrix}\right.<br>$$<br>同样可以将复杂度优化，三维到二维。类似地，不需要 i 维度，根据二维的递推图可知，需要从右下往左上递推。</p>
+<p><a href="https://leetcode-cn.com/problems/profitable-schemes/">盈利计划</a></p>
+<p>集团里有 n 名员工，他们可以完成各种各样的工作创造利润。</p>
+<p>第 i 种工作会产生 profit[i] 的利润，它要求 group[i] 名成员共同参与。如果成员参与了其中一项工作，就不能参与另一项工作。（每种工作只能完成一次，不能重复完成）</p>
+<p>工作的任何至少产生 minProfit 利润的子集称为 盈利计划 。并且工作的成员总数最多为 n 。</p>
+<p>有多少种计划可以选择？</p>
+<h2 id="2-完全背包问题"><a href="#2-完全背包问题" class="headerlink" title="2 完全背包问题"></a>2 完全背包问题</h2><p>有 n 个可待选择的物品，每个物品有无限件可用，它们都有各自的重量和价值。求用这 n 个物品，能组成的所有重量和对应的最大价值。</p>
+<p>定义 f(i, j) 表示用前 i 个物品得到重量 j 时的最大价值，对于完全背包问题，递推式为：<br>$$<br>f[i][j]&#x3D;max\left { f[i-1][j-k<em>weights[i]]+k</em>values[i],\ \ \ k*weights[i]\leq j \right }<br>$$<br>该递推式的复杂度是线性倍的 O(NW)</p>
+<p>上述递推式可以优化为：<br>$$<br>f[i][j]&#x3D;max\left { f[i-1][j],\ f[i][j-weights[i]]+values[i] \right }<br>$$<br>这是因为如果使用原来的递推式，在计算 f(i, j) 和 f(i, j-weights[i]) 的时候有重复计算。证明如下：<br>$$<br>\begin{align*}</p>
+<p>  f[i][j] &amp;&#x3D; max\left { f[i-1][j-k<em>weights[i]]+k</em>values[i],\ \ \ k*weights[i]\leq j \right } \ </p>
+<p>  &amp;&#x3D; max\left { f[i-1][j],\ f[i-1][j-weights[i]]\ …\ f[i-1][j-\lfloor \frac{j}{weights[i]} \rfloor*weights[i]] \right } \</p>
+<p>\end{align*}<br>$$<br>所以：<br>$$<br>f[i][j-weights[i]]&#x3D;max\left { f[i-1][j-weights[i]]\ …\ f[i-1][j-\lfloor \frac{j}{weights[i]} \rfloor*weights[i]] \right }<br>$$<br>所以：<br>$$<br>f[i][j]&#x3D;max\left { f[i-1][j],\ f[i][j-weights[i]]+values[i] \right }<br>$$<br>进一步地，对于这个递推式，通过控制递推方向为右下到左上，同样可以优化为一维的空间复杂度。</p>
+<h3 id="相关题目-1"><a href="#相关题目-1" class="headerlink" title="相关题目"></a>相关题目</h3><p><a href="https://leetcode-cn.com/problems/coin-change-2/">零钱兑换II</a></p>
+<p>给定数量不限的硬币，币值为25分、10分、5分和1分，编写代码计算 n 分有几种表示法</p>
+<p>设 f(i, j) 表示前 i 种硬币构成面值为 j 的方案数量。则递推式为：<br>$$<br>f[i][j]&#x3D;\sum_{0}^{k_{max}}f[i-1][j-k*coins[i]],\ \ \ \ k_{max}&#x3D;\lfloor \frac{j}{coins[i]} \rfloor<br>$$<br>类似地，去掉重复计算的部分，递推式可以优化为：<br>$$<br>f[i][j]&#x3D;f[i-1][j]+f[i][j-coins[i]]<br>$$</p>
+<h1 id="最长上升子序列"><a href="#最长上升子序列" class="headerlink" title="最长上升子序列"></a>最长上升子序列</h1><h2 id="递推"><a href="#递推" class="headerlink" title="递推"></a>递推</h2><p>设 f(i) 表示以 nums[i] 结尾的最长上升子序列（可以是长度，子序列等）</p>
+<h2 id="贪心算法"><a href="#贪心算法" class="headerlink" title="贪心算法"></a>贪心算法</h2><h2 id="相关题目-2"><a href="#相关题目-2" class="headerlink" title="相关题目"></a>相关题目</h2><p>通常是设置更多的条件来判断序列是否为上升序列，需要重写排序方法</p>
+<p>二维排序</p>
+<ul>
+<li><p>面试题 17.08. 马戏团人塔</p>
+</li>
+<li><p>最长数对链</p>
+</li>
+<li><p>俄罗斯套娃信封问题</p>
+</li>
+</ul>
+<p>三维排序：面试题 08.13. 堆箱子</p>
+<h1 id="最长公共子序列"><a href="#最长公共子序列" class="headerlink" title="最长公共子序列"></a>最长公共子序列</h1><p>设 f(i, j) 表示 text1 第 i 个元素开始，text2 第 j 个元素开始的结果</p>
+<p>则递推式为：<br>$$<br>f[i][j]&#x3D;\left{\begin{matrix}<br>1+f[i+1][j+1] &amp; if\ s[i]&#x3D;&#x3D;s[j]\<br>max\left { f[i+1][j],\ f[i][j+1] \right }  &amp; else<br>\end{matrix}\right.<br>$$<br>则递推图为：</p>
+<p><img src="/2022/04/07/dp/image-20220410214301011.png" alt="image-20220410214301011"></p>
+<p>那么在边界处，即 i&#x3D;M-1 和 j&#x3D;N-1 时，递推式会有越界问题。</p>
+<p>为了便于处理，可以多分配一行一列，它们的初值是 0，然后边界位置就可以正常用递推式了。</p>
+<h1 id="子数组问题"><a href="#子数组问题" class="headerlink" title="子数组问题"></a>子数组问题</h1><h2 id="最大子数组和"><a href="#最大子数组和" class="headerlink" title="最大子数组和"></a>最大子数组和</h2><p>给你一个整数数组 nums ，请你找出一个具有最大和的连续子数组（子数组最少包含一个元素），返回其最大和。<br>用 f(i) 表示以第 i 个数结尾的「连续子数组的最大和」便于递推。不递推所有连续子数组和（使用f(I,j)表示i~j的连续子数组和），</p>
+<h1 id="环形数组问题"><a href="#环形数组问题" class="headerlink" title="环形数组问题"></a>环形数组问题</h1><p>环形数组的连续子数组的最大和</p>
+<p>先不考虑环：求以i为结尾的连续子数组最大和，得到其中的最大值</p>
+<p>考虑环：求 以i为结尾的连续子数组最小和min，考虑环的情况下，环形数组的连续子数组的最大和 &#x3D; 总和-min</p>
+<p>圆环回原点问题（字节跳动高频面试题之圆环回原点问题）<br>$$<br>dp[i][j] &#x3D; dp[i-1][(j-1+length)%length] + dp[i-1][(j+1)%length]<br>$$</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">class Solution:</span><br><span class="line">    def backToOrigin(self,n):</span><br><span class="line">        #点的个数为10</span><br><span class="line">        length = 10</span><br><span class="line">        dp = [[0 for i in range(length)] for j in range(n+1)]</span><br><span class="line">        dp[0][0] = 1 第一行只有dp[0][0]=1，其他都为0</span><br><span class="line">第一行初始化之后，后面的行根据递推式易知可以递推出来</span><br><span class="line">        for i in range(1,n+1):</span><br><span class="line">            for j in range(length):</span><br><span class="line">                #dp[i][j]表示从0出发，走i步到j的方案数</span><br><span class="line">                dp[i][j] = dp[i-1][(j-1+length)%length] + dp[i-1][(j+1)%length]</span><br><span class="line">        return dp[n][0]</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h1 id="状态机"><a href="#状态机" class="headerlink" title="状态机"></a>状态机</h1>]]></content>
+      <categories>
+        <category>算法</category>
       </categories>
   </entry>
 </search>
