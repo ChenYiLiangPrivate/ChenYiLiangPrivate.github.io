@@ -37,7 +37,7 @@
 <meta property="og:image" content="http://example.com/2022/04/05/Virtualization/1643024036695-ef32003d-a133-42c3-9347-7c8e035b9784.png">
 <meta property="og:image" content="http://example.com/2022/04/05/Virtualization/1643033924079-f75ee3ea-89da-44bb-bcfb-b1b8055447d1.png">
 <meta property="article:published_time" content="2022-04-05T14:39:49.000Z">
-<meta property="article:modified_time" content="2022-04-11T03:11:05.257Z">
+<meta property="article:modified_time" content="2022-04-14T08:43:36.341Z">
 <meta property="article:author" content="Cyl">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://example.com/2022/04/05/Virtualization/1642770176746-362621fb-2a65-447d-a7e6-d0f10f18e8f6.png">
@@ -135,7 +135,7 @@
   </li>
         <li class="menu-item menu-item-archives">
 
-    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">15</span></a>
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">16</span></a>
 
   </li>
       <li class="menu-item menu-item-search">
@@ -223,7 +223,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-04-11 11:11:05" itemprop="dateModified" datetime="2022-04-11T11:11:05+08:00">2022-04-11</time>
+                <time title="修改时间：2022-04-14 16:43:36" itemprop="dateModified" datetime="2022-04-14T16:43:36+08:00">2022-04-14</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -236,6 +236,20 @@
             </span>
 
           
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2022/04/05/Virtualization/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2022/04/05/Virtualization/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
 
         </div>
       </header>
@@ -249,8 +263,7 @@
         <p>操作系统的虚拟化技术包括虚拟地址空间、虚拟 CPU</p>
 <p>虚拟地址空间主要是为了提供一个易用的物理内存抽象，实现内核与用户、进程与进程空间的隔离；虚拟化 CPU 主要是为了实现多进程的并行</p>
 <span id="more"></span>
-
-<h1 id="虚拟地址空间"><a href="#虚拟地址空间" class="headerlink" title="虚拟地址空间"></a>虚拟地址空间</h1><p>以 32 位操作系统举例，它的寻址空间为 4G &#x3D; 2 的 32 次方，一个字节大小的内存单元对应一个地址</p>
+<h1 id="虚拟地址空间"><a href="#虚拟地址空间" class="headerlink" title="虚拟地址空间"></a>虚拟地址空间</h1><p>以 32 位操作系统举例，它的寻址空间为 4G = 2 的 32 次方，一个字节大小的内存单元对应一个地址</p>
 <p>为什么叫虚拟，因为物理内存一共就 4G，但操作系统为<strong>每一个进程都分配了4G的内存空间，这个内存空间是虚拟的</strong>。以 linux 操作系统为例，每个进程 4G 的虚拟内存，将最高的 1G 字节供内核使用，称为内核空间，而将较低的 3G 字节，供各个进程使用，称为用户空间。</p>
 <blockquote>
 <p>如果你在一个程序中打印出一个地址，那只是一个虚拟地址。虚拟地址只是提供地址如何在内存中分布的假象，只有操作系统（和硬件）才知道物理地址。</p>
@@ -275,8 +288,7 @@
 <li>进程列表（process list）</li>
 </ul>
 <p>如下是一个进程控制块，进程控制块包括了上下文信息</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line">// 寄存器上下文（register context）</span><br><span class="line">// the registers xv6 will save and restore </span><br><span class="line">// to stop and subsequently restart a process </span><br><span class="line">struct context &#123; </span><br><span class="line">  int eip; </span><br><span class="line">  int esp; </span><br><span class="line">  int ebp; </span><br><span class="line">  </span><br><span class="line">  int ebx; </span><br><span class="line">  int ecx; </span><br><span class="line">  int edx; </span><br><span class="line">  </span><br><span class="line">  int esi; </span><br><span class="line">  int edi; </span><br><span class="line">&#125;; </span><br><span class="line"> </span><br><span class="line">// 进程状态枚举</span><br><span class="line">enum proc_state &#123; UNUSED, EMBRYO, SLEEPING, </span><br><span class="line">                  RUNNABLE, RUNNING, ZOMBIE &#125;; </span><br><span class="line"> </span><br><span class="line">// the information xv6 tracks about each process </span><br><span class="line">// including its register context and state </span><br><span class="line">struct proc &#123; </span><br><span class="line">	// 内存设置</span><br><span class="line">  char *mem;                   // Start of process memory </span><br><span class="line">  uint sz;                     // Size of process memory </span><br><span class="line">  </span><br><span class="line">  char *kstack;                // Bottom of kernel stack </span><br><span class="line">                               // for this process </span><br><span class="line">                              </span><br><span class="line">  enum proc_state state;       // Process state </span><br><span class="line">  int pid;                     // Process ID </span><br><span class="line">  struct proc *parent;         // Parent process </span><br><span class="line">  void *chan;                  // If non-zero, sleeping on chan </span><br><span class="line">  int killed;                  // If non-zero, have been killed </span><br><span class="line">  </span><br><span class="line">  struct file *ofile[NOFILE];  // Open files</span><br><span class="line">  struct inode *cwd;           // Current directory </span><br><span class="line">  </span><br><span class="line">  struct context context;      // // 上下文切换 </span><br><span class="line">  struct trapframe *tf;        // Trap frame（栈帧） for the current interrupt</span><br><span class="line">                               // 栈帧也是一个包含多个寄存器的结构体</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 寄存器上下文（register context）</span></span><br><span class="line"><span class="comment">// the registers xv6 will save and restore </span></span><br><span class="line"><span class="comment">// to stop and subsequently restart a process </span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">context</span> &#123;</span> </span><br><span class="line">  <span class="type">int</span> eip; </span><br><span class="line">  <span class="type">int</span> esp; </span><br><span class="line">  <span class="type">int</span> ebp; </span><br><span class="line">  </span><br><span class="line">  <span class="type">int</span> ebx; </span><br><span class="line">  <span class="type">int</span> ecx; </span><br><span class="line">  <span class="type">int</span> edx; </span><br><span class="line">  </span><br><span class="line">  <span class="type">int</span> esi; </span><br><span class="line">  <span class="type">int</span> edi; </span><br><span class="line">&#125;; </span><br><span class="line"> </span><br><span class="line"><span class="comment">// 进程状态枚举</span></span><br><span class="line"><span class="class"><span class="keyword">enum</span> <span class="title">proc_state</span> &#123;</span> UNUSED, EMBRYO, SLEEPING, </span><br><span class="line">                  RUNNABLE, RUNNING, ZOMBIE &#125;; </span><br><span class="line"> </span><br><span class="line"><span class="comment">// the information xv6 tracks about each process </span></span><br><span class="line"><span class="comment">// including its register context and state </span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">proc</span> &#123;</span> </span><br><span class="line">	<span class="comment">// 内存设置</span></span><br><span class="line">  <span class="type">char</span> *mem;                   <span class="comment">// Start of process memory </span></span><br><span class="line">  uint sz;                     <span class="comment">// Size of process memory </span></span><br><span class="line">  </span><br><span class="line">  <span class="type">char</span> *kstack;                <span class="comment">// Bottom of kernel stack </span></span><br><span class="line">                               <span class="comment">// for this process </span></span><br><span class="line">                              </span><br><span class="line">  <span class="class"><span class="keyword">enum</span> <span class="title">proc_state</span> <span class="title">state</span>;</span>       <span class="comment">// Process state </span></span><br><span class="line">  <span class="type">int</span> pid;                     <span class="comment">// Process ID </span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">proc</span> *<span class="title">parent</span>;</span>         <span class="comment">// Parent process </span></span><br><span class="line">  <span class="type">void</span> *chan;                  <span class="comment">// If non-zero, sleeping on chan </span></span><br><span class="line">  <span class="type">int</span> killed;                  <span class="comment">// If non-zero, have been killed </span></span><br><span class="line">  </span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">file</span> *<span class="title">ofile</span>[<span class="title">NOFILE</span>];</span>  <span class="comment">// Open files</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">inode</span> *<span class="title">cwd</span>;</span>           <span class="comment">// Current directory </span></span><br><span class="line">  </span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">context</span> <span class="title">context</span>;</span>      <span class="comment">// // 上下文切换 </span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">trapframe</span> *<span class="title">tf</span>;</span>        <span class="comment">// Trap frame（栈帧） for the current interrupt</span></span><br><span class="line">                               <span class="comment">// 栈帧也是一个包含多个寄存器的结构体</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
 <h3 id="内核空间和用户空间的切换"><a href="#内核空间和用户空间的切换" class="headerlink" title="内核空间和用户空间的切换"></a>内核空间和用户空间的切换</h3><p><strong>模式切换</strong>：仅仅需要寄存器进栈出栈，不会导致CPU中的数据缓存失效、MMU中的页表缓存失效</p>
 <p><strong>进程切换</strong>：不仅需要寄存器进栈出栈，还会使CPU中的数据缓存失效、MMU中的页表缓存失效（缓存失效是必须的，因为要切换到另一个进程的地址空间）</p>
 <blockquote>
@@ -290,7 +302,7 @@
 <p>内核空间应该有额外的信息来记录各个进程的内核栈？</p>
 <p>在执行系统调用陷入内核之后，这些内核代码所使用的栈并不是原先用户空间中的栈，而是一个内核空间的栈，这个称作进程的内核栈。</p>
 <h3 id="进程切换"><a href="#进程切换" class="headerlink" title="进程切换"></a>进程切换</h3><p>调度：进程是资源管理的基本单位，线程是程序执行的基本单位。</p>
-<p>系统开销：创建或撤销进程时，系统都要为之分配或回收系统资源，如内存空间，I&#x2F;O设备等，OS所付出的开销显著大于在创建或撤销线程时的开销，进程切换的开销也远大于线程切换的开销</p>
+<p>系统开销：创建或撤销进程时，系统都要为之分配或回收系统资源，如内存空间，I/O设备等，OS所付出的开销显著大于在创建或撤销线程时的开销，进程切换的开销也远大于线程切换的开销</p>
 <p>进程切换分两步：</p>
 <ol>
 <li>切换页表以使用新的地址空间，一旦去切换上下文，处理器中所有已经缓存的内存地址一瞬间都作废了。</li>
@@ -300,8 +312,7 @@
 <h3 id="进程-API"><a href="#进程-API" class="headerlink" title="进程 API"></a>进程 API</h3><p>程序中调用时发生系统调用</p>
 <p>fork</p>
 <ul>
-<li><p>一个现有进程可以调用 fork() 创建一个新进程，该新进程被称为<strong>子进程</strong>（child process），调用fork的进程称为<strong>父进程</strong>。</p>
-</li>
+<li>一个现有进程可以调用 fork() 创建一个新进程，该新进程被称为<strong>子进程</strong>（child process），调用fork的进程称为<strong>父进程</strong>。</li>
 <li><p>子进程通过拷贝的方式，获得 此时的 父进程地址空间副本（包括堆、栈等资源）。</p>
 </li>
 <li><ul>
@@ -319,12 +330,11 @@
 <li><p>exec指的是一个函数簇，包括execlp()、execv()和execvp()等</p>
 </li>
 <li><p>函数原型：</p>
-<p>  int execvp(const char *file, char *const argv[]); &#x2F;&#x2F; file为需要运行的文件名，argv[]为输入的参数列表</p>
+<p>  int execvp(const char <em>file, char </em>const argv[]); // file为需要运行的文件名，argv[]为输入的参数列表</p>
 </li>
 <li><p>给定可执行程序的名称及该程序需要的参数后，exec() 会从该程序中加载代码和静态数据，并用它 <strong>覆写</strong> 自己的代码段（以及静态数据），堆、栈及其他内存空间也会被重新<strong>初始化</strong>。然后操作系统就执行该程序，将参数 argv 传递给该进程。——并没有创建新进程，而是直接将当前运行的程序替换为另一个程序</p>
 </li>
-<li><p>调用了 exec() 的程序，exec() 之后的语句不会被执行</p>
-</li>
+<li>调用了 exec() 的程序，exec() 之后的语句不会被执行</li>
 </ul>
 <h2 id="虚拟地址到物理地址的映射"><a href="#虚拟地址到物理地址的映射" class="headerlink" title="虚拟地址到物理地址的映射"></a>虚拟地址到物理地址的映射</h2><p>一个基本的负责地址转换的<strong>内存管理单元</strong>（Memory Management Unit，MMU）需要包含：<strong>基址寄存器、界限寄存器</strong>。</p>
 <ul>
@@ -350,12 +360,13 @@
 <h3 id="分页"><a href="#分页" class="headerlink" title="分页"></a>分页</h3><p>为虚拟空间分配物理内存时以页（page）为单位分配。即将虚拟空间分成多个页，每个页对应一个物理帧。</p>
 <p>页表（page table）保存了<strong>页</strong>（<strong>虚拟</strong>地址空间）和物理帧（<strong>物理内存</strong>空间）的映射关系。</p>
 <blockquote>
-<p>物理帧不是硬盘空间&#x2F;外存的单元 </p>
+<p>物理帧不是硬盘空间/外存的单元 </p>
 </blockquote>
-<p>虚拟页面号（virtual page number，VPN）和页内的偏移量（offset）组成一个虚拟地址。假设进程的虚拟地址空间是 64 字节，每页大小 16 字节，共 4 个页。那么虚拟地址需要用 6 位描述，前两位是虚拟页号（VPN），用来区分不同的页，后四位区分一个页中的不同字节。例如，虚拟地址 &#x3D; 010101，VPN&#x3D;1，offset&#x3D;5，表示第 1 页第5 个字节。</p>
-<p>操作系统会将物理内存分成多个物理帧，物理帧和帧内的偏移量组成一个物理地址。假设第 1 页对应的物理帧号是 7，如图所示。则虚拟地址 010101 对应的物理地址是 112+5 &#x3D; 117 &#x3D; 1110101（图中物理帧 0<del>15，16</del>31，…）</p>
+<p>虚拟页面号（virtual page number，VPN）和页内的偏移量（offset）组成一个虚拟地址。假设进程的虚拟地址空间是 64 字节，每页大小 16 字节，共 4 个页。那么虚拟地址需要用 6 位描述，前两位是虚拟页号（VPN），用来区分不同的页，后四位区分一个页中的不同字节。例如，虚拟地址 = 010101，VPN=1，offset=5，表示第 1 页第5 个字节。</p>
+<p>操作系统会将物理内存分成多个物理帧，物理帧和帧内的偏移量组成一个物理地址。假设第 1 页对应的物理帧号是 7，如图所示。则虚拟地址 010101 对应的物理地址是 112+5 = 117 = 1110101（图中物理帧 0~15，16~31，…）</p>
 <p><img src="/2022/04/05/Virtualization/1643442576051-58a6712b-62dd-4570-abec-25a272edc855.png" alt="虚拟页与物理帧的对应关系"></p>
-<p>页表是一个数据表，进程创建时由操作系统为其生成对应页表（分配物理内存空间）。页表由页表项（<strong>PTE</strong>）组成，第 i 个页表项存储了 VPN &#x3D; i 的虚拟页的信息，包括：</p>
+<p>页表是一个数据表，进程创建时由操作系统为其生成对应页表（分配物理内存空间）。页表由页表项（<strong>PTE</strong>）组成，第 i 个页表项存储了 VPN = i 的虚拟页的信息，包括：</p>
+<div class="table-container">
 <table>
 <thead>
 <tr>
@@ -363,13 +374,14 @@
 <th></th>
 </tr>
 </thead>
-<tbody><tr>
+<tbody>
+<tr>
 <td>有效位</td>
 <td>是否为该虚拟页分配物理帧</td>
 </tr>
 <tr>
 <td>存在位（present bit）</td>
-<td>表示该页是否被调入内存中（有可能暂存硬盘），&#x3D;1表示被调入内存</td>
+<td>表示该页是否被调入内存中（有可能暂存硬盘），=1表示被调入内存</td>
 </tr>
 <tr>
 <td>脏位（dirty bit）</td>
@@ -379,7 +391,9 @@
 <td>参考位（reference bit，也被称为访问位，accessed bit）</td>
 <td>记录本页一段时间内的访问次数，或记录本页多久未被访问</td>
 </tr>
-</tbody></table>
+</tbody>
+</table>
+</div>
 <blockquote>
 <p>如果有效位是1，该PTE中就会存储物理内存中相应的物理页的起始地址。如果有效位是0，且PTE中的地址为null，这表示这个虚拟页还未被分配，而如果有效位是0且PTE中有地址，那么这个地址指向该虚拟页在磁盘上的起始位置</p>
 </blockquote>
@@ -395,15 +409,15 @@
 <p>为了改善内存访问性能，利用局部性原理加速访问页表的步骤——将常访问的页面保存至 CPU 缓存，该缓存称为<strong>地址变换高速缓存</strong>（Translation Look-aside Buffer，TLB），又可称为快表。配置快表后，CPU 访问页面会先去查看快表内是否存在，然后再去查看主存的页表。</p>
 <p>例：某一页式系统，其页表存放在主存中：</p>
 <p>(1) 如果对主存的一次存取需要 1.5μs，试问实现一次页面访问时存取时间是多少？</p>
-<p>答：页式访问需要访存两次，一次页表，一次数据，所以需要 1.5∗2&#x3D;3μs。</p>
+<p>答：页式访问需要访存两次，一次页表，一次数据，所以需要 1.5∗2=3μs。</p>
 <p>(2)如果系统有快表且其平均命中率为 85%，而页标项在快表查询的时间可忽略不计，试问此时的存取时间为多少？</p>
-<p>答：快表命中时访存一次，未命中时访存两次，所以需要 0.85∗1.5+0.15∗3&#x3D;1.725μs。（0.85概率找到页表项，0.15概率没有找到页表项，此时需要到主存的页表再去找）</p>
+<p>答：快表命中时访存一次，未命中时访存两次，所以需要 0.85∗1.5+0.15∗3=1.725μs。（0.85概率找到页表项，0.15概率没有找到页表项，此时需要到主存的页表再去找）</p>
 <p><strong>多级页表</strong></p>
 <p>页表大小问题可以通过多级页表的方法优化。</p>
 <p>分割：将庞大的页表分成多张较小的页表，并设置一张页目录表。逻辑地址的虚页号进一步划分为页目录号和虚页号，页目录号用于查询页表，虚页号用于查询物理帧号。</p>
 <p>按需调入：进程执行开始时只需要将页目录表调入内存，然后次级页表和页面可以在后面执行需要时再调入。同时，</p>
-<p>假设有 256 个虚拟页，可以拆分为 16*16 个部分，以 16 个页表项为一页（这里是页表页，而不是之前的虚拟页）。虚页号此时是 相对虚页号，即 16 个页 0<del>15，而非绝对虚页号，即 256 个页 0</del>255</p>
-<h4 id="页面置换算法-x2F-cache淘汰算法"><a href="#页面置换算法-x2F-cache淘汰算法" class="headerlink" title="页面置换算法&#x2F;cache淘汰算法"></a>页面置换算法&#x2F;cache淘汰算法</h4><p>什么是交换空间？</p>
+<p>假设有 256 个虚拟页，可以拆分为 16*16 个部分，以 16 个页表项为一页（这里是页表页，而不是之前的虚拟页）。虚页号此时是 相对虚页号，即 16 个页 0~15，而非绝对虚页号，即 256 个页 0~255</p>
+<h4 id="页面置换算法-cache淘汰算法"><a href="#页面置换算法-cache淘汰算法" class="headerlink" title="页面置换算法/cache淘汰算法"></a>页面置换算法/cache淘汰算法</h4><p>什么是交换空间？</p>
 <p>用于与内存换入换出的硬盘空间。操作系统把物理内存进行分页。当内存资源不足时，把某些页的内容转移至硬盘上的一块空间上，以释放内存空间。硬盘上的那块空间叫做交换空间（swap space）,而这一过程被称为交换。物理内存和交换空间的总容量就是虚拟内存的可用容量</p>
 <p>在程序运行过程中，如果要访问的页面不在内存中（根据页表项的存在位判断），就发生缺页中断从而将该页调入内存中。此时</p>
 <ul>
@@ -452,7 +466,7 @@
 </ul>
 <p>第二次机会算法</p>
 <p>数据结构：链表、最早页面指针</p>
-<p>每个页面有一个 second chance 位，也叫做引用位。上面叫做 参考位&#x2F;访问位</p>
+<p>每个页面有一个 second chance 位，也叫做引用位。上面叫做 参考位/访问位</p>
 <p>当一个页面被二次引用，它的 second chance 位设置为1。这表示该页面后面还有可能会被引用到，所以下次置换先跳过这个页面，也就是再给它一次机会留在内存中。这样可以减少页面置换。</p>
 <p>步骤</p>
 <ul>
@@ -460,7 +474,7 @@
 </li>
 <li><ul>
 <li>如果到尾部、未查找到、且有剩余空间，加入页面，它的 second chance 被设置为 0，最早页面指针后移一位<ul>
-<li>如果已经分配物理内存&#x2F;在链表中，它的 second chance 被设置为1</li>
+<li>如果已经分配物理内存/在链表中，它的 second chance 被设置为1</li>
 <li>如果到尾部、未查找到、且无剩余空间。需要替换内存中的一个页面，从 <strong>最早页面指针</strong> 往后查找可以被替换的页面：</li>
 </ul>
 </li>
@@ -507,11 +521,13 @@
 <p>陷阱表（trap table）记录了相关处理程序的位置。</p>
 <p><strong>执行系统调用将发生什么？</strong></p>
 <p>执行陷阱指令，进入内核模式</p>
-<p>保存进程信息（例如进程控制块）到内核栈<br>- 查找陷阱表，执行对应处理程序<br>执行从陷阱返回指令，从内核栈恢复寄存器，回到用户模式</p>
+<p>保存进程信息（例如进程控制块）到内核栈</p>
+<pre><code>- 查找陷阱表，执行对应处理程序
+</code></pre><p>执行从陷阱返回指令，从内核栈恢复寄存器，回到用户模式</p>
 </li>
 </ul>
 <p>当陷入内核，执行的都属于操作系统的程序，相当于操作系统接管了 CPU</p>
-<p><img src="https://cdn.nlark.com/yuque/__puml/19d56db61d9fe6cdb199e9e3e11ab4e7.svg"></p>
+<p><img src="https://cdn.nlark.com/yuque/__puml/19d56db61d9fe6cdb199e9e3e11ab4e7.svg" alt></p>
 <p>Intel 的 x86 处理器 可以运行在 ring0 ~ ring3 四个不同的权限级别。不过 Linux 和 Windows 只利用了其中的两个运行级别：</p>
 <p>内核模式，对应 ring0 级<br>用户模式，对应 ring3 级</p>
 <h2 id="控制权转移"><a href="#控制权转移" class="headerlink" title="控制权转移"></a>控制权转移</h2><p>协作方式——程序在最后执行系统调用交还控制权</p>
@@ -527,8 +543,8 @@
 <h2 id="进程调度"><a href="#进程调度" class="headerlink" title="进程调度"></a>进程调度</h2><h3 id="调度策略相关概念"><a href="#调度策略相关概念" class="headerlink" title="调度策略相关概念"></a>调度策略相关概念</h3><p><strong>抢占与非抢占</strong></p>
 <p>抢占式：当有比正在运行的进程<strong>优先级</strong>更高的进程就绪时，系统可强行剥夺当前运行进程的 CPU 使用权，提供给更高优先级的进程使用。</p>
 <p>非抢占式：某一进程被调度运行后，除非自身原因导致不能运行，否则一直运行下去。</p>
-<p><strong>I&#x2F;O 密集型和 CPU 密集型进程</strong></p>
-<p>I&#x2F;O 密集型：需要频繁地进行 I&#x2F;O 操作的进程。 I&#x2F;O 操作会阻塞进程</p>
+<p><strong>I/O 密集型和 CPU 密集型进程</strong></p>
+<p>I/O 密集型：需要频繁地进行 I/O 操作的进程。 I/O 操作会阻塞进程</p>
 <p>CPU 密集型：需要大量的 CPU 时间进行计算。</p>
 <h3 id="调度指标"><a href="#调度指标" class="headerlink" title="调度指标"></a>调度指标</h3><ul>
 <li><p><strong>周转时间</strong>（Turnaround Time）：每个进程从提出请求到运行完成的时间。运行完成时刻 - 任务到达时刻</p>
@@ -559,7 +575,7 @@
 </ul>
 <p><strong>最高响应比优先</strong>（Highest Response Ratio Next, HRRN)</p>
 <p>是对 FCFS 和 SJF 的综合平衡，调度时计算每个进程的响应比 R ，总是选择 R 最高的进程执行，属于<strong>非抢占式</strong>调度算法。</p>
-<p><img src="/2022/04/05/Virtualization/1643024036695-ef32003d-a133-42c3-9347-7c8e035b9784.png"></p>
+<p><img src="/2022/04/05/Virtualization/1643024036695-ef32003d-a133-42c3-9347-7c8e035b9784.png" alt></p>
 <p>当等待时间相同时，则运行时间越短响应比越高，实现短作业优先（SJF)</p>
 <p>当运行时间相同时，等待时间越长响应比越高，实现先来先服务（FCFS）</p>
 <p>实际上等价于将调度队列的各个任务按照 R 排序，R 大的在队头。</p>
@@ -593,7 +609,7 @@
 <li>当一个新进程进入内存后，首先放入第 1 级队列的末尾，按 FCFS 的原则排队等待调度。当该进程执行时，如果其能在时间片内完成便撤离系统；如果它在一个时间片结束未完成，该进程进入第 2 级队列按照 FCFS 的原则等待调度，以此类推。对于最后一级队列，进程执行一个时间片结束未完成会回到该队列的队尾。（如图中的环，如果前面队列的任务过多，可能导致饥饿问题）</li>
 <li>仅当第 1 级队列为空时，调度程序才调度第 2 级队列的进程进行执行，以此类推。</li>
 </ol>
-<p><img src="/2022/04/05/Virtualization/1643033924079-f75ee3ea-89da-44bb-bcfb-b1b8055447d1.png"></p>
+<p><img src="/2022/04/05/Virtualization/1643033924079-f75ee3ea-89da-44bb-bcfb-b1b8055447d1.png" alt="多级反馈队列"></p>
 <p>优点：</p>
 <p>短作业可以在前面的队列内完成，长作业可以得到部分执行。</p>
 <p>交互型作业通常较短，系统只要能使其第1级队列所规定的时间片内完成，即可使终端用户感到满意。</p>
@@ -634,6 +650,7 @@
 
           </div>
           
+    <div class="comments" id="valine-comments"></div>
 
 <script>
   window.addEventListener('tabs:register', () => {
@@ -680,7 +697,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%99%9A%E6%8B%9F%E5%9C%B0%E5%9D%80%E7%A9%BA%E9%97%B4"><span class="nav-number">1.</span> <span class="nav-text">虚拟地址空间</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%99%9A%E6%8B%9F%E5%9C%B0%E5%9D%80%E7%A9%BA%E9%97%B4%E7%9A%84%E6%9E%84%E6%88%90"><span class="nav-number">1.1.</span> <span class="nav-text">虚拟地址空间的构成</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%86%85%E6%A0%B8%E7%A9%BA%E9%97%B4%E5%92%8C%E7%94%A8%E6%88%B7%E7%A9%BA%E9%97%B4%E7%9A%84%E5%88%87%E6%8D%A2"><span class="nav-number">1.1.1.</span> <span class="nav-text">内核空间和用户空间的切换</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%9B%E7%A8%8B%E5%88%87%E6%8D%A2"><span class="nav-number">1.1.2.</span> <span class="nav-text">进程切换</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%9B%E7%A8%8B-API"><span class="nav-number">1.1.3.</span> <span class="nav-text">进程 API</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%99%9A%E6%8B%9F%E5%9C%B0%E5%9D%80%E5%88%B0%E7%89%A9%E7%90%86%E5%9C%B0%E5%9D%80%E7%9A%84%E6%98%A0%E5%B0%84"><span class="nav-number">1.2.</span> <span class="nav-text">虚拟地址到物理地址的映射</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%86%E6%AE%B5"><span class="nav-number">1.2.1.</span> <span class="nav-text">分段</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%86%E9%A1%B5"><span class="nav-number">1.2.2.</span> <span class="nav-text">分页</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%A1%B5%E9%9D%A2%E7%BD%AE%E6%8D%A2%E7%AE%97%E6%B3%95-x2F-cache%E6%B7%98%E6%B1%B0%E7%AE%97%E6%B3%95"><span class="nav-number">1.2.2.1.</span> <span class="nav-text">页面置换算法&#x2F;cache淘汰算法</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%AE%B5%E9%A1%B5%E5%BC%8F"><span class="nav-number">1.2.3.</span> <span class="nav-text">段页式</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%99%9A%E6%8B%9F-CPU"><span class="nav-number">2.</span> <span class="nav-text">虚拟 CPU</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#CPU-%E5%8F%8C%E6%A8%A1%E5%BC%8F"><span class="nav-number">2.1.</span> <span class="nav-text">CPU 双模式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8E%A7%E5%88%B6%E6%9D%83%E8%BD%AC%E7%A7%BB"><span class="nav-number">2.2.</span> <span class="nav-text">控制权转移</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%9B%E7%A8%8B%E8%B0%83%E5%BA%A6"><span class="nav-number">2.3.</span> <span class="nav-text">进程调度</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B0%83%E5%BA%A6%E7%AD%96%E7%95%A5%E7%9B%B8%E5%85%B3%E6%A6%82%E5%BF%B5"><span class="nav-number">2.3.1.</span> <span class="nav-text">调度策略相关概念</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B0%83%E5%BA%A6%E6%8C%87%E6%A0%87"><span class="nav-number">2.3.2.</span> <span class="nav-text">调度指标</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%9B%E7%A8%8B%E8%B0%83%E5%BA%A6%E7%AE%97%E6%B3%95"><span class="nav-number">2.3.3.</span> <span class="nav-text">进程调度算法</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%89%B9%E5%A4%84%E7%90%86%E7%B3%BB%E7%BB%9F"><span class="nav-number">2.3.3.1.</span> <span class="nav-text">批处理系统</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BA%A4%E4%BA%92%E5%BC%8F%E7%B3%BB%E7%BB%9F"><span class="nav-number">2.3.3.2.</span> <span class="nav-text">交互式系统</span></a></li></ol></li></ol></li></ol></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%99%9A%E6%8B%9F%E5%9C%B0%E5%9D%80%E7%A9%BA%E9%97%B4"><span class="nav-number">1.</span> <span class="nav-text">虚拟地址空间</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%99%9A%E6%8B%9F%E5%9C%B0%E5%9D%80%E7%A9%BA%E9%97%B4%E7%9A%84%E6%9E%84%E6%88%90"><span class="nav-number">1.1.</span> <span class="nav-text">虚拟地址空间的构成</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%86%85%E6%A0%B8%E7%A9%BA%E9%97%B4%E5%92%8C%E7%94%A8%E6%88%B7%E7%A9%BA%E9%97%B4%E7%9A%84%E5%88%87%E6%8D%A2"><span class="nav-number">1.1.1.</span> <span class="nav-text">内核空间和用户空间的切换</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%9B%E7%A8%8B%E5%88%87%E6%8D%A2"><span class="nav-number">1.1.2.</span> <span class="nav-text">进程切换</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%9B%E7%A8%8B-API"><span class="nav-number">1.1.3.</span> <span class="nav-text">进程 API</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%99%9A%E6%8B%9F%E5%9C%B0%E5%9D%80%E5%88%B0%E7%89%A9%E7%90%86%E5%9C%B0%E5%9D%80%E7%9A%84%E6%98%A0%E5%B0%84"><span class="nav-number">1.2.</span> <span class="nav-text">虚拟地址到物理地址的映射</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%86%E6%AE%B5"><span class="nav-number">1.2.1.</span> <span class="nav-text">分段</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%86%E9%A1%B5"><span class="nav-number">1.2.2.</span> <span class="nav-text">分页</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%A1%B5%E9%9D%A2%E7%BD%AE%E6%8D%A2%E7%AE%97%E6%B3%95-cache%E6%B7%98%E6%B1%B0%E7%AE%97%E6%B3%95"><span class="nav-number">1.2.2.1.</span> <span class="nav-text">页面置换算法&#x2F;cache淘汰算法</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%AE%B5%E9%A1%B5%E5%BC%8F"><span class="nav-number">1.2.3.</span> <span class="nav-text">段页式</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%99%9A%E6%8B%9F-CPU"><span class="nav-number">2.</span> <span class="nav-text">虚拟 CPU</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#CPU-%E5%8F%8C%E6%A8%A1%E5%BC%8F"><span class="nav-number">2.1.</span> <span class="nav-text">CPU 双模式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8E%A7%E5%88%B6%E6%9D%83%E8%BD%AC%E7%A7%BB"><span class="nav-number">2.2.</span> <span class="nav-text">控制权转移</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%9B%E7%A8%8B%E8%B0%83%E5%BA%A6"><span class="nav-number">2.3.</span> <span class="nav-text">进程调度</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B0%83%E5%BA%A6%E7%AD%96%E7%95%A5%E7%9B%B8%E5%85%B3%E6%A6%82%E5%BF%B5"><span class="nav-number">2.3.1.</span> <span class="nav-text">调度策略相关概念</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B0%83%E5%BA%A6%E6%8C%87%E6%A0%87"><span class="nav-number">2.3.2.</span> <span class="nav-text">调度指标</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%9B%E7%A8%8B%E8%B0%83%E5%BA%A6%E7%AE%97%E6%B3%95"><span class="nav-number">2.3.3.</span> <span class="nav-text">进程调度算法</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%89%B9%E5%A4%84%E7%90%86%E7%B3%BB%E7%BB%9F"><span class="nav-number">2.3.3.1.</span> <span class="nav-text">批处理系统</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BA%A4%E4%BA%92%E5%BC%8F%E7%B3%BB%E7%BB%9F"><span class="nav-number">2.3.3.2.</span> <span class="nav-text">交互式系统</span></a></li></ol></li></ol></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -696,7 +713,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">15</span>
+          <span class="site-state-item-count">16</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -797,6 +814,35 @@
   
 
   
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'bj1pUPUVv7CB9DzNJpPiyH5u-gzGzoHsz',
+      appKey     : 'RQWkhgEzgN0MjSY1E3rSiuJc',
+      placeholder: "Just go go",
+      avatar     : 'mm',
+      meta       : guest,
+      pageSize   : '9' || 10,
+      visitor    : false,
+      lang       : 'zh-cn' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
 
 </body>
 </html>
