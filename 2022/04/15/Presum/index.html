@@ -21,19 +21,19 @@
     var CONFIG = {"hostname":"example.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":true},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta name="description" content="Redis 是一个 Key-Value 类型的内存数据库  纯内存操作，读写性能极高。但容量也受到内存大小的限制 支持数据持久化 数据结构丰富。string、list、hash、set、zset、bitmap 支持多种集群方式。 支持事务">
+  <meta name="description" content="前缀和可以用来解决连续子数组问题，经常与哈希表配合，进行一遍扫描，希望在扫描到当前位置 x 时，获得以 x 为右端点的子数组结果，左端点可以通过查找哈希表找到。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Redis">
-<meta property="og:url" content="http://example.com/2022/04/05/Redis/index.html">
+<meta property="og:title" content="前缀和">
+<meta property="og:url" content="http://example.com/2022/04/15/Presum/index.html">
 <meta property="og:site_name" content="缘溪行">
-<meta property="og:description" content="Redis 是一个 Key-Value 类型的内存数据库  纯内存操作，读写性能极高。但容量也受到内存大小的限制 支持数据持久化 数据结构丰富。string、list、hash、set、zset、bitmap 支持多种集群方式。 支持事务">
+<meta property="og:description" content="前缀和可以用来解决连续子数组问题，经常与哈希表配合，进行一遍扫描，希望在扫描到当前位置 x 时，获得以 x 为右端点的子数组结果，左端点可以通过查找哈希表找到。">
 <meta property="og:locale" content="zh_CN">
-<meta property="article:published_time" content="2022-04-05T02:22:51.000Z">
-<meta property="article:modified_time" content="2022-04-11T06:42:20.678Z">
+<meta property="article:published_time" content="2022-04-15T06:06:40.000Z">
+<meta property="article:modified_time" content="2022-04-16T10:58:04.214Z">
 <meta property="article:author" content="Cyl">
 <meta name="twitter:card" content="summary">
 
-<link rel="canonical" href="http://example.com/2022/04/05/Redis/">
+<link rel="canonical" href="http://example.com/2022/04/15/Presum/">
 
 
 <script id="page-configurations">
@@ -46,7 +46,7 @@
   };
 </script>
 
-  <title>Redis | 缘溪行</title>
+  <title>前缀和 | 缘溪行</title>
   
 
 
@@ -184,7 +184,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://example.com/2022/04/05/Redis/">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/04/15/Presum/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/icon1.jpg">
@@ -197,7 +197,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          Redis
+          前缀和
         </h1>
 
         <div class="post-meta">
@@ -207,14 +207,14 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2022-04-05 10:22:51" itemprop="dateCreated datePublished" datetime="2022-04-05T10:22:51+08:00">2022-04-05</time>
+              <time title="创建时间：2022-04-15 14:06:40" itemprop="dateCreated datePublished" datetime="2022-04-15T14:06:40+08:00">2022-04-15</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-04-11 14:42:20" itemprop="dateModified" datetime="2022-04-11T14:42:20+08:00">2022-04-11</time>
+                <time title="修改时间：2022-04-16 18:58:04" itemprop="dateModified" datetime="2022-04-16T18:58:04+08:00">2022-04-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -222,7 +222,7 @@
               </span>
               <span class="post-meta-item-text">分类于</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/" itemprop="url" rel="index"><span itemprop="name">数据库</span></a>
+                  <a href="/categories/%E7%AE%97%E6%B3%95/" itemprop="url" rel="index"><span itemprop="name">算法</span></a>
                 </span>
             </span>
 
@@ -235,8 +235,8 @@
       </span>
       <span class="post-meta-item-text">Valine：</span>
     
-    <a title="valine" href="/2022/04/05/Redis/#valine-comments" itemprop="discussionUrl">
-      <span class="post-comments-count valine-comment-count" data-xid="/2022/04/05/Redis/" itemprop="commentCount"></span>
+    <a title="valine" href="/2022/04/15/Presum/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2022/04/15/Presum/" itemprop="commentCount"></span>
     </a>
   </span>
   
@@ -251,51 +251,42 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>Redis 是一个 Key-Value 类型的内存数据库</p>
-<ul>
-<li>纯内存操作，读写性能极高。但容量也受到内存大小的限制</li>
-<li>支持数据持久化</li>
-<li>数据结构丰富。string、list、hash、set、zset、bitmap</li>
-<li>支持多种集群方式。</li>
-<li>支持事务</li>
-</ul>
+        <p>前缀和可以用来解决连续子数组问题，经常与哈希表配合，进行一遍扫描，希望在扫描到当前位置 x 时，获得以 x 为右端点的子数组结果，左端点可以通过查找哈希表找到。</p>
 <span id="more"></span>
-
-<p>为什么要用缓存</p>
-<p>从高并发上来说：直接操作缓存能够承受的请求（QPS）是远远大于直接访问数据库的</p>
-<p>从高性能上来说：用户第一次访问数据库中的某些数据。因为是从硬盘上读取的所以这个过程会比较慢。将该用户访问的数据存在缓存中，下一次再访问这些数据的时候就可以直接从缓存中获取了。操作缓存就是直接操作内存，所以速度相当快。</p>
-<p>使用缓存的问题：数据库和缓存的一致性问题。</p>
-<p>写 ：先更新 DB，然后直接删除 cache 。</p>
-<p>理论上可能会出现数据不一致的问题，不过概率非常小，因为缓存的写入速度比数据库的写入速度快很多。</p>
-<p>先更新 DB，再删除 cache，则数据不一致的的持续时间就是删除 cache 花费的时间，很短</p>
-<p>先删除缓存，再改 DB，则数据不一致的的持续时间就是改 DB 的时间，较长，可能由于并发事务带来数据不一致的问题</p>
-<p>Redis 除了做缓存，还能做什么？</p>
+<p><strong>基本问题</strong></p>
+<p>对于一个数组 nums，求出所有满足和为 target 的连续子数组，连续子数组用 (左端点索引，右端点索引) 表示。</p>
+<p>用前缀和 + 哈希表进行求解。</p>
+<p>前缀和：起点为 nums[0] </p>
+<p>哈希表：以前缀和为键，前缀和终点的索引作为值。由于可能有多个前缀和相同，因此用 List\<Integer> 存放值。</Integer></p>
+<p>求解过程：</p>
 <ul>
-<li><p>业务场景 ：比如通过 bitmap 统计活跃用户、通过 sorted set 维护排行榜。</p>
-</li>
-<li><p>限流 ：一般是通过 Redis + Lua 脚本的方式来实现限流。虽然 redis 官方没有直接提供限流相应的API，但却支持了 Lua 脚本的功能，可以使用它实现令牌桶或漏桶算法。</p>
-<blockquote>
-<p>令牌桶<br>系统会维护一个令牌（token）桶，以一个恒定的速度往桶里放入令牌（token），这时如果有请求进来想要被处理，则需要先从桶里获取一个令牌（token）<br>漏桶<br>把水比作是请求，漏桶比作是系统处理能力极限，限制流入水的速率 &lt;&#x3D; 漏水的速率。</p>
-</blockquote>
-<blockquote>
-<p>相比Redis事务，Lua脚本的优点：</p>
+<li>遍历 nums，并维护从 nums[0] 到 nums[curidx] 的前缀和 preSum_curidx</li>
+<li>在哈希表中查找是否有 key = target - preSum_curidx 的键值对，如果有，遍历 key 对应的 List，以 List 的元素作为左端点，curidx 作为右端点，表示我们找到了一个连续子数组</li>
+<li>将 (preSum_curidx, curidx) 加入哈希表中</li>
+</ul>
+<p>给定一个二进制数组 nums , 找到含有相同数量的 0 和 1 的最长连续子数组，并返回该子数组的长度。</p>
+<p>前缀和：起点为 nums[0]，记录 preSum0 和 preSum1，表示从 nums[0] 到当前位置的 0 的个数和 1 的个数</p>
+<p>分析：</p>
+<p>设当前位置为 j，需要找的 i 满足：</p>
+<script type="math/tex; mode=display">
+preSum0_{j}-preSum0_{i}=preSum1_{j}-preSum1_{i}</script><p>将相同下标的前缀和移到一边：</p>
+<script type="math/tex; mode=display">
+preSum1_{j}-preSum0_{j}=preSum0_{j}-preSum1_{j}</script><p>因此，令哈希表的键为 preSum0 - preSum1，而哈希表的值不需要用 List\<Integer> 存放，这是因为虽然可能有多个位置的 preSum0 - preSum1 相等，但是题目要求的是最长连续子数组，也就是说，当有多个位置的 preSum0 - preSum1 相等，我们只需要第一次加入哈希表的那个端点，它一定是这些位置中最靠左的那个。</Integer></p>
+<p>在扫描到 j 时，只需要以当前的 preSum0 - preSum1 为键查找哈希表即可。</p>
+<p>注意到哈希表一开始添加了 (0, -1) 键值对。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Solution</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="type">int</span> <span class="title function_">findMaxLength</span><span class="params">(<span class="type">int</span>[] nums)</span> &#123;</span><br><span class="line">        <span class="type">int</span> <span class="variable">preSum0</span> <span class="operator">=</span> <span class="number">0</span>, preSum1 = <span class="number">0</span>;</span><br><span class="line">        HashMap&lt;Integer, Integer&gt; map = <span class="keyword">new</span> <span class="title class_">HashMap</span>&lt;&gt;(); </span><br><span class="line">        <span class="type">int</span> <span class="variable">ret</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line">        map.put(<span class="number">0</span>, -<span class="number">1</span>); <span class="comment">// 注意判断的是(i,j]子数组，左开右闭</span></span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;nums.length;++i)&#123;</span><br><span class="line">            <span class="keyword">if</span>(nums[i] == <span class="number">0</span>) ++preSum0;</span><br><span class="line">            <span class="keyword">else</span> ++preSum1;</span><br><span class="line"></span><br><span class="line">            <span class="type">int</span> <span class="variable">tmpkey</span> <span class="operator">=</span> preSum0 - preSum1;</span><br><span class="line">            <span class="keyword">if</span>(map.containsKey(tmpkey))&#123;</span><br><span class="line">                ret = Math.max(ret, i-map.get(tmpkey));</span><br><span class="line">                <span class="keyword">continue</span>; <span class="comment">// 后put的key-value 会覆盖之前已经put的。不put，留最前面那个即可</span></span><br><span class="line">            &#125; </span><br><span class="line">            <span class="keyword">else</span> map.put(tmpkey, i); </span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> ret;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>差分数组</p>
+<p>差分数组的第 i 个数是原数组的第 i-1 个元素和第 i 个元素的差值，对于数组 [1,2,2,4]，其差分数组为 [1,1,0,2]。</p>
+<p>差分数组的性质：</p>
 <ul>
-<li>减少网络开销：使用 Lua 脚本，无需向 Redis 发送多次请求，执行一次即可，减少网络传输</li>
-<li>原子操作：Redis 将整个 Lua 脚本作为一个命令执行，原子，无需担心并发，经常用来执行事务，而不使用 redis 本身的事务功能</li>
-<li>复用：Lua 脚本一旦执行，会永久保存 Redis 中,，其他客户端可复用</li>
+<li>差分数组的前缀和数组是原数组</li>
+<li>对原数组的某一个区间 [l, r] 的每个元素施加一个增量 inc，即差分数组的前缀和数组的 [l, r] 元素增加了 inc，而这可以等效为：差分数组 d，令 d[l] 增加 inc，d[r+1] 减少 inc</li>
 </ul>
+<p>根据性质 2，把对于区间内多个元素的修改变为对于差分数组两个元素的修改（前者是需要遍历的），当我们完成了差分数组的修改，再根据性质 1，求出差分数组的前缀和数组即可修改后的目标数组</p>
+<blockquote>
+<p>相关题目</p>
+<p><a target="_blank" rel="noopener" href="https://leetcode-cn.com/problems/corporate-flight-bookings/">1109. 航班预订统计</a></p>
 </blockquote>
-</li>
-<li><p>分布式锁：通常情况下，基于 Redisson 来实现分布式锁。</p>
-</li>
-</ul>
-<p>采用 I&#x2F;O 多路复用机制处理大量客户端的 Socket 请求，这是基于非阻塞的 I&#x2F;O 模型。</p>
-<p>Redis 没有 IO 阻塞操作，因此设计成了单线程。（抛弃了并发的效率）。Redis 的效率主要与两个因素有关：</p>
-<p>其一是机器内存大小，内存大小关系到 Redis 存储的数据量；</p>
-<p>其二是网络带宽。</p>
-<p>Redis 客户端执行一条命令分为四个过程：发送命令、命令排队、命令执行、返回结果。从发送命令到收到返回的结果，这段时间被称为 Round Trip Time（RTT，往返时间）</p>
-<p>Redis 的客户端和服务端可能部署在不同的机器上。例如客户端在北京，Redis 服务端在上海，两地直线距离约为1300 公里，那么 1 次 RTT &#x3D;1300×2&#x2F;（300000×2&#x2F;3）&#x3D;13毫秒（光在真空中传输速度为每秒30万公里，这里假设光纤为光速的2&#x2F;3），那么客户端在 1 秒内大约只能执行 80 次左右的命令，这就和 Redis 的高并发高吞吐特性背道而驰啦！所以一般情况下，都是就近部署！</p>
-<p>Redis6.0 之后引入了多线程，目的是为了提高网络 IO 读写性能。随着互联网的飞速发展，互联网业务系统所要处理的线上流量越来越大，Redis 的单线程模式会导致系统消耗很多 CPU 时间在网络 I&#x2F;O 上从而降低吞吐量。（虽然不会阻塞，但占用大量 CPU 时间）。因此，在网络数据的读写操作上使用多线程，提高网络 IO 读写性能，但执行命令仍然是单线程顺序执行。</p>
 
     </div>
 
@@ -311,13 +302,10 @@
         
     <div class="post-nav">
       <div class="post-nav-item">
-    <a href="/2022/04/04/JVM/" rel="prev" title="JVM">
-      <i class="fa fa-chevron-left"></i> JVM
+    <a href="/2022/04/14/random-number-question/" rel="prev" title="随机数问题">
+      <i class="fa fa-chevron-left"></i> 随机数问题
     </a></div>
-      <div class="post-nav-item">
-    <a href="/2022/04/05/DesignMode/" rel="next" title="设计模式">
-      设计模式 <i class="fa fa-chevron-right"></i>
-    </a></div>
+      <div class="post-nav-item"></div>
     </div>
       </footer>
     

@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.1.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.loli.net/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":true},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="生成离散均匀分布的随机数的方法、打乱数组和随机抽样">
+<meta property="og:type" content="article">
+<meta property="og:title" content="随机数问题">
+<meta property="og:url" content="http://example.com/2022/04/14/random-number-question/index.html">
+<meta property="og:site_name" content="缘溪行">
+<meta property="og:description" content="生成离散均匀分布的随机数的方法、打乱数组和随机抽样">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2022/04/14/random-number-question/image-20220414214209781.png">
+<meta property="og:image" content="http://example.com/2022/04/14/random-number-question/image-20220414215914112.png">
+<meta property="og:image" content="http://example.com/2022/04/14/random-number-question/image-20220414222453324.png">
+<meta property="article:published_time" content="2022-04-14T13:18:18.000Z">
+<meta property="article:modified_time" content="2022-04-15T03:24:56.448Z">
+<meta property="article:author" content="Cyl">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/2022/04/14/random-number-question/image-20220414214209781.png">
+
+<link rel="canonical" href="http://example.com/2022/04/14/random-number-question/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>随机数问题 | 缘溪行</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">缘溪行</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">5</span></a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">18</span></a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/04/14/random-number-question/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/icon1.jpg">
+      <meta itemprop="name" content="Cyl">
+      <meta itemprop="description" content="顽童大了别那么笨">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="缘溪行">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          随机数问题
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-04-14 21:18:18" itemprop="dateCreated datePublished" datetime="2022-04-14T21:18:18+08:00">2022-04-14</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-04-15 11:24:56" itemprop="dateModified" datetime="2022-04-15T11:24:56+08:00">2022-04-15</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%AE%97%E6%B3%95/" itemprop="url" rel="index"><span itemprop="name">算法</span></a>
+                </span>
+            </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2022/04/14/random-number-question/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2022/04/14/random-number-question/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>生成离散均匀分布的随机数的方法、打乱数组和随机抽样</p>
+<span id="more"></span>
+<h1 id="随机数的生成"><a href="#随机数的生成" class="headerlink" title="随机数的生成"></a>随机数的生成</h1><p>定义 rand(N) ：生成 [1,N] 的均匀随机整数</p>
+<p>性质：</p>
+<ol>
+<li><p>rand(N) + x 可生成 [1+x, N+x] 的均匀随机整数。要实现 0 ~ 6 随机器，只需要在 rand7() 的返回值上进行 -1 操作即可。</p>
+<p> 注意 rand(N) + x ≠ rand(N+x)，因为起点不是 1</p>
+</li>
+<li><p>rand(N+x) ≠ rand(N) + rand(x)。</p>
+<p> rand(7) + rand(7) 会产生 [2, 14] 范围内的数，但每个数并非等概率：</p>
+<ul>
+<li>产生2的概率为：1/7 * 1/7，即两个离散均匀分布同时输出 1</li>
+<li>产生4的概率为：1/7 <em> 1/7 + 1/7 </em> 1/7 + 1/7 * 1/7</li>
+</ul>
+</li>
+<li><p>rand(N<em>N) = (randN() - 1) </em> N + (randN() - 1)，这里的 rand(N<em>N) 表示 [0, N\</em>N-1] 的离散均匀分布。</p>
+</li>
+</ol>
+<p>生成的数不等概率的原因在于：两次随机值的不同组合「相加」的会出现相同的结果.鉴于此，可以从另一个角度看两次随机值对应的结果，即x、y对应一个进制数(xy)7，在这里是七进制数，而非看作x+y。也就是说1、1对应117，而非1+1=2.</p>
+<p>进一步地，为了统一进制数为通用形式，即每个位的范围是0~6，而非1~7，可以先将rand7()做减一操作。如果不做此操作，那么两位七进制数就是117到777，起始数是8</p>
+<p>最终，由于rand7()输出的是1 到 7 范围内的均匀随机整数，为了调整输出值为7进制数，则令输出为：(rand7() - 1) * 7 + (rand7() - 1)，两个加数分别表示七进制数的第1位和第0位。对应一个007到667（即十进制数0~48）的离散均匀分布.容易利用加法性质进行偏移。</p>
+<p>也就是说，求两次rand7，并且把两次的结果表示为一个7进制数。生成的7进制数是均匀随机的</p>
+<h2 id="拒绝采样"><a href="#拒绝采样" class="headerlink" title="拒绝采样"></a>拒绝采样</h2><p>拒绝采样可以由 rand(N) 得到 rand(M)，M &lt; N。在拒绝采样中，如果生成的随机数满足要求，那么就返回该随机数，否则会不断生成，直到生成一个满足要求的随机数为止。</p>
+<p>例如，用 rand10 进行拒绝采样，可得到 rand7</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">rand7</span><span class="params">()</span>&#123;</span><br><span class="line">    <span class="keyword">while</span>(<span class="literal">true</span>)&#123;</span><br><span class="line">        <span class="type">int</span> <span class="variable">ans</span> <span class="operator">=</span> rand10();</span><br><span class="line">        <span class="keyword">if</span>(ans &gt;= <span class="number">1</span> &amp;&amp; ans &lt;= <span class="number">7</span>) <span class="keyword">return</span> ans;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>输出 1~7 中任意数字的概率为：</p>
+<p><img src="/2022/04/14/random-number-question/image-20220414214209781.png" alt></p>
+<p>实际上，根据上述证明过程，我们可以利用拒绝采样生成 [1, 10] 区间内的整数构成的所有子集的离散均匀分布。但是，通常只有 1~x 的离散均匀分布是有意义的。</p>
+<p>来看另一个例子，用 Rand49() 实现 Rand10()</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 法1</span></span><br><span class="line"><span class="type">int</span> <span class="title function_">rand10</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">        <span class="type">int</span> <span class="variable">ans</span> <span class="operator">=</span> rand49(); <span class="comment">// 进制转换</span></span><br><span class="line">        <span class="keyword">if</span> (<span class="number">1</span> &lt;= ans &amp;&amp; ans &lt;= <span class="number">40</span>) <span class="keyword">return</span> ans % <span class="number">10</span> + <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 法2</span></span><br><span class="line"><span class="type">int</span> <span class="title function_">rand10</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">        <span class="type">int</span> <span class="variable">ans</span> <span class="operator">=</span> rand49(); </span><br><span class="line">        <span class="keyword">if</span> (<span class="number">1</span> &lt;= ans &amp;&amp; ans &lt;= <span class="number">10</span>) <span class="keyword">return</span> ans;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>两种拒绝采样方式都是可以的，但是法 1 的效率更高，因为对于 rand49() 的绝大多数输出，都能得到一个有效的返回值，减少了 rand49() 的执行次数。</p>
+<p>法1 的正确性同样可以通过求概率的方式证明。</p>
+<h1 id="打乱数组"><a href="#打乱数组" class="headerlink" title="打乱数组"></a>打乱数组</h1><h2 id="基本方法"><a href="#基本方法" class="headerlink" title="基本方法"></a>基本方法</h2><p>如何随机打乱一个数组？不妨设数组 nums，其长度为 n。我们可以使用如下方法打乱：</p>
+<ul>
+<li>将数组中所有的数都放到数据结构 waiting 中，并初始化打乱后的数组 shuffle；</li>
+<li>从 0 开始顺序遍历 shuffle 的所有位置并填入数字，在第 i 次遍历中<ul>
+<li>从 waiting 中随机等概率抽取一个数 num，将其作为 shuffle 的第 i 个元素</li>
+<li>从 waiting 中移除 num</li>
+</ul>
+</li>
+</ul>
+<h3 id="合理性证明"><a href="#合理性证明" class="headerlink" title="合理性证明"></a>合理性证明</h3><p>证明：对于原数组 nums 中的任意一个数字来说，被移动到打乱后的数组的第 i 个位置的概率为：</p>
+<p><img src="/2022/04/14/random-number-question/image-20220414215914112.png" style="zoom:150%;"></p>
+<p>也即 nums 中的任意一个数字在第 i 次被抽到的概率。/n</p>
+<p>因此，对于原数组 nums 中的任意一个数，被移动到打乱后的数组的任意一个位置的概率都是相同的，都是 1/n。</p>
+<p>从排列的角度：把所有排列（n! 种）存起来，等概率抽取一个作为 shuffle 数组。</p>
+<h3 id="实现方式"><a href="#实现方式" class="headerlink" title="实现方式"></a>实现方式</h3><p>主要需要实现的功能：</p>
+<ul>
+<li>从 waiting 中随机等概率抽取一个数 num</li>
+<li>从 waiting 中删除 num</li>
+</ul>
+<p>对于任意一个线性数据结构，例如对于数组 A，从中随机等概率抽取一个数的方法是：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">Random</span> <span class="variable">random</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Random</span>();</span><br><span class="line"><span class="type">int</span> <span class="variable">picked</span> <span class="operator">=</span> random.nextInt(A.length); <span class="comment">// 随机等概率生成 [0, A.length-1] 的数字</span></span><br><span class="line"><span class="type">int</span> <span class="variable">num</span> <span class="operator">=</span> A[picked]</span><br></pre></td></tr></table></figure>
+<p>为了方便删除元素，可以选用 List 而非数组作为 waiting 的数据结构。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> (<span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> <span class="number">0</span>; i &lt; nums.length; ++i) &#123;</span><br><span class="line">    <span class="type">int</span> <span class="variable">picked</span> <span class="operator">=</span> random.nextInt(list.size());</span><br><span class="line">    shuffled[i] = list.remove(picked);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>性能分析：</p>
+<p>List 的删除操作与数组的删除操作相比，时间复杂度都是 O(N)，只不过 List 已经封装好，调用 remove() 即可。如果这里要使用数组的话，也是可以的，每次将剩下的数都往 0 方向连续排列，并维护剩余数字的数量即可。</p>
+<p>优化 waiting 的更新操作：</p>
+<ul>
+<li>为了改进删除操作，类似 LRU 的想法，可以用链表存储数字，用一个变量维护链表长度，用 HashMap 保存 (数字 num，链表中的对应结点)，调用 Java 中双向链表的 remove() 方法即可。实现过程需要注意重复数字的情况，这种情况下，键值对应该改为 (数字，结点集合)</li>
+<li>上面的方法存储的是剩余的数集，而下面提到的无放回抽样的想法是存储剩余的坐标。相比之下，无放回抽样介绍的方法实现起来更加简单。</li>
+</ul>
+<h2 id="洗牌算法"><a href="#洗牌算法" class="headerlink" title="洗牌算法"></a>洗牌算法</h2><p>不需要使用额外的空间存储 shuffle 数组。</p>
+<p>设指针 x，维护 nums[0:x-1] 为打乱后的结果，nums[x:n-1] 为剩余数字：</p>
+<p>对于下标 x 而言，我们从 [x,n−1] 中随机出一个位置与 x 进行值交换，当所有位置都进行这样的处理后，我们便得到了一个公平的洗牌方案。</p>
+<h1 id="随机抽样"><a href="#随机抽样" class="headerlink" title="随机抽样"></a>随机抽样</h1><p>分为无放回抽样和有放回抽样。</p>
+<p>对于线性数据结构随机抽取的方法，适用于链表、数组等。</p>
+<h2 id="有放回抽样-水塘抽样法"><a href="#有放回抽样-水塘抽样法" class="headerlink" title="有放回抽样-水塘抽样法"></a>有放回抽样-水塘抽样法</h2><p>从 n 个样本中抽取一个样本，然后放回，要求每个样本被抽到的概率相等，即为 1/n。</p>
+<p>从 nums[0] 开始，遍历整个数组，对遍历到的 nums[i]，随机选择区间 [0,i) 内的一个整数，如果其等于 0，则将抽样值记为 nums[i]，否则抽样值不变。</p>
+<p>之前如果设置了 ans ，现在又得到0，不影响。只与后面是否又得到0有关</p>
+<p>假设最终成为答案的样本编号为 i，那么 i 成为答案的充要条件为「在遍历到 i 时被选中」并且「遍历大于 i 的所有元素时，均没有被选择」，因此 nums[i] 作为最终抽样值的概率为：</p>
+<p><img src="/2022/04/14/random-number-question/image-20220414222453324.png" style="zoom:130%;"></p>
+<p>0~i-1 位置的元素即便被选中过，也不会影响这个概率计算式。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Solution</span> &#123;</span><br><span class="line">    ListNode head;</span><br><span class="line">    <span class="type">Random</span> <span class="variable">random</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Random</span>(<span class="number">20220116</span>);</span><br><span class="line">    <span class="keyword">public</span> <span class="title function_">Solution</span><span class="params">(ListNode _head)</span> &#123;</span><br><span class="line">        head = _head;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">public</span> <span class="type">int</span> <span class="title function_">getRandom</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="type">int</span> <span class="variable">ans</span> <span class="operator">=</span> <span class="number">0</span>, idx = <span class="number">0</span>;</span><br><span class="line">        <span class="type">ListNode</span> <span class="variable">t</span> <span class="operator">=</span> head;</span><br><span class="line">        <span class="keyword">while</span> (t != <span class="literal">null</span> &amp;&amp; ++idx &gt;= <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="keyword">if</span> (random.nextInt(idx) == <span class="number">0</span>) ans = t.val;</span><br><span class="line">            t = t.next;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> ans;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>相关题目：<a href="[382. 链表随机节点 - 力扣（LeetCode） (leetcode-cn.com">链表随机节点</a>](<a target="_blank" rel="noopener" href="https://leetcode-cn.com/problems/linked-list-random-node/">https://leetcode-cn.com/problems/linked-list-random-node/</a>))</p>
+</blockquote>
+<p>如果是从二维数组中抽取，也是可以的，二维遍历即可，循环体不需要改变。</p>
+<h2 id="无放回抽样"><a href="#无放回抽样" class="headerlink" title="无放回抽样"></a>无放回抽样</h2><p>从 n 个样本中抽取一个样本，不放回，要求每次抽取是等概率抽取。</p>
+<p>基于有放回抽样，关键在于维护剩余的元素连续存放。</p>
+<p><strong>分析：</strong></p>
+<p>对于一个一维数组 nums 进行无放回抽样，nums 长度为 n。nums 所有元素初值为 0，表示未被抽取，若 nums[i] 被抽取，置 nums[i] 为 1，表示它已经被取出。</p>
+<p>设已经进行了 k 次抽样，则数组中有 n<em>−</em>k 个 1 和 k 个 0。我们不能够改变数组元素的位置，但又需要让剩余的还没被抽到的元素连续存放。因此，可以建立 map：</p>
+<ul>
+<li>性质：map[0:k-1] 存储 nums 中剩余元素的下标，即值为 0 的元素的下标；map[k:n-1] 存储 nums 中值为 1 的元素的下标</li>
+<li>抽样：当我们进行下一次翻转操作时，我们只需要在 [0, k-1) 这个区间生成随机数 x，并将 map[x] 映射到的矩阵的位置进行翻转即可。</li>
+</ul>
+<p>每次将 map[x] 进行翻转后，需要维护 map 的性质不变：</p>
+<p>在将 map[x] 进行翻转后，此时矩阵中有 k−1 个 0，所以我们需要保证 map[0..k−2] 都映射到矩阵中的 0。由于此时 map[x] 映射到了矩阵中的 1，map[k−1] 仍旧映射到矩阵中的 0，因此我们可以将 map[x] 与 map[k−1] 的值进行交换。</p>
+<p>实际上，我们只关心 map[x] 被交换后的值，因此，可以不需要交换操作：</p>
+<ul>
+<li>只需要用 map[k-1] 将 map[x] 覆盖</li>
+<li>然后需要额外的变量 k，表示剩余为 0 的个数，执行覆盖操作后让 k 自减即可</li>
+</ul>
+<p>以下实现方式并不显式地创建 map，而是用哈希表记录 map[0:k-1] 中被改变的坐标。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Solution</span> &#123;</span><br><span class="line">    Map&lt;Integer, Integer&gt; map = <span class="keyword">new</span> <span class="title class_">HashMap</span>&lt;&gt;();</span><br><span class="line">    <span class="type">int</span> n, total; <span class="comment">// total 表示剩余为 0 的个数</span></span><br><span class="line">    <span class="type">Random</span> <span class="variable">rand</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Random</span>();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="title function_">Solution</span><span class="params">(<span class="type">int</span> m, <span class="type">int</span> n)</span> &#123;</span><br><span class="line">        <span class="built_in">this</span>.n = n;</span><br><span class="line">        <span class="built_in">this</span>.total = n;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">public</span> <span class="type">int</span>[] flip() &#123;</span><br><span class="line">        <span class="type">int</span> <span class="variable">x</span> <span class="operator">=</span> rand.nextInt(total);</span><br><span class="line">        total--;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 查找位置 x 对应的映射</span></span><br><span class="line">        <span class="type">int</span> <span class="variable">idx</span> <span class="operator">=</span> map.getOrDefault(x, x);</span><br><span class="line">        <span class="comment">// 将位置 x 对应的映射设置为位置 total 对应的映射（即用边界的坐标覆盖 map[x]）</span></span><br><span class="line">        map.put(x, map.getOrDefault(total, total));</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> idx; </span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>相关题目：<a href="[519. 随机翻转矩阵 - 力扣（LeetCode） (leetcode-cn.com">随机翻转矩阵</a>](<a target="_blank" rel="noopener" href="https://leetcode-cn.com/problems/random-flip-matrix/">https://leetcode-cn.com/problems/random-flip-matrix/</a>))</p>
+</blockquote>
+<p>如果是从二维数组中抽取，也是可以的，将二维坐标 (i, j) 等效为一维坐标 i*n+j 即可。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/04/14/Create-Data-Structure-class/" rel="prev" title="创建数据结构类">
+      <i class="fa fa-chevron-left"></i> 创建数据结构类
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2022/04/15/Presum/" rel="next" title="前缀和">
+      前缀和 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%9A%8F%E6%9C%BA%E6%95%B0%E7%9A%84%E7%94%9F%E6%88%90"><span class="nav-number">1.</span> <span class="nav-text">随机数的生成</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8B%92%E7%BB%9D%E9%87%87%E6%A0%B7"><span class="nav-number">1.1.</span> <span class="nav-text">拒绝采样</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%89%93%E4%B9%B1%E6%95%B0%E7%BB%84"><span class="nav-number">2.</span> <span class="nav-text">打乱数组</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%BA%E6%9C%AC%E6%96%B9%E6%B3%95"><span class="nav-number">2.1.</span> <span class="nav-text">基本方法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%90%88%E7%90%86%E6%80%A7%E8%AF%81%E6%98%8E"><span class="nav-number">2.1.1.</span> <span class="nav-text">合理性证明</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0%E6%96%B9%E5%BC%8F"><span class="nav-number">2.1.2.</span> <span class="nav-text">实现方式</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B4%97%E7%89%8C%E7%AE%97%E6%B3%95"><span class="nav-number">2.2.</span> <span class="nav-text">洗牌算法</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%9A%8F%E6%9C%BA%E6%8A%BD%E6%A0%B7"><span class="nav-number">3.</span> <span class="nav-text">随机抽样</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%89%E6%94%BE%E5%9B%9E%E6%8A%BD%E6%A0%B7-%E6%B0%B4%E5%A1%98%E6%8A%BD%E6%A0%B7%E6%B3%95"><span class="nav-number">3.1.</span> <span class="nav-text">有放回抽样-水塘抽样法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%97%A0%E6%94%BE%E5%9B%9E%E6%8A%BD%E6%A0%B7"><span class="nav-number">3.2.</span> <span class="nav-text">无放回抽样</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Cyl"
+      src="/images/icon1.jpg">
+  <p class="site-author-name" itemprop="name">Cyl</p>
+  <div class="site-description" itemprop="description">顽童大了别那么笨</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">18</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Cyl</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+  <script defer src="/lib/three/three.min.js"></script>
+    <script defer src="/lib/three/three-waves.min.js"></script>
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'bj1pUPUVv7CB9DzNJpPiyH5u-gzGzoHsz',
+      appKey     : 'RQWkhgEzgN0MjSY1E3rSiuJc',
+      placeholder: "Just go go",
+      avatar     : 'mm',
+      meta       : guest,
+      pageSize   : '9' || 10,
+      visitor    : false,
+      lang       : 'zh-cn' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>
