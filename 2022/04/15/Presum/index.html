@@ -21,15 +21,15 @@
     var CONFIG = {"hostname":"example.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":true},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta name="description" content="前缀和可以用来解决连续子数组问题，经常与哈希表配合，进行一遍扫描，希望在扫描到当前位置 x 时，获得以 x 为右端点的子数组结果，左端点可以通过查找哈希表找到。">
+  <meta name="description" content="前缀和可以用来解决连续子数组问题，经常与哈希表配合，进行一遍扫描，希望在扫描到当前位置 x 时，获得以 x 为右端点的子数组结果，左端点可以通过查找哈希表找到。 需要注意，配合哈希表使用的时候，经常要先添加一些基本的键值对，保证解的充分性。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="前缀和">
 <meta property="og:url" content="http://example.com/2022/04/15/Presum/index.html">
 <meta property="og:site_name" content="缘溪行">
-<meta property="og:description" content="前缀和可以用来解决连续子数组问题，经常与哈希表配合，进行一遍扫描，希望在扫描到当前位置 x 时，获得以 x 为右端点的子数组结果，左端点可以通过查找哈希表找到。">
+<meta property="og:description" content="前缀和可以用来解决连续子数组问题，经常与哈希表配合，进行一遍扫描，希望在扫描到当前位置 x 时，获得以 x 为右端点的子数组结果，左端点可以通过查找哈希表找到。 需要注意，配合哈希表使用的时候，经常要先添加一些基本的键值对，保证解的充分性。">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2022-04-15T06:06:40.000Z">
-<meta property="article:modified_time" content="2022-04-16T10:58:04.214Z">
+<meta property="article:modified_time" content="2022-04-18T03:21:52.569Z">
 <meta property="article:author" content="Cyl">
 <meta name="twitter:card" content="summary">
 
@@ -126,7 +126,7 @@
   </li>
         <li class="menu-item menu-item-archives">
 
-    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">18</span></a>
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">19</span></a>
 
   </li>
       <li class="menu-item menu-item-search">
@@ -214,7 +214,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-04-16 18:58:04" itemprop="dateModified" datetime="2022-04-16T18:58:04+08:00">2022-04-16</time>
+                <time title="修改时间：2022-04-18 11:21:52" itemprop="dateModified" datetime="2022-04-18T11:21:52+08:00">2022-04-18</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -252,9 +252,9 @@
 
       
         <p>前缀和可以用来解决连续子数组问题，经常与哈希表配合，进行一遍扫描，希望在扫描到当前位置 x 时，获得以 x 为右端点的子数组结果，左端点可以通过查找哈希表找到。</p>
+<p>需要注意，配合哈希表使用的时候，经常要先添加一些基本的键值对，保证解的充分性。</p>
 <span id="more"></span>
-<p><strong>基本问题</strong></p>
-<p>对于一个数组 nums，求出所有满足和为 target 的连续子数组，连续子数组用 (左端点索引，右端点索引) 表示。</p>
+<h1 id="前缀和与哈希表"><a href="#前缀和与哈希表" class="headerlink" title="前缀和与哈希表"></a>前缀和与哈希表</h1><h2 id="基本问题：连续子数组和为定值"><a href="#基本问题：连续子数组和为定值" class="headerlink" title="基本问题：连续子数组和为定值"></a>基本问题：连续子数组和为定值</h2><p>对于一个数组 nums，求出所有满足和为 target 的连续子数组，连续子数组用 (左端点索引，右端点索引) 表示。</p>
 <p>用前缀和 + 哈希表进行求解。</p>
 <p>前缀和：起点为 nums[0] </p>
 <p>哈希表：以前缀和为键，前缀和终点的索引作为值。由于可能有多个前缀和相同，因此用 List\<Integer> 存放值。</Integer></p>
@@ -264,7 +264,7 @@
 <li>在哈希表中查找是否有 key = target - preSum_curidx 的键值对，如果有，遍历 key 对应的 List，以 List 的元素作为左端点，curidx 作为右端点，表示我们找到了一个连续子数组</li>
 <li>将 (preSum_curidx, curidx) 加入哈希表中</li>
 </ul>
-<p>给定一个二进制数组 nums , 找到含有相同数量的 0 和 1 的最长连续子数组，并返回该子数组的长度。</p>
+<h2 id="525-0-和-1-个数相同的子数组"><a href="#525-0-和-1-个数相同的子数组" class="headerlink" title="525. 0 和 1 个数相同的子数组"></a>525. 0 和 1 个数相同的子数组</h2><p>给定一个二进制数组 nums , 找到含有相同数量的 0 和 1 的最长连续子数组，并返回该子数组的长度。</p>
 <p>前缀和：起点为 nums[0]，记录 preSum0 和 preSum1，表示从 nums[0] 到当前位置的 0 的个数和 1 的个数</p>
 <p>分析：</p>
 <p>设当前位置为 j，需要找的 i 满足：</p>
@@ -275,8 +275,37 @@ preSum1_{j}-preSum0_{j}=preSum0_{j}-preSum1_{j}</script><p>因此，令哈希表
 <p>在扫描到 j 时，只需要以当前的 preSum0 - preSum1 为键查找哈希表即可。</p>
 <p>注意到哈希表一开始添加了 (0, -1) 键值对。</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Solution</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="type">int</span> <span class="title function_">findMaxLength</span><span class="params">(<span class="type">int</span>[] nums)</span> &#123;</span><br><span class="line">        <span class="type">int</span> <span class="variable">preSum0</span> <span class="operator">=</span> <span class="number">0</span>, preSum1 = <span class="number">0</span>;</span><br><span class="line">        HashMap&lt;Integer, Integer&gt; map = <span class="keyword">new</span> <span class="title class_">HashMap</span>&lt;&gt;(); </span><br><span class="line">        <span class="type">int</span> <span class="variable">ret</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line">        map.put(<span class="number">0</span>, -<span class="number">1</span>); <span class="comment">// 注意判断的是(i,j]子数组，左开右闭</span></span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;nums.length;++i)&#123;</span><br><span class="line">            <span class="keyword">if</span>(nums[i] == <span class="number">0</span>) ++preSum0;</span><br><span class="line">            <span class="keyword">else</span> ++preSum1;</span><br><span class="line"></span><br><span class="line">            <span class="type">int</span> <span class="variable">tmpkey</span> <span class="operator">=</span> preSum0 - preSum1;</span><br><span class="line">            <span class="keyword">if</span>(map.containsKey(tmpkey))&#123;</span><br><span class="line">                ret = Math.max(ret, i-map.get(tmpkey));</span><br><span class="line">                <span class="keyword">continue</span>; <span class="comment">// 后put的key-value 会覆盖之前已经put的。不put，留最前面那个即可</span></span><br><span class="line">            &#125; </span><br><span class="line">            <span class="keyword">else</span> map.put(tmpkey, i); </span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> ret;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>差分数组</p>
-<p>差分数组的第 i 个数是原数组的第 i-1 个元素和第 i 个元素的差值，对于数组 [1,2,2,4]，其差分数组为 [1,1,0,2]。</p>
+<h2 id="974-和可被-K-整除的子数组"><a href="#974-和可被-K-整除的子数组" class="headerlink" title="974. 和可被 K 整除的子数组"></a>974. 和可被 K 整除的子数组</h2><p>给定一个整数数组 nums 和一个整数 k（k 不为 0），返回其中元素之和可被 k 整除的（连续、非空） 子数组 的数目。</p>
+<p>前缀和：起点为 nums[0]，记录 preSum，表示从 nums[0] 到当前位置的和</p>
+<p>以下以 % 为模运算符进行分析。</p>
+<blockquote>
+<p>在 Java 中 % 是求余运算，仅当被除数和除数是同号的时候才可以替代求模运算。求模运算需要使用 Math.floorMod(被除数, 除数)</p>
+</blockquote>
+<p>设当前位置为 j，需要找的 i 满足：</p>
+<script type="math/tex; mode=display">
+(preSum_{j}-preSum_{i})\%k==0</script><p>做等价变换，将相同下标的变量移到一边。根据求模运算性质，可以设：</p>
+<script type="math/tex; mode=display">
+\left\{\begin{matrix}
+preSum_{i}=ak+b\\ preSum_{j}=ck+d
+
+\end{matrix}\right.</script><p>则：</p>
+<script type="math/tex; mode=display">
+(preSum_{j}-preSum_{i})=(a-c)k+(b-d)</script><p>于是原式等价于：</p>
+<script type="math/tex; mode=display">
+b==d</script><p>进一步可以写作：</p>
+<script type="math/tex; mode=display">
+preSum_{j}\%k==preSum_{i}\%k</script><p>因此，令哈希表的键为 preSum % k，值为 preSum % k 出现的次数，不需要记录下标（以 List\<Integer>  方式）。当然了，记录下标可以帮助我们得到更完整更有意义的输出结果。</Integer></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="type">int</span> <span class="title function_">subarraysDivByK</span><span class="params">(<span class="type">int</span>[] nums, <span class="type">int</span> k)</span> &#123;</span><br><span class="line">    Map&lt;Integer, Integer&gt; hs = <span class="keyword">new</span> <span class="title class_">HashMap</span>&lt;&gt;();</span><br><span class="line">    <span class="type">int</span> <span class="variable">ans</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="type">int</span> <span class="variable">preSum</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line">    hs.put(<span class="number">0</span>, <span class="number">1</span>); <span class="comment">// 注意需要添加 (0, 1) 键值对，当 preSum % k == 0 时有解</span></span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;nums.length;++i)&#123;</span><br><span class="line">        preSum += nums[i];</span><br><span class="line">        <span class="type">int</span> <span class="variable">val</span> <span class="operator">=</span> Math.floorMod(preSum, k);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span>(hs.containsKey(val))&#123;</span><br><span class="line">            ans += hs.get(val);</span><br><span class="line">            hs.put(val, hs.get(val)+<span class="number">1</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span></span><br><span class="line">            hs.put(val, <span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> ans;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="523-连续的子数组和"><a href="#523-连续的子数组和" class="headerlink" title="523. 连续的子数组和"></a>523. 连续的子数组和</h2><p>给你一个整数数组 nums 和一个整数 k ，编写一个函数来判断该数组是否含有同时满足下述条件的连续子数组：</p>
+<p>子数组大小 至少为 2 ，且</p>
+<ul>
+<li>子数组元素总和为 k 的倍数。</li>
+<li>如果存在，返回 true ；否则，返回 false 。</li>
+</ul>
+<p>与 974 相同，只需要把哈希表存储的值改变为：第一次出现的下标，保证每次看的子数组是最长的。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="type">boolean</span> <span class="title function_">checkSubarraySum</span><span class="params">(<span class="type">int</span>[] nums, <span class="type">int</span> k)</span> &#123;</span><br><span class="line">        Map&lt;Integer, Integer&gt; hs = <span class="keyword">new</span> <span class="title class_">HashMap</span>&lt;&gt;();</span><br><span class="line">        <span class="type">int</span> <span class="variable">preSum</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line">        hs.put(<span class="number">0</span>, -<span class="number">1</span>); <span class="comment">// 注意</span></span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;nums.length;++i)&#123;</span><br><span class="line">            preSum += nums[i];</span><br><span class="line">            <span class="type">int</span> <span class="variable">val</span> <span class="operator">=</span> Math.floorMod(preSum, k);</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span>(hs.containsKey(val))&#123; </span><br><span class="line">                <span class="keyword">if</span>(i-hs.get(val)&gt;<span class="number">1</span>)</span><br><span class="line">                    <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">else</span> <span class="comment">// 若 key 已经存在，不能够走到这里</span></span><br><span class="line">                hs.put(val, i);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">        </span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<h1 id="差分数组"><a href="#差分数组" class="headerlink" title="差分数组"></a>差分数组</h1><p>差分数组的第 i 个</p>
+<p>数是原数组的第 i-1 个元素和第 i 个元素的差值，对于数组 [1,2,2,4]，其差分数组为 [1,1,0,2]。</p>
 <p>差分数组的性质：</p>
 <ul>
 <li>差分数组的前缀和数组是原数组</li>
@@ -287,6 +316,41 @@ preSum1_{j}-preSum0_{j}=preSum0_{j}-preSum1_{j}</script><p>因此，令哈希表
 <p>相关题目</p>
 <p><a target="_blank" rel="noopener" href="https://leetcode-cn.com/problems/corporate-flight-bookings/">1109. 航班预订统计</a></p>
 </blockquote>
+<h1 id="推广的前缀和"><a href="#推广的前缀和" class="headerlink" title="推广的前缀和"></a>推广的前缀和</h1><h2 id="二维前缀和"><a href="#二维前缀和" class="headerlink" title="二维前缀和"></a>二维前缀和</h2><p>设 preSum(i, j) 表示以 (0, 0) 为左上角，(i, j) 为右下角的元素和，则:</p>
+<p>1 前缀和递推：preSum(i, j) = matrix[i][j] + preSum(i, j-1) + preSum(i-1, j) - preSum(i-1, j-1)</p>
+<p>2 任意矩阵元素和。作图易知，以 (a, b) 为左上角，(c, d) 为右下角的矩阵和 = </p>
+<p>preSum(c, d) – preSum(c,b) – preSum(a, d) + preSum(a, b)</p>
+<h2 id="1588-所有奇数长度子数组的和"><a href="#1588-所有奇数长度子数组的和" class="headerlink" title="1588. 所有奇数长度子数组的和"></a>1588. 所有奇数长度子数组的和</h2><p>设原数组为 nums，nums 的前缀和数组为 preSum，则</p>
+<ul>
+<li><p>长度为 1 的子数组的和：</p>
+<script type="math/tex; mode=display">
+  preSum[0] + (preSum[1]\ –\ preSum[0])+ … + (preSum[N-1]\ –\ preSum[N-2])</script></li>
+<li><p>长度为 3 的子数组的和：</p>
+<script type="math/tex; mode=display">
+  preSum[2] + (preSum[3]\ –\ preSum[0])+ ... + (preSum[N-1]\ –\ preSum [N-1-3]</script></li>
+<li><p>因此，长度为 x 的子数组的和：</p>
+<script type="math/tex; mode=display">
+  \begin{align*}
+
+    Sum_{x} &= preSum[x-1] + preSum[x]-preSum[0] + ... + preSum[N-1]-preSum[N-1-x] \\ 
+
+    &= \sum_{i=x-1}^{N-1}preSum[i]-\sum_{i=0}^{N-1-x}preSum[i] \\
+
+  \end{align*}</script></li>
+</ul>
+<p>为了加速对长度为 x 的子数组和的计算，可以继续求 preSum 数组的前缀和数组 preSum1，避免多次遍历 preSum 求和。</p>
+<p>于是：</p>
+<script type="math/tex; mode=display">
+\begin{align*}
+
+  Sum_{x} &= \sum_{i=x-1}^{N-1}preSum[i]-\sum_{i=0}^{N-1-x}preSum[i] \\ 
+
+  &= preSum1[N-1]-preSum1[x-2]-preSum1[N-1-x] \\
+
+\end{align*}</script><p>注意 Sum1 的第二项是不存在的。于是可以求解：</p>
+<script type="math/tex; mode=display">
+Sum_{1}+Sum_{3}+...+Sum_{x}</script><h2 id="树的前缀和"><a href="#树的前缀和" class="headerlink" title="树的前缀和"></a>树的前缀和</h2><h3 id="437-路径总和-III"><a href="#437-路径总和-III" class="headerlink" title="437. 路径总和 III"></a>437. 路径总和 III</h3><p>注意这里的路径是单向的，只能从父结点向一个子树延申，而不是任意的一个连通路径</p>
+<p>不需要到叶子节点。</p>
 
     </div>
 
@@ -305,7 +369,10 @@ preSum1_{j}-preSum0_{j}=preSum0_{j}-preSum1_{j}</script><p>因此，令哈希表
     <a href="/2022/04/14/random-number-question/" rel="prev" title="随机数问题">
       <i class="fa fa-chevron-left"></i> 随机数问题
     </a></div>
-      <div class="post-nav-item"></div>
+      <div class="post-nav-item">
+    <a href="/2022/04/17/Java-basis/" rel="next" title="Java 基础知识">
+      Java 基础知识 <i class="fa fa-chevron-right"></i>
+    </a></div>
     </div>
       </footer>
     
@@ -365,6 +432,7 @@ preSum1_{j}-preSum0_{j}=preSum0_{j}-preSum1_{j}</script><p>因此，令哈希表
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%89%8D%E7%BC%80%E5%92%8C%E4%B8%8E%E5%93%88%E5%B8%8C%E8%A1%A8"><span class="nav-number">1.</span> <span class="nav-text">前缀和与哈希表</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%BA%E6%9C%AC%E9%97%AE%E9%A2%98%EF%BC%9A%E8%BF%9E%E7%BB%AD%E5%AD%90%E6%95%B0%E7%BB%84%E5%92%8C%E4%B8%BA%E5%AE%9A%E5%80%BC"><span class="nav-number">1.1.</span> <span class="nav-text">基本问题：连续子数组和为定值</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#525-0-%E5%92%8C-1-%E4%B8%AA%E6%95%B0%E7%9B%B8%E5%90%8C%E7%9A%84%E5%AD%90%E6%95%B0%E7%BB%84"><span class="nav-number">1.2.</span> <span class="nav-text">525. 0 和 1 个数相同的子数组</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#974-%E5%92%8C%E5%8F%AF%E8%A2%AB-K-%E6%95%B4%E9%99%A4%E7%9A%84%E5%AD%90%E6%95%B0%E7%BB%84"><span class="nav-number">1.3.</span> <span class="nav-text">974. 和可被 K 整除的子数组</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#523-%E8%BF%9E%E7%BB%AD%E7%9A%84%E5%AD%90%E6%95%B0%E7%BB%84%E5%92%8C"><span class="nav-number">1.4.</span> <span class="nav-text">523. 连续的子数组和</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%B7%AE%E5%88%86%E6%95%B0%E7%BB%84"><span class="nav-number">2.</span> <span class="nav-text">差分数组</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%8E%A8%E5%B9%BF%E7%9A%84%E5%89%8D%E7%BC%80%E5%92%8C"><span class="nav-number">3.</span> <span class="nav-text">推广的前缀和</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E7%BB%B4%E5%89%8D%E7%BC%80%E5%92%8C"><span class="nav-number">3.1.</span> <span class="nav-text">二维前缀和</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#1588-%E6%89%80%E6%9C%89%E5%A5%87%E6%95%B0%E9%95%BF%E5%BA%A6%E5%AD%90%E6%95%B0%E7%BB%84%E7%9A%84%E5%92%8C"><span class="nav-number">3.2.</span> <span class="nav-text">1588. 所有奇数长度子数组的和</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A0%91%E7%9A%84%E5%89%8D%E7%BC%80%E5%92%8C"><span class="nav-number">3.3.</span> <span class="nav-text">树的前缀和</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#437-%E8%B7%AF%E5%BE%84%E6%80%BB%E5%92%8C-III"><span class="nav-number">3.3.1.</span> <span class="nav-text">437. 路径总和 III</span></a></li></ol></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -380,7 +448,7 @@ preSum1_{j}-preSum0_{j}=preSum0_{j}-preSum1_{j}</script><p>因此，令哈希表
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">18</span>
+          <span class="site-state-item-count">19</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
