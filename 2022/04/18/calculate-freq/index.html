@@ -23,15 +23,17 @@
 
   <meta name="description" content="统计数组中数字出现频数的方法">
 <meta property="og:type" content="article">
-<meta property="og:title" content="calculate freq">
+<meta property="og:title" content="统计频数">
 <meta property="og:url" content="http://example.com/2022/04/18/calculate-freq/index.html">
 <meta property="og:site_name" content="缘溪行">
 <meta property="og:description" content="统计数组中数字出现频数的方法">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2022/04/18/calculate-freq/a70cb9316157ecd7eeffe7900d3ca83849079824964e8a0aaefbcffd4040f175-image.png">
 <meta property="article:published_time" content="2022-04-18T11:52:58.000Z">
-<meta property="article:modified_time" content="2022-04-18T13:38:33.919Z">
+<meta property="article:modified_time" content="2022-04-21T09:11:52.187Z">
 <meta property="article:author" content="Cyl">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/2022/04/18/calculate-freq/a70cb9316157ecd7eeffe7900d3ca83849079824964e8a0aaefbcffd4040f175-image.png">
 
 <link rel="canonical" href="http://example.com/2022/04/18/calculate-freq/">
 
@@ -46,7 +48,7 @@
   };
 </script>
 
-  <title>calculate freq | 缘溪行</title>
+  <title>统计频数 | 缘溪行</title>
   
 
 
@@ -126,7 +128,7 @@
   </li>
         <li class="menu-item menu-item-archives">
 
-    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">20</span></a>
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">22</span></a>
 
   </li>
       <li class="menu-item menu-item-search">
@@ -197,7 +199,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          calculate freq
+          统计频数
         </h1>
 
         <div class="post-meta">
@@ -206,10 +208,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
-              
 
-              <time title="创建时间：2022-04-18 19:52:58 / 修改时间：21:38:33" itemprop="dateCreated datePublished" datetime="2022-04-18T19:52:58+08:00">2022-04-18</time>
+              <time title="创建时间：2022-04-18 19:52:58" itemprop="dateCreated datePublished" datetime="2022-04-18T19:52:58+08:00">2022-04-18</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-04-21 17:11:52" itemprop="dateModified" datetime="2022-04-21T17:11:52+08:00">2022-04-21</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -247,7 +255,7 @@
       
         <p>统计数组中数字出现频数的方法</p>
 <span id="more"></span>
-<h1 id="频数统计的各种方法"><a href="#频数统计的各种方法" class="headerlink" title="频数统计的各种方法"></a>频数统计的各种方法</h1><h4 id="剑指-Offer-39-数组中出现次数超过一半的数字"><a href="#剑指-Offer-39-数组中出现次数超过一半的数字" class="headerlink" title="剑指 Offer 39. 数组中出现次数超过一半的数字"></a><a target="_blank" rel="noopener" href="https://leetcode-cn.com/problems/shu-zu-zhong-chu-xian-ci-shu-chao-guo-yi-ban-de-shu-zi-lcof/">剑指 Offer 39. 数组中出现次数超过一半的数字</a></h4><h1 id="原地哈希"><a href="#原地哈希" class="headerlink" title="原地哈希"></a>原地哈希</h1><p>原地哈希算法通常用来统计大小在 [1, n] 范围内元素的频数。</p>
+<h1 id="原地哈希"><a href="#原地哈希" class="headerlink" title="原地哈希"></a>原地哈希</h1><p>原地哈希算法通常用来统计大小在 [1, n] 范围内元素的频数。</p>
 <h2 id="基本思路"><a href="#基本思路" class="headerlink" title="基本思路"></a>基本思路</h2><p>设数组 nums 的长度为 n，即下标范围 0~n-1。如果数组中<strong>任意元素都满足</strong>：1&lt;=x&lt;=n，则我们可以通过原地哈希的方法对 x 的频数进行统计：</p>
 <ul>
 <li>哈希函数：hash(x) = (x-1)%n，该哈希函数表示，对于数字 x，它将被映射到数组中 (x-1)%n 的位置<ul>
@@ -267,11 +275,14 @@
 <p><a target="_blank" rel="noopener" href="https://leetcode-cn.com/problems/find-all-numbers-disappeared-in-an-array/">448. 找到所有数组中消失的数字</a>，找频数为 0 的数</p>
 <p><a target="_blank" rel="noopener" href="https://leetcode-cn.com/problems/find-all-duplicates-in-an-array/">442. 数组中重复的数据</a>，<a target="_blank" rel="noopener" href="https://leetcode-cn.com/problems/find-the-duplicate-number/">287. 寻找重复数</a>，找频数为 2 的数</p>
 </blockquote>
-<h2 id="部分元素不满足大小在-1-n"><a href="#部分元素不满足大小在-1-n" class="headerlink" title="部分元素不满足大小在 [1, n]"></a>部分元素不满足大小在 [1, n]</h2><p>假设仍旧按照上面的统计 [1,n] 元素，会存在的问题是频数统计这块：</p>
-<p>若 nums[hash(x)]  不满足大小在 [1, n]，则后面无法恢复出原来的 nums[hash[x]]</p>
-<p>例题：给你一个未排序的整数数组 nums ，请你找出其中没有出现的最小的正整数。</p>
-<p><a target="_blank" rel="noopener" href="https://leetcode-cn.com/problems/first-missing-positive/">41. 缺失的第一个正数</a></p>
-<p>另一种哈希映射方法，只适用频数上限为1的情况。</p>
+<h2 id="部分元素不满足大小在-1-n"><a href="#部分元素不满足大小在-1-n" class="headerlink" title="部分元素不满足大小在 [1, n]"></a>部分元素不满足大小在 [1, n]</h2><p>假设仍旧按照上面的统计 [1,n] 元素，会存在的问题是频数统计这块：若 nums[hash(x)]  不满足大小在 [1, n] 区间，则将其 +n 后，如果在后面遍历到了 nums[hash(x)]，nums[hash(x)]%n 并非原来的数。</p>
+<p>例题：给你一个未排序的整数数组 nums ，请你找出其中没有出现的最小的正整数。<a target="_blank" rel="noopener" href="https://leetcode-cn.com/problems/first-missing-positive/">41. 缺失的第一个正数</a></p>
+<p>原地哈希，只适用频数为 0 和不为 0 的情况。</p>
+<p>对于 1&lt;=nums[i]&lt;=n，它将被映射到 nums[i]-1 的索引位置，并修改该位置的元素为：nums[num - 1] = -Math.abs(nums[num - 1]); 也就是保证该索引位置的元素一定是负数，多次遇到值和 nums[i] 相同的元素，始终保持 nums[num - 1] 为负数，表示 nums[i] 频数不为0</p>
+<blockquote>
+<p>注意到在将负数处理为 n+1 后，不能延用原来的原地哈希方法，因为对于 n+1， +n 后再 % n 无法恢复原来的值。</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="type">int</span> <span class="title function_">firstMissingPositive</span><span class="params">(<span class="type">int</span>[] nums)</span> &#123;</span><br><span class="line">    <span class="comment">// 法1 ：我们可以将数组所有的数放入哈希表，随后从 1 开始依次枚举正整数，并判断其是否在哈希表中</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 将法1的空间复杂度优化为 O(1)，需要使用原地哈希</span></span><br><span class="line">    <span class="comment">// 实际上，对于一个长度为 N 的数组，其中没有出现的最小正整数只能在 [1,N+1] 中。这是因为如果 [1,N] 都出现了，那么答案是 N+1，否则答案是 [1,N] 中没有出现的最小正整数。这样一来，我们将所有在 [1,N] 范围内的数放入哈希表，也可以得到最终的答案</span></span><br><span class="line">    <span class="comment">// 问题转化为统计 [1,N] 的元素频数。</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 令nums[x-1]为负数，这种方法仅局限于频数上限为1，因为再取相反数频数信息就丢失了（任意偶数），其中的减1操作同样是为了把下标变成0开始。恢复下标为 y 的元素值：nums[y]=|nums[y]|，即取绝对值</span></span><br><span class="line">    <span class="comment">// 负数的处理：由于用取负数来记录正整数的频数，因此对原来就存在的负数要处理。由于止只统计 [1,N] 的频数，因此可以把负数转化为正整数 N+1，即在这个区间外的正整数，它的频数不会被统计</span></span><br><span class="line">    <span class="type">int</span> <span class="variable">n</span> <span class="operator">=</span> nums.length;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> <span class="number">0</span>; i &lt; n; ++i) &#123;</span><br><span class="line">        <span class="keyword">if</span> (nums[i] &lt;= <span class="number">0</span>) &#123;</span><br><span class="line">            nums[i] = n + <span class="number">1</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> <span class="number">0</span>; i &lt; n; ++i) &#123;</span><br><span class="line">        <span class="type">int</span> <span class="variable">num</span> <span class="operator">=</span> Math.abs(nums[i]);</span><br><span class="line">        <span class="keyword">if</span> (num &lt;= n) &#123;</span><br><span class="line">            <span class="comment">// 注意每次取某个下标的数都要用 绝对值 来取得</span></span><br><span class="line">            nums[num - <span class="number">1</span>] = -Math.abs(nums[num - <span class="number">1</span>]);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> <span class="number">0</span>; i &lt; n; ++i) &#123;</span><br><span class="line">        <span class="keyword">if</span> (nums[i] &gt; <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> i + <span class="number">1</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> n + <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <h1 id="摩尔投票法"><a href="#摩尔投票法" class="headerlink" title="摩尔投票法"></a>摩尔投票法</h1><p>设一个数组 nums，它的长度表示为 n。</p>
 <p>摩尔投票法的核心思想为对拼消耗。每次从序列里选择两个不相同的数字删除掉（或称为「抵消」），最后剩下一个数字或几个相同的数字，就是出现次数大于总数一半的那个元素。具体的证明过程需要参考论文，论文地址：<a href="https://leetcode-cn.com/link/?target=https%3A%2F%2Fwww.cs.ou.edu%2F~rlpage%2Fdmtools%2Fmjrty.pdf">MJRTYA Fast Majority Vote Algorithm</a></p>
 <h2 id="求出现频数-gt-n-2-的数字"><a href="#求出现频数-gt-n-2-的数字" class="headerlink" title="求出现频数 &gt; n/2 的数字"></a>求出现频数 &gt; n/2 的数字</h2><p>Boyer-Moore 算法的详细步骤：</p>
@@ -290,6 +301,26 @@
 <blockquote>
 <p>能否处理频数等于 nums.length/2 的情况？</p>
 </blockquote>
+<h3 id="其他解法"><a href="#其他解法" class="headerlink" title="其他解法"></a>其他解法</h3><p><strong>以下解法中，哈希表、随机化和分治对众数的频数并没有限制（即限制频数 &gt;n/2）</strong></p>
+<ul>
+<li><p>哈希表统计</p>
+</li>
+<li><p>排序。如果将数组 nums 中的所有元素按照单调递增或单调递减的顺序排序，那么下标为 $\lfloor \dfrac{n}{2} \rfloor$ 的元素（下标从 0 开始）一定是众数。下面的图中解释了为什么这种策略是有效的。在下图中，第一个例子是 n 为奇数的情况，第二个例子是 n 为偶数的情况。</p>
+<p>  <img src="/2022/04/18/calculate-freq/a70cb9316157ecd7eeffe7900d3ca83849079824964e8a0aaefbcffd4040f175-image.png" alt="image.png" style="zoom:50%;"></p>
+<p>  对于每种情况，数组下面的线表示如果众数是数组中的最小值时覆盖的下标，数组上面的线表示如果众数是数组中的最大值时覆盖的下标。<strong>对于其他的情况，这条线会在这两种极端情况的中间</strong>。（先将边界找出）</p>
+<p>  对于这两种极端情况，它们会在下标为 $\lfloor \dfrac{n}{2} \rfloor$ 的地方有重叠。因此，无论众数是多少，返回 $\lfloor \dfrac{n}{2} \rfloor$ 下标对应的值都是正确的。</p>
+</li>
+<li><p>随机化。随机挑选一个元素检查它是否是众数，如果是就返回，否则继续随机挑选。</p>
+<p>  是放回抽样，在第 k 次抽到众数的概率是 ${(\frac{1}{2})}^k$，因此随机变量 k，即抽取次数的期望值 E(k)=2，因此期望时间复杂度是 O(N)，即抽取 E(K) 次，每次需要遍历数组判断抽到的元素是否为众数。</p>
+</li>
+<li><p>分治。如果数 <code>a</code> 是数组 <code>nums</code> 的众数，如果我们将 <code>nums</code> 分成两部分，那么 <code>a</code> 必定是至少一部分的众数。</p>
+<p>  这样一来，我们就可以使用分治法解决这个问题：将数组分成左右两部分，分别求出左半部分的众数 a1 以及右半部分的众数 a2，随后在 a1 和 a2 中选出正确的众数。</p>
+<p>  merge() 方法为：如果 a1 != a2，则判断 a2 和 a1 哪一个是区间的众数（区间 [l, r]，左半部分[l, mid]，右半部分 [mid+1, r]）</p>
+</li>
+</ul>
+<blockquote>
+<p>参考 <a target="_blank" rel="noopener" href="https://leetcode-cn.com/problems/shu-zu-zhong-chu-xian-ci-shu-chao-guo-yi-ban-de-shu-zi-lcof/">剑指 Offer 39. 数组中出现次数超过一半的数字</a></p>
+</blockquote>
 <h2 id="求出现频数-gt-n-k-的数字"><a href="#求出现频数-gt-n-k-的数字" class="headerlink" title="求出现频数 &gt; n/k 的数字"></a>求出现频数 &gt; n/k 的数字</h2><p>可以用反证法证明，出现次数超过 n/k 的数<strong>最多</strong>只有 k−1 个（可能小于 k-1 个）。否则必然违背「数总共只有 n 个」或者「当前统计的是出现次数超过 n/k 的数」的前提条件。</p>
 <p>我们可以使用有限变量来代表这 k - 1 个候选数及其出现次数。</p>
 <p>假设当前遍历到的元素为 x：</p>
@@ -305,6 +336,22 @@
 <p>当处理完整个数组后，这 k−1 个数可能会被填满，但不一定都是符合出现次数超过 n/k 要求的。（出现次数超过 n/k 的数<strong>最多</strong>只有 k−1 个）</p>
 <p>需要遍历数组并检查 k-1 个数每个数的出现频次，如果频次超过 n/k 才加入到结果。</p>
 <h2 id="摩尔投票法的性能分析"><a href="#摩尔投票法的性能分析" class="headerlink" title="摩尔投票法的性能分析"></a>摩尔投票法的性能分析</h2><p>用摩尔投票法求出现频次 &gt; n/2 的数字时，该数字是唯一的，因此用 O(N) 的时间和 O(1) 的空间就可以得到结果；然而，用摩尔投票法求出现频次 &gt; n/k 的数字时，需要遍历数组再次统计 k-1 个候选人的频数，这会导致时间复杂度为 O(2*N)，在这种情况下，反而不如直接使用哈希表，虽然哈希表会带来 O(N) 的空间开销。</p>
+<h1 id="统计字符串的频数"><a href="#统计字符串的频数" class="headerlink" title="统计字符串的频数"></a>统计字符串的频数</h1><p>一个字符串 s，只包含四种字符 A C G T，编写一个函数来找出所有目标子串，目标子串的长度为 10，且在 DNA 字符串 s 中出现次数超过一次。</p>
+<p>法1：哈希表的键为字符串，每个键大小 10 个字符，20 个字节；</p>
+<p>法2：哈希表的键为字符串的等效。<strong>由于 s 中只含有 4 种字符，我们可以将每个字符用 2 个比特表示</strong>：00 01 10 11，如此一来，一个长为 10 的字符串就可以用 20 个比特表示，而一个 int 整数有 32 个比特，足够容纳该字符串，因此我们可以将 s 的每个长为 10 的子串用一个 int 整数表示（只用低 20 位）。键大小一个字节。</p>
+<p>两种方法都需要用滑动窗口来获取子串。</p>
+<ul>
+<li>法1，需要维护一个可变字符串，可用 StringBuffer </li>
+<li>法2，用位运算。先左移两位，然后将高位置零，然后加上低位两个比特。由于只用到了低 20 位，需要将高位置零，可以通过和高位全 0，低 20 位全 1 的二进制数与运算来实现，该二进制数=(1 &lt;&lt; 20) - 1</li>
+</ul>
+<p>对于一个字符串数组，如果对于其中的每个字符串，需要知道它的包含字符情况。（即是否包含，不要求具体数量）</p>
+<ul>
+<li><p>若将字符串当作字符数组，判重复杂度O(L1*L2)</p>
+</li>
+<li><p>若将字符串记录为 count数组（只需要存储0、1），遍历count复杂度O(26)</p>
+</li>
+<li>假设只包含小写字母，因为 count 只需要存储 0、1（<strong>否则要用更大的进制</strong>。不推荐，不如直接用哈希表），进一步将count映射为二进制数，一个 int 足以存储，位运算复杂度 O(1)</li>
+</ul>
 
     </div>
 
@@ -323,7 +370,10 @@
     <a href="/2022/04/17/Java-basis/" rel="prev" title="Java 基础知识">
       <i class="fa fa-chevron-left"></i> Java 基础知识
     </a></div>
-      <div class="post-nav-item"></div>
+      <div class="post-nav-item">
+    <a href="/2022/04/20/sort/" rel="next" title="排序算法">
+      排序算法 <i class="fa fa-chevron-right"></i>
+    </a></div>
     </div>
       </footer>
     
@@ -383,7 +433,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%A2%91%E6%95%B0%E7%BB%9F%E8%AE%A1%E7%9A%84%E5%90%84%E7%A7%8D%E6%96%B9%E6%B3%95"><span class="nav-number">1.</span> <span class="nav-text">频数统计的各种方法</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%89%91%E6%8C%87-Offer-39-%E6%95%B0%E7%BB%84%E4%B8%AD%E5%87%BA%E7%8E%B0%E6%AC%A1%E6%95%B0%E8%B6%85%E8%BF%87%E4%B8%80%E5%8D%8A%E7%9A%84%E6%95%B0%E5%AD%97"><span class="nav-number">1.0.0.1.</span> <span class="nav-text">剑指 Offer 39. 数组中出现次数超过一半的数字</span></a></li></ol></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8E%9F%E5%9C%B0%E5%93%88%E5%B8%8C"><span class="nav-number">2.</span> <span class="nav-text">原地哈希</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%BA%E6%9C%AC%E6%80%9D%E8%B7%AF"><span class="nav-number">2.1.</span> <span class="nav-text">基本思路</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%83%A8%E5%88%86%E5%85%83%E7%B4%A0%E4%B8%8D%E6%BB%A1%E8%B6%B3%E5%A4%A7%E5%B0%8F%E5%9C%A8-1-n"><span class="nav-number">2.2.</span> <span class="nav-text">部分元素不满足大小在 [1, n]</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%91%A9%E5%B0%94%E6%8A%95%E7%A5%A8%E6%B3%95"><span class="nav-number">3.</span> <span class="nav-text">摩尔投票法</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B1%82%E5%87%BA%E7%8E%B0%E9%A2%91%E6%95%B0-gt-n-2-%E7%9A%84%E6%95%B0%E5%AD%97"><span class="nav-number">3.1.</span> <span class="nav-text">求出现频数 &gt; n&#x2F;2 的数字</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B1%82%E5%87%BA%E7%8E%B0%E9%A2%91%E6%95%B0-gt-n-k-%E7%9A%84%E6%95%B0%E5%AD%97"><span class="nav-number">3.2.</span> <span class="nav-text">求出现频数 &gt; n&#x2F;k 的数字</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%91%A9%E5%B0%94%E6%8A%95%E7%A5%A8%E6%B3%95%E7%9A%84%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90"><span class="nav-number">3.3.</span> <span class="nav-text">摩尔投票法的性能分析</span></a></li></ol></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8E%9F%E5%9C%B0%E5%93%88%E5%B8%8C"><span class="nav-number">1.</span> <span class="nav-text">原地哈希</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%BA%E6%9C%AC%E6%80%9D%E8%B7%AF"><span class="nav-number">1.1.</span> <span class="nav-text">基本思路</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%83%A8%E5%88%86%E5%85%83%E7%B4%A0%E4%B8%8D%E6%BB%A1%E8%B6%B3%E5%A4%A7%E5%B0%8F%E5%9C%A8-1-n"><span class="nav-number">1.2.</span> <span class="nav-text">部分元素不满足大小在 [1, n]</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%91%A9%E5%B0%94%E6%8A%95%E7%A5%A8%E6%B3%95"><span class="nav-number">2.</span> <span class="nav-text">摩尔投票法</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B1%82%E5%87%BA%E7%8E%B0%E9%A2%91%E6%95%B0-gt-n-2-%E7%9A%84%E6%95%B0%E5%AD%97"><span class="nav-number">2.1.</span> <span class="nav-text">求出现频数 &gt; n&#x2F;2 的数字</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B6%E4%BB%96%E8%A7%A3%E6%B3%95"><span class="nav-number">2.1.1.</span> <span class="nav-text">其他解法</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B1%82%E5%87%BA%E7%8E%B0%E9%A2%91%E6%95%B0-gt-n-k-%E7%9A%84%E6%95%B0%E5%AD%97"><span class="nav-number">2.2.</span> <span class="nav-text">求出现频数 &gt; n&#x2F;k 的数字</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%91%A9%E5%B0%94%E6%8A%95%E7%A5%A8%E6%B3%95%E7%9A%84%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90"><span class="nav-number">2.3.</span> <span class="nav-text">摩尔投票法的性能分析</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%BB%9F%E8%AE%A1%E5%AD%97%E7%AC%A6%E4%B8%B2%E7%9A%84%E9%A2%91%E6%95%B0"><span class="nav-number">3.</span> <span class="nav-text">统计字符串的频数</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -399,7 +449,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">20</span>
+          <span class="site-state-item-count">22</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -498,6 +548,59 @@
   
 
   
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
 
   
 

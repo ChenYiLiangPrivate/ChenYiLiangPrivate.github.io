@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.1.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.loli.net/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":true},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="排序算法的评价标准主要有：时间复杂度、空间复杂度和稳定性（待排序的序列中有两元素相等，排序之后它们的先后顺序不变）">
+<meta property="og:type" content="article">
+<meta property="og:title" content="排序算法">
+<meta property="og:url" content="http://example.com/2022/04/20/sort/index.html">
+<meta property="og:site_name" content="缘溪行">
+<meta property="og:description" content="排序算法的评价标准主要有：时间复杂度、空间复杂度和稳定性（待排序的序列中有两元素相等，排序之后它们的先后顺序不变）">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2022/04/20/sort/sort.png">
+<meta property="og:image" content="http://example.com/2022/04/20/sort/selectionSort.gif">
+<meta property="og:image" content="http://example.com/2022/04/20/sort/bubbleSort.gif">
+<meta property="og:image" content="http://example.com/2022/04/20/sort/insertionSort.gif">
+<meta property="article:published_time" content="2022-04-20T06:58:37.000Z">
+<meta property="article:modified_time" content="2022-04-22T07:41:23.823Z">
+<meta property="article:author" content="Cyl">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/2022/04/20/sort/sort.png">
+
+<link rel="canonical" href="http://example.com/2022/04/20/sort/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>排序算法 | 缘溪行</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">缘溪行</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">5</span></a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">22</span></a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/04/20/sort/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/icon1.jpg">
+      <meta itemprop="name" content="Cyl">
+      <meta itemprop="description" content="顽童大了别那么笨">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="缘溪行">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          排序算法
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-04-20 14:58:37" itemprop="dateCreated datePublished" datetime="2022-04-20T14:58:37+08:00">2022-04-20</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-04-22 15:41:23" itemprop="dateModified" datetime="2022-04-22T15:41:23+08:00">2022-04-22</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%AE%97%E6%B3%95/" itemprop="url" rel="index"><span itemprop="name">算法</span></a>
+                </span>
+            </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2022/04/20/sort/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2022/04/20/sort/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>排序算法的评价标准主要有：时间复杂度、空间复杂度和稳定性（待排序的序列中有两元素相等，排序之后它们的先后顺序不变）</p>
+<span id="more"></span>
+<p><img src="/2022/04/20/sort/sort.png" alt="img"></p>
+<h1 id="选择排序"><a href="#选择排序" class="headerlink" title="选择排序"></a>选择排序</h1><p>维护循环不变量，即将数组划分为 （有序区，无序区），每次在无序区中选出最小的数（通过记录当前遇到的最小值的方法），放到有序区的后面（与无序区第一个元素进行交换）。</p>
+<p><img src="/2022/04/20/sort/selectionSort.gif" alt="img"></p>
+<p>性能分析：</p>
+<ul>
+<li><p>稳定性：交换操作可能导致两相等元素的相对位置改变，因此是<strong>不稳定</strong>的</p>
+</li>
+<li><p>时间复杂度：始终为 O(N^2)</p>
+</li>
+</ul>
+<p>如果是对链表进行选择排序，可以进行适当的修改，使得选择排序是稳定的：</p>
+<p>每次在无序区中选出最小的数，放到有序区的后面。对于链表，可以让选出的最小的数对应的节点从表中断开，然后插入到（有序区，无序区）的分界位置。</p>
+<h1 id="冒泡排序"><a href="#冒泡排序" class="headerlink" title="冒泡排序"></a>冒泡排序</h1><p>维护循环不变量，即将数组划分为 （无序区，有序区），每次在无序区中<strong>通过不断交换的方法</strong>将最大的数放到无序区的最后。</p>
+<p><strong>通过不断交换的方法</strong>选出最大的数：</p>
+<ul>
+<li>比较相邻的元素。如果第一个比第二个大，就交换他们两个。</li>
+<li>对每一对相邻元素作同样的工作，从开始第一对到结尾的最后一对。这步做完后，最后的元素会是最大的数。</li>
+</ul>
+<p><img src="/2022/04/20/sort/bubbleSort.gif" alt="img"></p>
+<p>性能分析：</p>
+<ul>
+<li><p>稳定性：<strong>虽然有交换操作</strong>，但是这种交换操作不会导致两相等元素的相对位置改变，因此是稳定的</p>
+</li>
+<li><p>时间复杂度：始终为 O(N^2)</p>
+</li>
+</ul>
+<h1 id="插入排序"><a href="#插入排序" class="headerlink" title="插入排序"></a>插入排序</h1><p>维护循环不变量，即将数组划分为 （有序区，无序区），每次把无序区的第一个元素插入到有序区的合适位置中。</p>
+<p>插入操作：对于数组来说，需要执行多次的赋值操作，对于链表才是真正意义上的插入操作。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">insertion_sort</span><span class="params">(<span class="type">int</span> arr[], <span class="type">int</span> len)</span>&#123;</span><br><span class="line">    <span class="type">int</span> i,j,key;</span><br><span class="line">    <span class="keyword">for</span> (i=<span class="number">1</span>;i&lt;len;i++)&#123;</span><br><span class="line">        key = arr[i];</span><br><span class="line">        j=i<span class="number">-1</span>;</span><br><span class="line">        <span class="keyword">while</span>((j&gt;=<span class="number">0</span>) &amp;&amp; (arr[j]&gt;key)) &#123;</span><br><span class="line">            arr[j+<span class="number">1</span>] = arr[j];</span><br><span class="line">            j--;</span><br><span class="line">        &#125;</span><br><span class="line">        arr[j+<span class="number">1</span>] = key;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><img src="/2022/04/20/sort/insertionSort.gif" alt="img"></p>
+<p>性能分析：</p>
+<ul>
+<li><p>稳定性：由于是从后往前顺序地找插入点，因此不会导致两相等元素的相对位置改变，因此是<strong>稳定</strong>的。从前往后找插入点可能会不稳定，除非在相等时继续往后走。</p>
+</li>
+<li><p>时间复杂度：始终为 O(N^2)</p>
+</li>
+</ul>
+<h1 id="快速排序"><a href="#快速排序" class="headerlink" title="快速排序"></a>快速排序</h1><h2 id="Partition算法"><a href="#Partition算法" class="headerlink" title="Partition算法"></a>Partition算法</h2><p>作用：给定一个数组 A 和数组中任意一个元素 pivot=A[r]， 通过一趟扫描，以 pivot 为分界线将数组中的元素原地重排为两部分，使得左边的数小于等于 pivot，右边的数大于 pivot。（等于号在哪一边都可以，具体实现的时候注意即可），最后返回 pivot=A[r] 排序之后的位置。</p>
+<h3 id="实现方法-1"><a href="#实现方法-1" class="headerlink" title="实现方法 1"></a>实现方法 1</h3><p>双指针实现：设数组 A[p…r]，选取 pivot=A[r]，即数组最后一个元素，便于最后返回它排序之后的位置。所谓的双指针，指的是指针 i 和 j 维护了两个区域，见下方循环不变量。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">partition</span><span class="params">(<span class="type">int</span>[] A, <span class="type">int</span> p, <span class="type">int</span> r)</span>&#123;</span><br><span class="line">	<span class="type">int</span> <span class="variable">pivot</span> <span class="operator">=</span> A[r];</span><br><span class="line">    </span><br><span class="line">    <span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> p-<span class="number">1</span>;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> j=p;j&lt;r;++j)&#123;</span><br><span class="line">        <span class="comment">// [p, i] 的元素都 &lt;= pivot，i+1 的元素不满足。将满足条件的 A[j] 与 A[i+1] 交换并移动 i 指针到 i+1 的位置</span></span><br><span class="line">        <span class="keyword">if</span>(A[j] &lt;= pivot)&#123;</span><br><span class="line">            ++i; </span><br><span class="line">            swap(A, i, j)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    swap(A, i+<span class="number">1</span>, j);</span><br><span class="line">    <span class="keyword">return</span> i+<span class="number">1</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在第 3~6 行的 for 循环的每一轮迭代的开始和结束，数组将被划分为四个区域，每一个区域都满足一定的性质，我们将这些性质作为<strong>循环不变量</strong>：</p>
+<p>在第 3~6 行的 for 循环的每一轮迭代的开始和结束（即上一轮 for 的 ++j 之后，本轮 for 的 if 语句前），对于任意下标 k，有：</p>
+<ol>
+<li><p>若 p≤k≤i，则 A[k]&lt;=x。 </p>
+</li>
+<li><p>若 i+1&lt;=k&lt;=j-1，则 A[k]&gt;x。</p>
+</li>
+<li>若 j&lt;=k&lt;=r-1，A[k] 与 x 无特定大小关系。</li>
+<li>若 k=r，则 A[k]=x。</li>
+</ol>
+<p>证明：我们需要证明这个循环不变式在第一轮迭代之前是成立的，并且在之后的每一轮迭代后仍然成立。使用<strong>归纳法</strong>证明。</p>
+<ul>
+<li><p>初始化（第一轮迭代之前）：在第一轮迭代之前，x=A[r]，i=p-1，j=p，因为区域 1 和 2 为空，所以循环不变量的前两个条件都满足，第三个条件根据赋值操作也显然满足。注意 j=p 虽然在第 3~6 行的循环体中，但是它不属于迭代更新操作。</p>
+</li>
+<li><p>保持（每一轮迭代后）：根据第四行中条件判断的不同结果，需要考虑两种情况。当 A[j]&gt;x 和当 A[j]&lt;=x，易知两种情况下，一轮迭代之后循环不变式依旧成立。</p>
+</li>
+<li><p><strong>终止</strong>：当终止时，j=r。于是，数组中的每个元素必然属于循环不变量所描述的四个区域中的一个，易知区域 3为空。当继续执行倒数第二行代码时，A[r] 将被交换到正确的位置，数组 [p, i+1] 元素都 &lt;= x，[i+2, r] 元素都 &gt; x。</p>
+</li>
+</ul>
+<p>缺陷：不高效。从直观上来说，每个小于 pivot 的值基本上都需要交换一次，而大于 pivot 的值可能要交换多次（这句话可以看区域 2 理解，每次交换会把区域 2 的头换到区域 2 中间，而之后再遇到说不定还得继续交换）。</p>
+<p><strong>关于相对位置：[p, i] 区域元素的相对位置与之前一致，[i+1, j-1] 区域元素相对位置无法保证</strong>。</p>
+<h3 id="实现方法-2"><a href="#实现方法-2" class="headerlink" title="实现方法 2"></a>实现方法 2</h3><p>双向扫描：设数组 A[p…r]，选取 pivot=A[r]。保持两个指针向中间扫描，在前面找到大于 pivot 的值，同时在后面找到小于等于 pivot 的值，把他们做一次交换，就可以一次把这两个数字放到其所属区域（这两个位置之后不会再被交换到其他地方）。</p>
+<p>相较于实现方法 1，这种方法元素交换次数更少。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">partition</span><span class="params">(<span class="type">int</span>[] A, <span class="type">int</span> p, <span class="type">int</span> r)</span>&#123;</span><br><span class="line">    <span class="type">int</span> <span class="variable">pivot</span> <span class="operator">=</span> A[r];</span><br><span class="line">    </span><br><span class="line">    <span class="type">int</span> i=p, j=r-<span class="number">1</span>;</span><br><span class="line">    <span class="keyword">while</span>(i &lt;= j)&#123;</span><br><span class="line">        <span class="keyword">while</span>(i &lt;= j &amp;&amp; A[i] &lt;= x)</span><br><span class="line">            ++i;</span><br><span class="line">        <span class="keyword">while</span>(i &lt;= j &amp;&amp; A[j] &gt; x)</span><br><span class="line">            --j;</span><br><span class="line">        <span class="keyword">if</span>(i &lt;= j)&#123;</span><br><span class="line">            swap(A, i, j);</span><br><span class="line">            ++i;</span><br><span class="line">            --j;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    swap(A, i, r);</span><br><span class="line">    <span class="keyword">return</span> i;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>每次循环结束，[0,i) 的数&lt;=x，(j,r] 的数&gt;x。while 执行完后由于 pivot 在索引 r 处，因此要把 &gt;x 的数换过来，也就是把 i 或者 j+1 位置换过来。</p>
+<h3 id="随机化-Partition"><a href="#随机化-Partition" class="headerlink" title="随机化 Partition"></a>随机化 Partition</h3><p>随机化 partition 的想法是，通过对序列的随机抽样，保证主元 pivot 是等概率从数组中选取的，因此在平均情况下，能够获得较好的期望性能。</p>
+<p>具体做法：首先随机抽样一个元素 x=A[ind]，然后将其与 A[r] 元素交换，再调用上述 partition 函数即可。</p>
+<h2 id="性能分析"><a href="#性能分析" class="headerlink" title="性能分析"></a>性能分析</h2><p>最坏时间复杂度：当数组已经有序（升序或降序）时，时间复杂度 O(N^2^)，这是因为每次 partition 操作后，子问题的大小是 N-1 和 1</p>
+<p>最好时间复杂度：O(NlogN)，即每次 partition 操作都能把主元放到中点。</p>
+<p>稳定性：不稳定，这是因为 partition 操作是不稳定的</p>
+<h2 id="相关题目"><a href="#相关题目" class="headerlink" title="相关题目"></a>相关题目</h2><p><a target="_blank" rel="noopener" href="https://leetcode-cn.com/problems/sort-an-array/">912. 排序数组</a></p>
+<p><a target="_blank" rel="noopener" href="https://leetcode-cn.com/problems/move-zeroes/">移动零</a></p>
+<p>给定一个数组 <code>nums</code>，编写一个函数将所有 <code>0</code> 移动到数组的末尾，同时保持非零元素的相对顺序。</p>
+<p>类似 partition，维护两段的循环不变量</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">moveZeroes</span><span class="params">(<span class="type">int</span>[] nums)</span> &#123;</span><br><span class="line">    <span class="type">int</span> <span class="variable">n</span> <span class="operator">=</span> nums.length, left = <span class="number">0</span>, right = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">while</span> (right &lt; n) &#123;</span><br><span class="line">        <span class="keyword">if</span> (nums[right] != <span class="number">0</span>) &#123;</span><br><span class="line">            swap(nums, left, right);</span><br><span class="line">            left++;</span><br><span class="line">        &#125;</span><br><span class="line">        right++;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><a href>颜色分类</a></p>
+<p>法1：两次 partition，第一次：维护 0 和 非 0；第二次：在非 0 中维护 1 和非 1</p>
+<p>法2：一次 partition，需要维护的循环不变量为三段：0、1、其他</p>
+<p>用指针 p0 维护 0 区，指针 p1 维护 1 区。用指针 i 从左向右遍历整个数组：</p>
+<ul>
+<li><p>如果遇到 1，那么将其与 nums[p1] 进行交换，并将 p1 向后移动一个位置</p>
+</li>
+<li><p>如果遇到 0，那么将其与 nums[p0] 进行交换，并将 p0 向后移动一个位置。如果 p0&lt;p1，说明 nums[p0]=1，此时会把 1 交换给 nums[i]，那么我们需要再将 nums[i] 与 nums[p1] 进行交换，并将 p1 向后移动一个位置</p>
+</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">sortColors</span><span class="params">(<span class="type">int</span>[] nums)</span> &#123;</span><br><span class="line">    <span class="type">int</span> <span class="variable">n</span> <span class="operator">=</span> nums.length;</span><br><span class="line">    <span class="type">int</span> <span class="variable">p0</span> <span class="operator">=</span> <span class="number">0</span>, p1 = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> <span class="number">0</span>; i &lt; n; ++i) &#123;</span><br><span class="line">        <span class="keyword">if</span> (nums[i] == <span class="number">1</span>) &#123;</span><br><span class="line">            swap(nums, i, p1);</span><br><span class="line">            ++p1;</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (nums[i] == <span class="number">0</span>) &#123;</span><br><span class="line">            swap(nums, i, p0);</span><br><span class="line">            <span class="keyword">if</span> (p0 &lt; p1) &#123;</span><br><span class="line">                swap(nums, i, p1);</span><br><span class="line">            &#125;</span><br><span class="line">            ++p0;</span><br><span class="line">            ++p1;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>法3：一次 partition，需要维护的循环不变量为三段：0、其他、2。过程略</p>
+<p><a target="_blank" rel="noopener" href="https://leetcode-cn.com/problems/kth-largest-element-in-an-array/">数组中的第k大元素</a></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="type">int</span> <span class="title function_">myFindKth</span><span class="params">(<span class="type">int</span>[] a, <span class="type">int</span> l, <span class="type">int</span> r, <span class="type">int</span> K)</span>&#123;</span><br><span class="line">    <span class="type">int</span> <span class="variable">x</span> <span class="operator">=</span> partition(a, l, r);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span>(x == a.length-K) <span class="keyword">return</span> a[x];</span><br><span class="line">    <span class="comment">// 注意 x-1，这是因为如果选择 [l,x]，主元 a[x] 不会被移动，partition 不生效</span></span><br><span class="line">    <span class="comment">// 并且x位置的元素也肯定不可能是解</span></span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span>(x &gt; a.length-K) <span class="keyword">return</span> myFindKth(a, l, x-<span class="number">1</span>, K);</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">return</span> myFindKth(a, x+<span class="number">1</span>, r, K);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="堆排序"><a href="#堆排序" class="headerlink" title="堆排序"></a>堆排序</h1>
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/04/18/calculate-freq/" rel="prev" title="统计频数">
+      <i class="fa fa-chevron-left"></i> 统计频数
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2022/04/21/network-layer/" rel="next" title="网络层">
+      网络层 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%80%89%E6%8B%A9%E6%8E%92%E5%BA%8F"><span class="nav-number">1.</span> <span class="nav-text">选择排序</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F"><span class="nav-number">2.</span> <span class="nav-text">冒泡排序</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%8F%92%E5%85%A5%E6%8E%92%E5%BA%8F"><span class="nav-number">3.</span> <span class="nav-text">插入排序</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%BF%AB%E9%80%9F%E6%8E%92%E5%BA%8F"><span class="nav-number">4.</span> <span class="nav-text">快速排序</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Partition%E7%AE%97%E6%B3%95"><span class="nav-number">4.1.</span> <span class="nav-text">Partition算法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0%E6%96%B9%E6%B3%95-1"><span class="nav-number">4.1.1.</span> <span class="nav-text">实现方法 1</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0%E6%96%B9%E6%B3%95-2"><span class="nav-number">4.1.2.</span> <span class="nav-text">实现方法 2</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%9A%8F%E6%9C%BA%E5%8C%96-Partition"><span class="nav-number">4.1.3.</span> <span class="nav-text">随机化 Partition</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90"><span class="nav-number">4.2.</span> <span class="nav-text">性能分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9B%B8%E5%85%B3%E9%A2%98%E7%9B%AE"><span class="nav-number">4.3.</span> <span class="nav-text">相关题目</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%A0%86%E6%8E%92%E5%BA%8F"><span class="nav-number">5.</span> <span class="nav-text">堆排序</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Cyl"
+      src="/images/icon1.jpg">
+  <p class="site-author-name" itemprop="name">Cyl</p>
+  <div class="site-description" itemprop="description">顽童大了别那么笨</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">22</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Cyl</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+  <script defer src="/lib/three/three.min.js"></script>
+    <script defer src="/lib/three/three-waves.min.js"></script>
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'bj1pUPUVv7CB9DzNJpPiyH5u-gzGzoHsz',
+      appKey     : 'RQWkhgEzgN0MjSY1E3rSiuJc',
+      placeholder: "Just go go",
+      avatar     : 'mm',
+      meta       : guest,
+      pageSize   : '9' || 10,
+      visitor    : false,
+      lang       : 'zh-cn' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

@@ -21,18 +21,22 @@
     var CONFIG = {"hostname":"example.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":true},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta name="description" content="五种IO模型，分别是：阻塞IO、非阻塞IO、多路复用IO、信号驱动IO以及异步IO。 以下以读操作为例，对于写操作，是否可以写数据到缓冲区取决于缓冲区剩余空间是否足够。">
+  <meta name="description" content="五种IO模型，分别是：阻塞IO、非阻塞IO、多路复用IO、信号驱动IO以及异步IO。 主要分析的是服务器端应该使用的 IO 模型，因为服务器端需要处理大量的 IO 请求。 以下以读操作为例，对于写操作，是否可以写数据到缓冲区取决于缓冲区剩余空间是否足够。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="I&#x2F;O 模型">
 <meta property="og:url" content="http://example.com/2022/04/07/I-O-model/index.html">
 <meta property="og:site_name" content="缘溪行">
-<meta property="og:description" content="五种IO模型，分别是：阻塞IO、非阻塞IO、多路复用IO、信号驱动IO以及异步IO。 以下以读操作为例，对于写操作，是否可以写数据到缓冲区取决于缓冲区剩余空间是否足够。">
+<meta property="og:description" content="五种IO模型，分别是：阻塞IO、非阻塞IO、多路复用IO、信号驱动IO以及异步IO。 主要分析的是服务器端应该使用的 IO 模型，因为服务器端需要处理大量的 IO 请求。 以下以读操作为例，对于写操作，是否可以写数据到缓冲区取决于缓冲区剩余空间是否足够。">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="http://example.com/2022/04/07/I-O-model/1068826-20170514141900066-500353710.png">
 <meta property="og:image" content="http://example.com/2022/04/07/I-O-model/1068826-20170514142359222-677058307.png">
 <meta property="og:image" content="http://example.com/2022/04/07/I-O-model/1068826-20170514143622722-640397005.png">
+<meta property="og:image" content="http://example.com/2022/04/07/I-O-model/v2-9b720fa8bbe7108003edc2abb6df7c71_720w.jpg">
+<meta property="og:image" content="http://example.com/2022/04/07/I-O-model/v2-f4af10c10479a9e0ec0ec9f327d78d70_720w-16506095928067.jpg">
+<meta property="og:image" content="http://example.com/2022/04/07/I-O-model/v2-e6c497d098c782ed52830da08b3e5cbe_720w.jpg">
+<meta property="og:image" content="http://example.com/2022/04/07/I-O-model/70.png">
 <meta property="article:published_time" content="2022-04-07T14:27:20.000Z">
-<meta property="article:modified_time" content="2022-04-18T14:31:02.550Z">
+<meta property="article:modified_time" content="2022-04-22T06:56:49.074Z">
 <meta property="article:author" content="Cyl">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://example.com/2022/04/07/I-O-model/1068826-20170514141900066-500353710.png">
@@ -130,7 +134,7 @@
   </li>
         <li class="menu-item menu-item-archives">
 
-    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">20</span></a>
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">22</span></a>
 
   </li>
       <li class="menu-item menu-item-search">
@@ -218,7 +222,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-04-18 22:31:02" itemprop="dateModified" datetime="2022-04-18T22:31:02+08:00">2022-04-18</time>
+                <time title="修改时间：2022-04-22 14:56:49" itemprop="dateModified" datetime="2022-04-22T14:56:49+08:00">2022-04-22</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -256,6 +260,7 @@
 
       
         <p>五种IO模型，分别是：阻塞IO、非阻塞IO、多路复用IO、信号驱动IO以及异步IO。</p>
+<p>主要分析的是服务器端应该使用的 IO 模型，因为服务器端需要处理大量的 IO 请求。</p>
 <p>以下以读操作为例，对于写操作，是否可以写数据到缓冲区取决于缓冲区剩余空间是否足够。</p>
 <span id="more"></span>
 <h1 id="阻塞-IO-模型"><a href="#阻塞-IO-模型" class="headerlink" title="阻塞 IO 模型"></a>阻塞 IO 模型</h1><p>最传统的一种 IO 模型，即在读写数据过程中会发生阻塞现象。</p>
@@ -268,42 +273,139 @@
 <p> 所以事实上，在非阻塞IO模型中，用户线程需要不断地询问内核数据是否就绪（自旋），也就说非阻塞IO不会交出CPU，而会一直占用CPU。</p>
 <p>典型的非阻塞IO模型一般如下：</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">while</span>(<span class="literal">true</span>)&#123; </span><br><span class="line">    data = socket.read(); </span><br><span class="line">    <span class="keyword">if</span>(data!= error)&#123; </span><br><span class="line">        处理数据 </span><br><span class="line">        <span class="keyword">break</span>; </span><br><span class="line">    &#125; </span><br><span class="line">&#125; </span><br></pre></td></tr></table></figure>
-<h1 id="IO-复用模型"><a href="#IO-复用模型" class="headerlink" title="IO 复用模型"></a>IO 复用模型</h1><p>场景：对于一个应用线程 T，当多个用户向线程 T 发送请求（发送请求体的数据），为了能够同时响应多个用户，通常会选择用多个线程，每个线程来处理用户的请求，各个处理线程首先要调用 recvfrom 读取用户发过来的请求体数据。</p>
+<h1 id="IO-复用模型"><a href="#IO-复用模型" class="headerlink" title="IO 复用模型"></a>IO 复用模型</h1><p>场景：对于一个应用线程 T，当多个用户向线程 T 发送请求（发送请求体的数据），为了能够同时响应多个用户，通常会选择用多个线程，每个线程来处理用户的请求，各个处理线程首先要调用 recvfrom 读取用户发过来的请求体数据，然后再进行处理，并且，通常来说，对每个用户的处理代码应该是相同的。</p>
 <p>存在的问题：</p>
 <ul>
 <li>用户量庞大的时候，会创建大量的线程。</li>
-<li>每个线程首先基于阻塞 IO 模型或者非阻塞 IO 模型读取数据时一旦读取不到数据，它或者阻塞或者自旋，会持续占据线程资源。这种问题在大量线程读取缓冲区数据时会变得更加严重。</li>
+<li>每个线程首先基于阻塞 IO 模型或者非阻塞 IO 模型读取数据时一旦读取不到数据，它或者阻塞或者自旋，会持续占据线程资源。这种问题在大量线程读取缓冲区数据时会变得更加严重。并且，无论是否阻塞/自旋，由于创建了大量的线程，线程切换的成本十分巨大。</li>
 </ul>
 <p>在 IO 复用模型中，会有一个线程不断去轮询多个 socket 的状态，只有当 socket 真正有读写事件时，才真正调用实际的 IO 读写操作。</p>
-<p>因为在多路复用IO模型中，只需要<strong>使用一个线程就可以管理多个socket</strong>，系统不需要建立新的进程或者线程，也不必维护这些线程和进程，并且只有<strong>在真正有socket读写事件进行时，才会使用IO资源</strong>，所以它大大减少了资源占用。</p>
+<p>因为在多路复用IO模型中，只需要<strong>使用一个线程就可以管理多个socket</strong>，并且只有在真正有 socket 读写事件进行时，才会使用 IO 资源，所以它大大减少了资源占用。</p>
 <p><img src="/2022/04/07/I-O-model/1068826-20170514143622722-640397005.png" alt="多路复用IO模型" style="zoom:150%;"></p>
-<p>在Java NIO中，是通过selector.select()去查询每个通道是否有到达事件，如果没有事件，则一直阻塞在那里，因此这种方式<strong>会导致用户线程的阻塞</strong>。</p>
 <p>多路复用IO为何比非阻塞IO模型的效率高是因为在非阻塞IO中，不断地询问socket状态是通过用户线程去进行的（会造成 CPU 模式切换），而在多路复用IO中，轮询每个socket状态是内核在进行的。</p>
 <p>不过要注意的是，多路复用IO模型是通过轮询的方式来检测是否有事件到达，并且对到达的事件逐一进行响应。因此对于多路复用IO模型来说，一旦事件响应体很大，那么就会导致后续的事件迟迟得不到处理，并且会影响新的事件轮询。</p>
-<p>信号驱动IO模型</p>
-<p>在信号驱动IO模型中，当用户线程发起一个IO请求操作，会给对应的socket注册一个信号函数，然后用户线程会继续执行，当内核数据就绪时会发送一个信号给用户线程，用户线程接收到信号之后，便在信号函数中调用IO读写操作（调用socket.read()）来进行实际的IO请求操作。</p>
-<p>调用socket.read() 仍旧会阻塞用户线程，只不过相比阻塞IO模型，阻塞时间少去了等待数据的时间</p>
-<p>异步IO模型</p>
-<p>异步IO模型是最理想的IO模型，在异步IO模型中，当用户线程发起read操作之后，立刻就可以开始去做其它的事。而另一方面，从内核的角度，当它收到一个asynchronous read之后，它会立刻返回，说明read请求已经成功发起了，因此不会对用户线程产生任何block。然后，内核会等待数据准备完成，然后将数据拷贝到用户线程，当这一切都完成之后，内核会给用户线程发送一个信号，告诉它read操作完成了。也就说用户线程完全不需要知道实际的整个IO操作是如何进行的，只需要先发起一个请求，当接收内核返回的成功信号时表示IO操作已经完成，可以直接去使用数据了。</p>
-<p>相比信号驱动IO模型。在异步IO模型中，IO操作的两个阶段都不会阻塞用户线程，这两个阶段都是由内核自动完成，然后发送一个信号告知用户线程操作已完成。用户线程中不需要再次调用IO函数进行具体的读写。</p>
-<p>注意，异步IO是需要操作系统的底层支持，在Java 7中，提供了Asynchronous IO。</p>
+<p><img src="/2022/04/07/I-O-model/v2-9b720fa8bbe7108003edc2abb6df7c71_720w.jpg" alt="文件描述符的量级和CPU耗时"></p>
+<h2 id="select"><a href="#select" class="headerlink" title="select"></a>select</h2><p>select 轮询所有 socket，找出能读出数据或者写入数据的 socket，并顺序对这些 socket 进行操作。</p>
+<p><strong>select 函数接口</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/select.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/time.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> FD_SETSIZE 1024</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> NFDBITS (8 * sizeof(unsigned long))</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> __FDSET_LONGS (FD_SETSIZE/NFDBITS)</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 数据结构 (bitmap)</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">    <span class="type">unsigned</span> <span class="type">long</span> fds_bits[__FDSET_LONGS];</span><br><span class="line">&#125; fd_set;</span><br><span class="line"></span><br><span class="line"><span class="comment">// API</span></span><br><span class="line"><span class="type">int</span> <span class="title function_">select</span><span class="params">(</span></span><br><span class="line"><span class="params">    <span class="type">int</span> max_fd, </span></span><br><span class="line"><span class="params">    fd_set *readset, </span></span><br><span class="line"><span class="params">    fd_set *writeset, </span></span><br><span class="line"><span class="params">    fd_set *exceptset, </span></span><br><span class="line"><span class="params">    <span class="keyword">struct</span> timeval *timeout</span></span><br><span class="line"><span class="params">)</span>                              <span class="comment">// 返回值就绪描述符的数目</span></span><br><span class="line"></span><br><span class="line"><span class="title function_">FD_ZERO</span><span class="params">(<span class="type">int</span> fd, fd_set* fds)</span>   <span class="comment">// 清空集合</span></span><br><span class="line"><span class="title function_">FD_SET</span><span class="params">(<span class="type">int</span> fd, fd_set* fds)</span>    <span class="comment">// 将给定的描述符加入集合</span></span><br><span class="line"><span class="title function_">FD_ISSET</span><span class="params">(<span class="type">int</span> fd, fd_set* fds)</span>  <span class="comment">// 判断指定描述符是否在集合中 </span></span><br><span class="line"><span class="title function_">FD_CLR</span><span class="params">(<span class="type">int</span> fd, fd_set* fds)</span>    <span class="comment">// 将给定的描述符从文件中删除  </span></span><br></pre></td></tr></table></figure>
+<p>对 select 接口的理解</p>
+<ul>
+<li>每个 fd_set 是一个长度为 1024 的 bitmap，若 fd_set[fd] = 1，表示 fd 对应的文件资源有效。</li>
+<li>FD_SET(int fd, fd_set* fds)：将 fds 的第 fd 位置 1</li>
+<li><p>FD_ISSET(int fd, fd_set* fds)：判断 fds 的第 fd 位是否为 1</p>
+</li>
+<li><p>select 函数</p>
+<ul>
+<li>max_fd 参数告诉内核，只需要检查 fd 为 [0, max_fd-1] 区间的对应的文件资源即可。（<strong>在这个范围内，只检查 readset、writeset 和 exceptset 中为 1 的索引值 fd</strong>）</li>
+<li>*read_set 参数是 fd_set 类型，当 read_set[fd] 为 1，表示 fd 对应的文件资源可以被读</li>
+<li>select 函数会把在用户空间创建的 readset、writeset 和 exceptset 拷贝到内核空间，由内核更新这三个 fd_set 类型的数据，这会导致 <strong>CPU 模式的切换</strong>。</li>
+<li>select 的返回值是就绪文件描述符的数目。当没有就绪的文件时，select 会导致用户线程的阻塞。当有就绪的文件时，<strong>select 返回，read_set、writeset 和 exceptset 会被更新</strong></li>
+</ul>
+</li>
+</ul>
+<p>具体来说，使用 select 函数的过程一般是：先调用宏 FD_ZERO 将指定的 fd_set 清零（fd_set 可以作为 read_set、writeset 或 exceptset 传入函数），然后调用宏 FD_SET <strong>将需要测试的 fd 加入 fd_set</strong> ，接着调用函数 select <strong>测试 fd_set 中的所有 fd</strong>，最后用宏 FD_ISSET 检查某个 fd 在函数 select 调用后是否为 1。</p>
+<blockquote>
+<p>fd_set 中原来为 1 的位对应的 fd 会变内核监听，如果可读写，则保持为 1，否则，置为 0</p>
+</blockquote>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">while</span>(<span class="number">1</span>)&#123;</span><br><span class="line">    <span class="comment">// 假设外面已经定义了 fd_set 类型的变量 rset </span></span><br><span class="line">    FD_ZERO(&amp;rset);</span><br><span class="line">    <span class="comment">// 设只需要监听 5 个 fd，例如，设 fds = [1,7,9,11,40]</span></span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;<span class="number">5</span>;++i)&#123;</span><br><span class="line">        FD_SET(fds[i], &amp;rset); <span class="comment">// 将感兴趣的文件描述符加入 rset</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// max 在这个例子中是 40</span></span><br><span class="line">    <span class="comment">// 每次执行 select 都会拷贝 rset 到内核空间</span></span><br><span class="line">    select(max+<span class="number">1</span>, &amp;rset, <span class="literal">NULL</span>, <span class="literal">NULL</span>, <span class="literal">NULL</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;<span class="number">5</span>;++i)&#123;</span><br><span class="line">        <span class="keyword">if</span>(FD_ISSET(fds[i], &amp;rset))&#123;</span><br><span class="line">            <span class="comment">// 读取数据，不阻塞</span></span><br><span class="line">            <span class="built_in">memset</span>(buffer, <span class="number">0</span>, MAXBUF);</span><br><span class="line">            read(fds[i], buffer, MAXBUF);</span><br><span class="line">            <span class="comment">// .. 处理数据</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>select 的缺陷：</p>
+<ul>
+<li>单个进程所打开的 fd 是有限制的，通过 FD_SETSIZE 设置，默认1024。假如有 100 万个连接，每次只能处理 1024 个。</li>
+<li>fd_set 不可重用。每个 while(1) 中都要先置 0、再注册感兴趣的文件描述符</li>
+<li>会导致 CPU 模式切换</li>
+<li>当 select 返回后，有可用的文件，不确定具体是哪几个，需要遍历 fd_set 找到该文件对应的 fd，并进行 IO 操作（<strong>IO 操作不会阻塞</strong>）</li>
+</ul>
+<h2 id="poll"><a href="#poll" class="headerlink" title="poll"></a>poll</h2><p>poll 与 select 相同点：都是将用户传入的文件描述符集合拷贝到内核空间，然后轮询每个 fd 对应的文件状态</p>
+<p>poll 与 select 的区别：将 fd_set 进一步封装为 struct pollfd fds[]，由 bitmap 变为结构体数组。对于文件描述符集合的操作自然也不再是用宏，例如 FD_SET。这使得，poll 比 select 具有优点：</p>
+<ul>
+<li><p>没有最大连接数的限制</p>
+</li>
+<li><p>fd 对应的 fds[fd] 是可重用的（如果需要监听的事件 events 不变的话，否则需要重新注册）。</p>
+<blockquote>
+<p>可重用：不需要像 select 那样先置 0 再重新将感兴趣的 fd 置 1。并不代表内核空间的文件描述符集合可重用，每次仍旧要从用户空间拷贝到内核空间</p>
+</blockquote>
+</li>
+<li><p>一个 fds 可监听多种事件（设置 events 即可），不需要区分为 readset、writeset 和 exceptset</p>
+</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;poll.h&gt;</span></span></span><br><span class="line"><span class="comment">// 数据结构</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">pollfd</span> &#123;</span></span><br><span class="line">    <span class="type">int</span> fd;                         <span class="comment">// 需要监视的文件描述符</span></span><br><span class="line">    <span class="type">short</span> events;                   <span class="comment">// 需要内核监视的事件</span></span><br><span class="line">    <span class="type">short</span> revents;                  <span class="comment">// 实际发生的事件，r指real</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// API</span></span><br><span class="line"><span class="comment">// 只监听 fds 的前 nfds 个元素</span></span><br><span class="line"><span class="type">int</span> <span class="title function_">poll</span><span class="params">(<span class="keyword">struct</span> pollfd fds[], <span class="type">nfds_t</span> nfds, <span class="type">int</span> timeout)</span>;</span><br></pre></td></tr></table></figure>
+<h2 id="epoll"><a href="#epoll" class="headerlink" title="epoll"></a>epoll</h2><p>epoll 的步骤</p>
+<ol>
+<li><p>调用 epoll_create 建立一个 epoll 对象。</p>
+</li>
+<li><p>调用 epoll_ctl 向 epoll 对象中添加文件描述符句柄。（在需要的时候可以删除原有的 fd）</p>
+</li>
+<li><p>调用 epoll_wait 收集发生事件的连接。</p>
+</li>
+</ol>
+<p>在调用 epoll_create 时，内核除了帮我们在 epoll 文件系统里建了个 file 结点，在内核 cache 里建了个红黑树用于存储以后 epoll_ctl 传来的 socket 外，还会再建立一个 rdllist 双向链表，用于存储准备就绪的事件。</p>
+<p>所有添加到 epoll 中的 fd 句柄都会关联一个回调方法，这个回调方法在内核中叫做 ep_poll_callback，fd 句柄中感兴趣的事件发生时，fd 会被放到 rdllist 中。于是，内核不需要不断地遍历扫描来判断注册的 fd 是否有事件发生。</p>
+<p>当 epoll_wait 调用时，仅仅观察 rdllist 是否为空即可。如果 rdllist 不为空，则将 rdllist 复制到用户空间中，同时将事件数量返回给用户。rdlist 为空就 sleep（表现为用户线程阻塞），等到 timeout 时间到后即使链表没数据也返回。</p>
+<p><img src="/2022/04/07/I-O-model/v2-f4af10c10479a9e0ec0ec9f327d78d70_720w-16506095928067.jpg" alt="epoll示意图"></p>
+<h3 id="epoll-的两种触发模式"><a href="#epoll-的两种触发模式" class="headerlink" title="epoll 的两种触发模式"></a>epoll 的两种触发模式</h3><ul>
+<li>LT 模式（水平触发，默认）只要有数据都会触发，缓冲区剩余未读尽的数据会导致 epoll_wait 返回。</li>
+<li>ET 模式（边缘触发）只有数据到来才触发，不管缓存区中是否还有数据，缓冲区剩余未读尽的数据不会导致 epoll_wait 返回；</li>
+</ul>
+<p><img src="/2022/04/07/I-O-model/v2-e6c497d098c782ed52830da08b3e5cbe_720w.jpg" alt="img"></p>
+<h3 id="select、poll-和-epoll-对比"><a href="#select、poll-和-epoll-对比" class="headerlink" title="select、poll 和 epoll 对比"></a>select、poll 和 epoll 对比</h3><div class="table-container">
+<table>
+<thead>
+<tr>
+<th></th>
+<th>select</th>
+<th>poll</th>
+<th>epoll</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>fd 数量</td>
+<td>1024</td>
+<td>无限制</td>
+<td>无限制</td>
+</tr>
+<tr>
+<td>fd 状态判断</td>
+<td>轮询 O(N)</td>
+<td>轮询 O(N)</td>
+<td>触发式 O(1)</td>
+</tr>
+<tr>
+<td>fd 集合的重用性</td>
+<td>不可重用</td>
+<td>可重用</td>
+<td>可重用</td>
+</tr>
+<tr>
+<td>模式</td>
+<td>LT</td>
+<td>LT</td>
+<td>LT 和 ET</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>与select和poll相比，epoll为什么使用红黑树而非数组？</p>
+<p>select和poll每次调用时都会存在一个将 fd_set 从用户态向内核态中拷贝的过程，，而epoll内核中维护了一个内核事件表，它是将所有的文件描述符全部都存放在内核中，系统去检测有事件发生的时候触发回调，当你要添加新的文件描述符的时候也是调用epoll_ctl函数使用EPOLL_CTL_ADD宏来插入，epoll_wait也不是每次调用时都会重新拷贝一遍所有的文件描述符到内核态。当我现在要在内核中长久的维护一个数据结构来存放文件描述符，并且时常会有插入，查找和删除的操作发生，红黑树三个操作更高效。</p>
+<p>epoll为什么使用红黑树而不使用哈希表？</p>
+<p>红黑树占用的内存更小（仅需要为其存在的节点分配内存），而HashMap事先就应该分配足够的内存存储散列表（即使有些槽可能遭弃用），也就是说，HashMap占用的空间只有部分存储了有效的节点</p>
+<h1 id="信号驱动IO模型"><a href="#信号驱动IO模型" class="headerlink" title="信号驱动IO模型"></a>信号驱动IO模型</h1><p>在信号驱动IO模型中，当用户线程发起一个 IO 请求操作，会给对应的 socket 注册一个信号函数，然后用户线程可以继续执行，当内核数据就绪时会发送一个信号给用户线程，用户线程接收到信号之后，便在信号函数中调用 IO 读写操作（例如调用 socket.read()）来进行实际的 IO 请求操作。</p>
+<p>调用 socket.read() 仍旧会阻塞用户线程，只不过相比阻塞IO模型，阻塞时间少去了等待数据的时间</p>
+<h1 id="异步IO模型"><a href="#异步IO模型" class="headerlink" title="异步IO模型"></a>异步IO模型</h1><p>异步 IO 模型是最理想的 IO 模型，在异步 IO 模型中，当用户线程发起 read 操作之后，立刻就可以开始去做其它的事。</p>
+<p>而另一方面，从内核的角度，当它收到一个 asynchronous read 之后，它会立刻返回（不让用户线程阻塞），说明 read 请求已经成功发起了，因此不会对用户线程产生任何阻塞。然后，内核会等待数据准备完成，然后将数据拷贝到用户线程，当这一切都完成之后，内核会给用户线程发送一个信号，告诉它 read 操作完成了。</p>
+<p>也就说用户线程完全不需要知道实际的整个 IO 操作是如何进行的，只需要先发起一个请求，当接收内核返回的成功信号时表示IO操作已经完成，可以直接去使用数据了。</p>
+<p>相比信号驱动 IO 模型。在异步 IO 模型中，IO 操作的两个阶段都不会阻塞用户线程，这两个阶段都是由内核自动完成，然后发送一个信号告知用户线程操作已完成。用户线程中不需要再次调用 IO 函数进行具体的读写。</p>
+<p>异步 IO 需要操作系统的底层支持。</p>
 <blockquote>
 <p>前面四种IO模型实际上都属于同步IO，只有最后一种是真正的异步IO，因为无论是多路复用IO还是信号驱动模型，IO操作的第2个阶段都会引起用户线程阻塞，也就是内核进行数据拷贝的过程都会让用户线程阻塞。</p>
 </blockquote>
-<p>select、poll 和 epoll 之间的区别</p>
-<p>（1）select：时间复杂度 O(n)<br>select 仅仅知道有 I/O 事件发生，但并不知道是哪几个流，所以只能无差别轮询所有流，找出能读出数<br>据或者写入数据的流，并对其进行操作。所以 select 具有 O(n) 的无差别轮询复杂度，同时处理的流越<br>多，无差别轮询时间就越长。<br>（2）poll：时间复杂度 O(n)<br>poll 本质上和 select 没有区别，它将用户传入的数组拷贝到内核空间，然后查询每个 fd 对应的设备状<br>态，但是它没有最大连接数的限制，原因是它是基于链表来存储的。<br>（3）epoll：时间复杂度 O(1)<br>epoll 可以理解为 event poll，不同于忙轮询和无差别轮询，epoll 会把哪个流发生了怎样的 I/O 事件通<br>知我们。所以说 epoll 实际上是事件驱动（每个事件关联上 fd）的（触发式）。</p>
-<p>你在大学读书，你的朋友来找你：</p>
-<ul>
-<li>select版宿管阿姨，就会带着你的朋友挨个房间找，直到找到你</li>
-<li><p>epoll版阿姨，会先记下每位同学房间号， 你的朋友来时，只需告诉你的朋友你住在哪个房间即可，无需亲自带着你朋友满大楼找人</p>
-</li>
-<li><p>select 基于轮询机制</p>
-</li>
-<li>epoll基于操作系统支持的I/O通知机制 epoll支持水平触发和边沿触发两种模式。</li>
-</ul>
-<p>在Reactor模式中，会先对每个client注册感兴趣的事件，然后有一个线程专门去轮询每个client是否有事件发生，当有事件发生时，便 <strong>顺序处理</strong> 每个事件，当所有事件处理完之后，便再转去继续轮询，如下图所示：</p>
-<p>上面的五种IO模型中的多路复用IO就是采用Reactor模式。注意，上面的图中展示的 是顺序处理每个事件，当然为了提高事件处理速度，可以通过多线程或者线程池的方式来处理事件。</p>
-<p>　　在Proactor模式中，当检测到有事件发生时，会新起一个异步操作，然后交由内核线程去处理，当内核线程完成IO操作之后，发送一个通知告知操作已完成，可以得知，异步IO模型采用的就是Proactor模式。</p>
+<h1 id="Reactor-模式和-Proactor-模式"><a href="#Reactor-模式和-Proactor-模式" class="headerlink" title="Reactor 模式和 Proactor 模式"></a>Reactor 模式和 Proactor 模式</h1><p>在Reactor模式中，会先对每个client注册感兴趣的事件，然后有一个线程专门去轮询每个client是否有事件发生，当有事件发生时，便 <strong>顺序处理</strong> 每个事件，当所有事件处理完之后，便再转去继续轮询，如下图所示：</p>
+<p>注意，上面的图中展示的 是顺序处理每个事件，当然为了提高事件处理速度，可以通过多线程或者线程池的方式来处理事件。</p>
+<p>在Proactor模式中，当检测到有事件发生时，会新起一个异步操作，然后交由内核线程去处理，当内核线程完成IO操作之后，发送一个通知告知操作已完成，可以得知，异步IO模型采用的就是Proactor模式。</p>
+<h1 id="文件描述符（File-descriptor，fd）"><a href="#文件描述符（File-descriptor，fd）" class="headerlink" title="文件描述符（File descriptor，fd）"></a>文件描述符（File descriptor，fd）</h1><p>内核为<strong>每个进程</strong>维护了一个 file descriptor table，file descriptor<strong>（fd） 是</strong> file descriptor table 的<strong>索引</strong>，file descriptor table 的表项又是<strong>系统级</strong>（所有进程共享）的 file table 的索引。</p>
+<p>file table 每个表项标识一个文件资源，记录了该资源的相关信息，例如所处模式（读、写等），并且还提供了到inode table 对应表项的索引，inode table 真正的描述了底层的文件。</p>
+<p><img src="/2022/04/07/I-O-model/70.png" alt="File_table_and_inode_table"></p>
+<p>在 Unix/Linux 系统中，一个 socket 句柄，可以看做是一个文件，在 socket 上收发数据，相当于对一个文件进行读写，所以一个 socket 句柄，通常也用表示文件句柄的 fd 来表示。</p>
 
     </div>
 
@@ -385,7 +487,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%98%BB%E5%A1%9E-IO-%E6%A8%A1%E5%9E%8B"><span class="nav-number">1.</span> <span class="nav-text">阻塞 IO 模型</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%9D%9E%E9%98%BB%E5%A1%9E-IO-%E6%A8%A1%E5%9E%8B"><span class="nav-number">2.</span> <span class="nav-text">非阻塞 IO 模型</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#IO-%E5%A4%8D%E7%94%A8%E6%A8%A1%E5%9E%8B"><span class="nav-number">3.</span> <span class="nav-text">IO 复用模型</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%98%BB%E5%A1%9E-IO-%E6%A8%A1%E5%9E%8B"><span class="nav-number">1.</span> <span class="nav-text">阻塞 IO 模型</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%9D%9E%E9%98%BB%E5%A1%9E-IO-%E6%A8%A1%E5%9E%8B"><span class="nav-number">2.</span> <span class="nav-text">非阻塞 IO 模型</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#IO-%E5%A4%8D%E7%94%A8%E6%A8%A1%E5%9E%8B"><span class="nav-number">3.</span> <span class="nav-text">IO 复用模型</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#select"><span class="nav-number">3.1.</span> <span class="nav-text">select</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#poll"><span class="nav-number">3.2.</span> <span class="nav-text">poll</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#epoll"><span class="nav-number">3.3.</span> <span class="nav-text">epoll</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#epoll-%E7%9A%84%E4%B8%A4%E7%A7%8D%E8%A7%A6%E5%8F%91%E6%A8%A1%E5%BC%8F"><span class="nav-number">3.3.1.</span> <span class="nav-text">epoll 的两种触发模式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#select%E3%80%81poll-%E5%92%8C-epoll-%E5%AF%B9%E6%AF%94"><span class="nav-number">3.3.2.</span> <span class="nav-text">select、poll 和 epoll 对比</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BF%A1%E5%8F%B7%E9%A9%B1%E5%8A%A8IO%E6%A8%A1%E5%9E%8B"><span class="nav-number">4.</span> <span class="nav-text">信号驱动IO模型</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%BC%82%E6%AD%A5IO%E6%A8%A1%E5%9E%8B"><span class="nav-number">5.</span> <span class="nav-text">异步IO模型</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Reactor-%E6%A8%A1%E5%BC%8F%E5%92%8C-Proactor-%E6%A8%A1%E5%BC%8F"><span class="nav-number">6.</span> <span class="nav-text">Reactor 模式和 Proactor 模式</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6%EF%BC%88File-descriptor%EF%BC%8Cfd%EF%BC%89"><span class="nav-number">7.</span> <span class="nav-text">文件描述符（File descriptor，fd）</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -401,7 +503,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">20</span>
+          <span class="site-state-item-count">22</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>

@@ -3,76 +3,166 @@
   <entry>
     <title>并发</title>
     <url>/2022/04/07/Concurrency/</url>
-    <content><![CDATA[<p>同步、锁机制<br><span id="more"></span></p>
+    <content><![CDATA[<p>锁、条件变量的实现与使用<br><span id="more"></span></p>
 <p>多线程/多进程的目的：</p>
 <p>对于单 CPU 来说，只是提供一种程序同时执行的错觉。</p>
 <p>对于单 CPU 来说，如果没有 IO 阻塞操作（即读取磁盘操作），单线程执行多个任务，总时间更短，因为多线程单CPU无法并发执行，会导致线程切换，带来额外开销；如果有 IO 阻塞操作，多线程可以利用阻塞时间，因此多线程可能更快，应该综合考虑阻塞时间的利用和线程切换的消耗，看哪个大</p>
 <p>多线程/多进程可以利用多 CPU</p>
-<h1 id="锁"><a href="#锁" class="headerlink" title="锁"></a>锁</h1><p><img src="/2022/04/07/Concurrency/1647569931834-e7d0bf33-43a6-4c34-8a33-8be6345076d0.jpeg" alt="思维导图"></p>
-<h2 id="1-乐观锁-VS-悲观锁"><a href="#1-乐观锁-VS-悲观锁" class="headerlink" title="1 乐观锁 VS 悲观锁"></a><strong>1 乐观锁 VS 悲观锁</strong></h2><p>悲观锁适合写操作多的场景，先加锁可以保证写操作时数据正确。</p>
-<p>乐观锁适合读操作多的场景，不加锁的特点能够使其读操作的性能大幅提升。</p>
-<h2 id="2-自旋锁-VS-适应性自旋锁"><a href="#2-自旋锁-VS-适应性自旋锁" class="headerlink" title="2 自旋锁 VS 适应性自旋锁"></a><strong>2 自旋锁 VS 适应性自旋锁</strong></h2><p>在许多场景中，同步资源的锁定时间很短（同步代码块执行需要的时间很短），为了这一小段时间去切换线程，线程挂起和恢复现场的花费可能会让系统得不偿失。</p>
-<p>如果有<strong>多个处理器</strong>，能够让两个或以上的线程同时执行，我们就可以让后面那个请求锁的线程不放弃CPU 的执行时间，看看持有锁的线程是否很快就会释放锁。而为了让当前线程“稍等一下”，我们需让当前线程进行自旋，如果在自旋完成后前面锁定同步资源的线程已经释放了锁，那么当前线程就可以不必阻塞而是直接获取同步资源，从而避免切换线程的开销。这就是自旋锁。</p>
-<p>自旋锁本身是有缺点的，它不能代替阻塞。自旋等待虽然避免了线程切换的开销，但它要占用处理器时间。</p>
-<p>自适应意味着自旋的时间（次数）不再固定，而是由前一次在同一个锁上的自旋时间及锁的拥有者的状态来决定。如果在同一个锁对象上，自旋等待刚刚成功获得过锁，并且持有锁的线程正在运行中，那么虚拟机就会认为这次自旋也是很有可能再次成功，进而它将允许自旋等待持续相对更长的时间。如果对于某个锁，自旋很少成功获得过，那在以后尝试获取这个锁时将可能省略掉自旋过程，直接阻塞线程，避免浪费处理器资源。</p>
-<h3 id="自旋锁的实现"><a href="#自旋锁的实现" class="headerlink" title="自旋锁的实现"></a>自旋锁的实现</h3><p>自旋锁基于硬件原语实现，这是因为硬件原语可以原子地获取表示锁状态的计数器。包括测试并设置指令（test-and-set）、比较并交换指令（compare-and-swap）和获取并增加指令（fetch-and-add）。</p>
-<h4 id="失败的尝试"><a href="#失败的尝试" class="headerlink" title="失败的尝试"></a>失败的尝试</h4><figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">lock_t</span> &#123;</span> </span><br><span class="line">	<span class="type">int</span> flag; <span class="comment">// 0 -&gt; lock is available, 1 -&gt; held </span></span><br><span class="line">&#125;<span class="type">lock_t</span>; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">init</span><span class="params">(<span class="type">lock_t</span> *mutex)</span> &#123;</span><br><span class="line">	mutex-&gt;flag = <span class="number">0</span>; </span><br><span class="line">&#125;</span><br><span class="line"><span class="type">void</span> <span class="title function_">lock</span><span class="params">(<span class="type">lock_t</span> *mutex)</span> &#123; </span><br><span class="line">    <span class="keyword">while</span> (mutex-&gt;flag == <span class="number">1</span>) </span><br><span class="line">    	; <span class="comment">// spin-wait (do nothing)，自旋，即不断扫描锁的状态</span></span><br><span class="line">	mutex-&gt;flag = <span class="number">1</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="type">void</span> <span class="title function_">unlock</span><span class="params">(<span class="type">lock_t</span> *mutex)</span> &#123; </span><br><span class="line">	mutex-&gt;flag = <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>协程</p>
+<h1 id="锁"><a href="#锁" class="headerlink" title="锁"></a>锁</h1><h2 id="自旋锁的实现"><a href="#自旋锁的实现" class="headerlink" title="自旋锁的实现"></a>自旋锁的实现</h2><p>自旋锁基于硬件原语实现，这是因为硬件原语可以原子地获取表示锁状态的计数器。包括测试并设置指令（test-and-set）、比较并交换指令（compare-and-swap）和获取并增加指令（fetch-and-add）。</p>
+<h3 id="失败的尝试"><a href="#失败的尝试" class="headerlink" title="失败的尝试"></a>失败的尝试</h3><figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">lock_t</span> &#123;</span> </span><br><span class="line">	<span class="type">int</span> flag; <span class="comment">// 0 -&gt; lock is available, 1 -&gt; held </span></span><br><span class="line">&#125;<span class="type">lock_t</span>; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">init</span><span class="params">(<span class="type">lock_t</span> *mutex)</span> &#123;</span><br><span class="line">	mutex-&gt;flag = <span class="number">0</span>; </span><br><span class="line">&#125;</span><br><span class="line"><span class="type">void</span> <span class="title function_">lock</span><span class="params">(<span class="type">lock_t</span> *mutex)</span> &#123; </span><br><span class="line">    <span class="keyword">while</span> (mutex-&gt;flag == <span class="number">1</span>) </span><br><span class="line">    	; <span class="comment">// spin-wait (do nothing)，自旋，即不断扫描锁的状态</span></span><br><span class="line">	mutex-&gt;flag = <span class="number">1</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="type">void</span> <span class="title function_">unlock</span><span class="params">(<span class="type">lock_t</span> *mutex)</span> &#123; </span><br><span class="line">	mutex-&gt;flag = <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>如下的执行过程将导致两个线程都进入到临界区，不会有一个处于自旋等待状态。<strong>失败的原因是：获取并更新锁状态的操作不是原子的</strong></p>
 <p><img src="/2022/04/07/Concurrency/1643699387182-83e08ca1-3a9f-40df-8bf7-d66a1145ab15.png" alt></p>
-<h4 id="测试并设置指令（test-and-set）"><a href="#测试并设置指令（test-and-set）" class="headerlink" title="测试并设置指令（test-and-set）"></a>测试并设置指令（test-and-set）</h4><figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">TestAndSet</span><span class="params">(<span class="type">int</span> *old_ptr, <span class="type">int</span> new)</span> &#123; </span><br><span class="line">    <span class="type">int</span> old = *old_ptr; <span class="comment">// fetch old value at old_ptr </span></span><br><span class="line">    *old_ptr = new;    <span class="comment">// store &#x27;new&#x27; into old_ptr </span></span><br><span class="line">    <span class="keyword">return</span> old;        <span class="comment">// return the old value </span></span><br><span class="line">&#125; </span><br></pre></td></tr></table></figure>
+<h3 id="可用的自旋锁"><a href="#可用的自旋锁" class="headerlink" title="可用的自旋锁"></a>可用的自旋锁</h3><h4 id="测试并设置指令（test-and-set）"><a href="#测试并设置指令（test-and-set）" class="headerlink" title="测试并设置指令（test-and-set）"></a>测试并设置指令（test-and-set）</h4><figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">TestAndSet</span><span class="params">(<span class="type">int</span> *old_ptr, <span class="type">int</span> new)</span> &#123; </span><br><span class="line">    <span class="type">int</span> old = *old_ptr; <span class="comment">// fetch old value at old_ptr </span></span><br><span class="line">    *old_ptr = new;    <span class="comment">// store &#x27;new&#x27; into old_ptr </span></span><br><span class="line">    <span class="keyword">return</span> old;        <span class="comment">// return the old value </span></span><br><span class="line">&#125; </span><br></pre></td></tr></table></figure>
 <p>TestAndSet() 返回 old_ptr 指向的旧值，同时更新 old_ptr 为 new。由于这些代码是原子地执行，所以我们把这条指令叫作“测试<strong>并</strong>设置”。</p>
 <p>用测试并设置指令实现自旋锁的方式如下</p>
 <figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">lock_t</span> &#123;</span> </span><br><span class="line">	<span class="type">int</span> flag; </span><br><span class="line">&#125; <span class="type">lock_t</span>;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">lock</span><span class="params">(<span class="type">lock_t</span> *lock)</span> &#123; </span><br><span class="line">    <span class="keyword">while</span> (TestAndSet(&amp;lock-&gt;flag, <span class="number">1</span>) == <span class="number">1</span>) </span><br><span class="line">    	;spin-wait (<span class="keyword">do</span> nothing)</span><br><span class="line">&#125;</span><br><span class="line"><span class="type">void</span> <span class="title function_">unlock</span><span class="params">(<span class="type">lock_t</span> *lock)</span> &#123;</span><br><span class="line">    lock-&gt;flag = <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>由于 TestAndSet(&amp;lock-&gt;flag, 1) 是原子操作，因此获取锁的过程是互斥的</strong>。</p>
 <h4 id="比较并交换指令（compare-and-swap）"><a href="#比较并交换指令（compare-and-swap）" class="headerlink" title="比较并交换指令（compare-and-swap）"></a>比较并交换指令（compare-and-swap）</h4><figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">CompareAndSwap</span><span class="params">(<span class="type">int</span> *ptr, <span class="type">int</span> expected, <span class="type">int</span> new)</span> &#123; </span><br><span class="line">    <span class="type">int</span> actual = *ptr; </span><br><span class="line">    <span class="keyword">if</span> (actual == expected) </span><br><span class="line">    	*ptr = new; </span><br><span class="line">    <span class="keyword">return</span> actual; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>CompareAndSwap() 检测 ptr 指向的内存单元的值是否和 expected 相等；如果是，更新 ptr 所指的值为新值。否则，什么也不做。并返回操作之后 ptr 指向的内存单元的值。</p>
-<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">lock</span><span class="params">(<span class="type">lock_t</span> *lock)</span> &#123; </span><br><span class="line">    <span class="keyword">while</span> (CompareAndSwap(&amp;lock-&gt;flag, <span class="number">0</span>, <span class="number">1</span>) == <span class="number">1</span>) </span><br><span class="line">    	;spin-wait (<span class="keyword">do</span> nothing)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">lock</span><span class="params">(<span class="type">lock_t</span> *lock)</span> &#123; </span><br><span class="line">    <span class="keyword">while</span> (CompareAndSwap(&amp;lock-&gt;flag, <span class="number">0</span>, <span class="number">1</span>) == <span class="number">1</span>) </span><br><span class="line">    	;spin-wait (<span class="keyword">do</span> nothing)</span><br><span class="line">&#125;</span><br><span class="line"><span class="type">void</span> <span class="title function_">unlock</span><span class="params">(<span class="type">lock_t</span> *lock)</span> &#123;</span><br><span class="line">    lock-&gt;flag = <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <h4 id="获取并增加指令（fetch-and-add）"><a href="#获取并增加指令（fetch-and-add）" class="headerlink" title="获取并增加指令（fetch-and-add）"></a>获取并增加指令（fetch-and-add）</h4><p>获取并增加指令（fetch-and-add）能原子地返回特定地址的旧值，并且让该值自增一</p>
 <figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">FetchAndAdd</span><span class="params">(<span class="type">int</span> *ptr)</span> &#123; </span><br><span class="line">    <span class="type">int</span> old = *ptr; </span><br><span class="line">    *ptr = old + <span class="number">1</span>; </span><br><span class="line">    <span class="keyword">return</span> old; </span><br><span class="line">&#125; </span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">lock_t</span> &#123;</span> </span><br><span class="line">    <span class="type">int</span> ticket; </span><br><span class="line">    <span class="type">int</span> turn; </span><br><span class="line">&#125; <span class="type">lock_t</span>; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">lock_init</span><span class="params">(<span class="type">lock_t</span> *lock)</span> &#123; </span><br><span class="line">    lock-&gt;ticket = <span class="number">0</span>; </span><br><span class="line">    lock-&gt;turn   = <span class="number">0</span>; </span><br><span class="line">&#125; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">lock</span><span class="params">(<span class="type">lock_t</span> *lock)</span> &#123; </span><br><span class="line">    <span class="type">int</span> myturn = FetchAndAdd(&amp;lock-&gt;ticket); </span><br><span class="line">    <span class="keyword">while</span> (lock-&gt;turn != myturn) </span><br><span class="line">    	; <span class="comment">// spin </span></span><br><span class="line">&#125; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">unlock</span><span class="params">(<span class="type">lock_t</span> *lock)</span> &#123; </span><br><span class="line">	FetchAndAdd(&amp;lock-&gt;turn); </span><br><span class="line">&#125; </span><br></pre></td></tr></table></figure>
-<p>ticket 锁用了 ticket 和 turn 变量来构建锁。基本操作也很简单：如果线程希望获取锁，首先对一个 ticket 值执行一个原子的获取并相加指令。这个值作为该线程的顺位，即 myturn。根据全局共享的 lock-&gt;turn 变量，当某一个线程的（myturn == turn）时，则轮到这个线程进入临界区。unlock 则是增加 turn，从而下一个等待线程可以<br>进入临界区。 </p>
-<p>不同于之前的方法：本方法能够保证所有线程都能抢到锁。只要一个线程获得了ticket值，它最终会被调度。之前的方法则不会保证（存在饥饿问题）。比如基于测试并设置的方法，一个线程有可能一直自旋，即使其他线程在获取和释放锁。</p>
-<h3 id="自旋锁的问题"><a href="#自旋锁的问题" class="headerlink" title="自旋锁的问题"></a>自旋锁的问题</h3><p>以两个线程运行在单处理器上为例，当一个线程（线程0）持有锁时，被中断。第二个线程（线程1）去获取锁，发现锁已经被持有。因此，它就开始自旋，直到，时钟中断产生，操作系统切换线程，线程 0 重新运行，它释放锁。下一次轮到线程1 时，线程 1 不需要继续自旋了，它获取了锁。</p>
-<p>也就是说，一个线程会一直自旋检查一个不会改变的值，浪费掉整个时间片！如果有 N个线程去竞争一个锁，情<br>况会更糟糕。同样的场景下，会浪费 N−1 个时间片。即便有多个处理器并发，也有这个问题。</p>
+<p>ticket 锁用了 ticket 和 turn 变量来构建锁。基本操作也很简单：如果线程希望获取锁，首先对一个 ticket 值执行一次原子的 FetchAndAdd 指令。这个值作为该线程的顺位，即 myturn。根据全局共享的 lock-&gt;turn 变量，当某一个线程的（myturn == turn）时，则轮到这个线程进入临界区。unlock 则是增加 lock-&gt;turn，从而下一个等待线程可以进入临界区。 </p>
+<p>不同于之前的方法：本方法能够保证所有线程都能抢到锁。只要一个线程获得了 ticket 值，它最终会被调度。之前的方法则不会保证（存在饥饿问题）。比如基于测试并设置的方法，一个线程有可能一直自旋，即使其他线程在获取和释放锁。</p>
+<blockquote>
+<p>存在的问题：如果一个线程调用了多次 unlock()？这是可以的</p>
+</blockquote>
+<h2 id="自旋锁的性能"><a href="#自旋锁的性能" class="headerlink" title="自旋锁的性能"></a>自旋锁的性能</h2><p>以两个线程运行在单处理器上为例，当一个线程（线程0）持有锁时，被中断。第二个线程（线程1）去获取锁，发现锁已经被持有。因此，它就开始自旋，直到，时钟中断产生，操作系统切换线程，线程 0 重新运行，它释放锁。下一次轮到线程1 时，线程 1 不需要继续自旋了，它获取了锁。</p>
+<p>也就是说，一个线程会一直自旋检查一个不会改变的值，浪费掉整个时间片。如果有 N个线程去竞争一个锁，情<br>况会更糟糕。同样的场景下，会浪费 N−1 个时间片。</p>
+<p>如果有多个处理器：</p>
+<ul>
+<li>持有锁的线程被中断后没有迅速被重新调度运行，也会有这个问题。</li>
+<li>持有锁的线程并没有因为 CPU 时钟中断切换线程而暂停，由于临界区代码通常较短，它可能被迅速执行完，然后释放锁。其他 CPU 上等待的线程在一个时间片内获得了锁。</li>
+</ul>
 <p>自旋等待其他线程释放锁的时候会浪费时间。尤其是在单处理器上，一个等待线程等待的目标线程甚至无法运行（至少在上下文切换之前）（处于自旋等待的线程占用 CPU，导致目标线程根本无法运行，也不可能释放锁，一个线程会一直自旋检查一个不会改变的值，浪费掉整个时间片）</p>
-<h3 id="自旋锁的优化"><a href="#自旋锁的优化" class="headerlink" title="自旋锁的优化"></a>自旋锁的优化</h3><h4 id="在要自旋的时候，放弃CPU"><a href="#在要自旋的时候，放弃CPU" class="headerlink" title="在要自旋的时候，放弃CPU"></a>在要自旋的时候，放弃CPU</h4><p>如下是测试并设置指令结合让出 CPU 实现的锁</p>
+<h2 id="自旋锁的优化"><a href="#自旋锁的优化" class="headerlink" title="自旋锁的优化"></a>自旋锁的优化</h2><h3 id="在要自旋的时候，放弃CPU"><a href="#在要自旋的时候，放弃CPU" class="headerlink" title="在要自旋的时候，放弃CPU"></a>在要自旋的时候，放弃CPU</h3><p>如下是测试并设置指令结合让出 CPU 实现的锁</p>
 <figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">init</span><span class="params">()</span> &#123; </span><br><span class="line">	flag = <span class="number">0</span>; </span><br><span class="line">&#125; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">lock</span><span class="params">()</span> &#123; </span><br><span class="line">    <span class="keyword">while</span> (TestAndSet(&amp;flag, <span class="number">1</span>) == <span class="number">1</span>) </span><br><span class="line">    	yield(); <span class="comment">// give up the CPU </span></span><br><span class="line">&#125; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">unlock</span><span class="params">()</span> &#123; </span><br><span class="line">	flag = <span class="number">0</span>; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>这种方法中，我们假定操作系统提供<strong>原语</strong> yield()，线程可以调用它主动放弃 CPU，让其他线程运行。线程可以处于 3 种状态之一（运行、就绪和阻塞）。yield() 系统调用能够让运行（running）态变为就绪（ready）态，从而允许其他线程运行。因此，让出线程本质上取消调度（deschedules）了它自己。</p>
-<p>用上下文切换的成本替代了时间片运行和上下文切换的成本。也就是删除了时间片运行这一项</p>
 <p>考虑在单 CPU 上运行两个线程。在这个例子中，基于 yield 的方法十分有效。一个线程调用 lock()，发现锁被占用时，让出 CPU，另外一个线程运行，完成临界区。在这个简单的例子中，让出方法工作得非常好。 </p>
-<p>现在来考虑多个线程（例如 100 个）反复竞争一把锁的情况。在这种情况下，一个线程持有锁，在释放锁之前被抢占，其他 99 个线程分别调用 lock()，发现锁被抢占，然后让出 CPU。假定采用某种轮转调度程序，这 99 个线程会一直处于运行—让出这种模式，直到持有锁的线程再次运行。虽然比原来的浪费99 个时间片的自旋方案要好，但这种方法仍然成本很高，上下文切换的成本是实实在在的，因此浪费很大。 也就是说，上下文切换的成本还在</p>
-<p>更糟的是，我们还没有考虑饿死的问题。一个线程可能一直处于让出的循环，而其他线程反复进出临界区。</p>
-<p>使用队列：休眠替代自旋</p>
-<p>前面一些方法的真正问题是存在太多的偶然性。调度程序决定如何调度。如果调度不合理，线程或者一直自旋（第一种方法），或者立刻让出 CPU（第二种方法）。无论哪种方法，都可能造成浪费，也能防止饿死。</p>
-<p>也就是说，它们一直在被调度运行，实际上这不是必要的。只有当锁能够获取才需要被调度。</p>
-<p>我们必须显式地施加某种控制，决定锁释放时，谁能抢到锁。为了做到这一点，我们需要操作系统的更多支持，并需要一个队列来保存等待锁的线程。 </p>
-<p>简单起见，我们利用Solaris 提供的支持，它提供了两个调用：</p>
-<p>park()能够让调用线程休眠 休眠被唤醒后，会从 lock() 中 park() 下一条语句继续执行</p>
-<p>unpark(threadID)则会唤醒 threadID 标识的线程。</p>
-<p>可以用这两个调用来实现锁，让调用者在获取不到锁时睡眠，在锁可用时被唤醒。我们来看看图 28.8 中的代码，理解这组原语的一种可能用法。</p>
-<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">lock_t</span> &#123;</span> </span><br><span class="line">    <span class="type">int</span> flag; </span><br><span class="line">    <span class="type">int</span> guard; </span><br><span class="line">    <span class="type">queue_t</span> *q; </span><br><span class="line">&#125;<span class="type">lock_t</span>; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">lock_init</span><span class="params">(<span class="type">lock_t</span> *m)</span> &#123; </span><br><span class="line">    m-&gt;flag  = <span class="number">0</span>; </span><br><span class="line">    m-&gt;guard = <span class="number">0</span>; </span><br><span class="line">   queue_init(m-&gt;q); </span><br><span class="line">&#125; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">lock</span><span class="params">(<span class="type">lock_t</span> *m)</span> &#123; </span><br><span class="line">   <span class="keyword">while</span> (TestAndSet(&amp;m-&gt;guard, <span class="number">1</span>) == <span class="number">1</span>) </span><br><span class="line">       ; </span><br><span class="line">   <span class="keyword">if</span> (m-&gt;flag == <span class="number">0</span>) &#123; </span><br><span class="line">       m-&gt;flag = <span class="number">1</span>; <span class="comment">// lock is acquired </span></span><br><span class="line">       m-&gt;guard = <span class="number">0</span>; </span><br><span class="line">   &#125; <span class="keyword">else</span> &#123; </span><br><span class="line">       queue_add(m-&gt;q, gettid()); </span><br><span class="line">       m-&gt;guard = <span class="number">0</span>; </span><br><span class="line">       park(); </span><br><span class="line">   &#125; </span><br><span class="line">&#125; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">unlock</span><span class="params">(<span class="type">lock_t</span> *m)</span> &#123; </span><br><span class="line">   <span class="keyword">while</span> (TestAndSet(&amp;m-&gt;guard, <span class="number">1</span>) == <span class="number">1</span>) </span><br><span class="line">       ; </span><br><span class="line">   <span class="keyword">if</span> (queue_empty(m-&gt;q)) </span><br><span class="line">       m-&gt;flag = <span class="number">0</span>; <span class="comment">// 释放锁 </span></span><br><span class="line">   <span class="keyword">else</span> </span><br><span class="line">       unpark(queue_remove(m-&gt;q)); <span class="comment">// hold lock (for next thread!) </span></span><br><span class="line">   m-&gt;guard = <span class="number">0</span>; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>我们将之前的测试并设置和等待队列结合，实现了一个更高性能的锁。其次，我们通过队列来控制谁会获得锁，避免饿死。</p>
-<p>讨论，从第一个线程获取锁开始。当 T1 先执行 lock的while，原子执行，它将guard设为1，因此在T1 执行lock的ifelse之前，各个线程会在while自旋，即便被调度也卡在while。当 T1 执行if块之后（m-&gt;guard被设为0），设T2最先被调度，在TestAndSet()处它将检测到m-&gt;guard为0，并原子地将m-&gt;guard设为1，这导致在T2执行else块之前，其他线程执行lock会自旋。当T2走到else里，会再次将m-&gt;guard设为0，然后进入队列并休眠。当 T2 执行if块之后（具体地来说是m-&gt;guard被设为0之后），设T3最先被调度，T3会经过和T2类似的过程。</p>
+<p>现在来考虑在单 CPU 上运行多个线程（例如 100 个）反复竞争一把锁的情况。在这种情况下，一个线程持有锁，在释放锁之前被抢占，其他 99 个线程分别调用 lock()，发现锁被抢占，然后让出 CPU。</p>
+<ul>
+<li>假定操作系统采用队列来轮转调度，这 99 个线程会一直处于运行—让出这种模式，直到持有锁的线程再次运行。虽然比原来的浪费 99 个时间片的自旋方案要好，但这种方法仍然成本很高，因为上下文切换的次数相比原来没有变化，仍旧进行了 99 次的切换。</li>
+<li>可能出现线程饿死的问题。一个线程可能一直处于让出的循环，而其他线程反复进出临界区。例如线程 A 每次得到时间片的时候，获得锁的线程都还没有释放锁，则线程 A 一直处于让出的循环。甚至可能是因为调度的问题，每次线程让出 CPU 后，又被调度了。</li>
+</ul>
+<h3 id="使用队列：休眠替代自旋"><a href="#使用队列：休眠替代自旋" class="headerlink" title="使用队列：休眠替代自旋"></a>使用队列：休眠替代自旋</h3><p>前面一些方法的<strong>真正问题是存在太多的偶然性</strong>。线程的调度顺序由操作系统控制。如果调度不合理，线程或者一直自旋，或者立刻让出 CPU。无论哪种方法，都可能造成资源的浪费和线程饿死问题。</p>
+<p>也就是说，<strong>竞争锁的线程一直在被调度运行，实际上这不是必要的。只有当锁能够获取时才需要被调度</strong>。</p>
+<ul>
+<li><p>我们必须显式地施加某种控制，决定锁释放时，谁能抢到锁。为了做到这一点，我们需要操作系统的更多支持，并需要一个队列来保存等待锁的线程。 </p>
+</li>
+<li><p>简单起见，我们利用 Solaris 提供的支持，它提供了两个调用：</p>
+<ul>
+<li><p>park() 能够让调用线程休眠，休眠被唤醒后，会从 park() 下一条语句继续执行</p>
+</li>
+<li><p>unpark(threadID) 则会唤醒 threadID 标识的线程。</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>可以用 park() 和 unpark(threadID) 这两个调用来实现锁，让调用者在获取不到锁时睡眠，在锁可用时被唤醒。</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">lock_t</span> &#123;</span> </span><br><span class="line">    <span class="type">int</span> flag; </span><br><span class="line">    <span class="type">int</span> guard; </span><br><span class="line">    <span class="type">queue_t</span> *q; </span><br><span class="line">&#125;<span class="type">lock_t</span>; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">lock_init</span><span class="params">(<span class="type">lock_t</span> *m)</span> &#123; </span><br><span class="line">    m-&gt;flag  = <span class="number">0</span>; </span><br><span class="line">    m-&gt;guard = <span class="number">0</span>; </span><br><span class="line">   queue_init(m-&gt;q); </span><br><span class="line">&#125; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">lock</span><span class="params">(<span class="type">lock_t</span> *m)</span> &#123; </span><br><span class="line">   <span class="keyword">while</span> (TestAndSet(&amp;m-&gt;guard, <span class="number">1</span>) == <span class="number">1</span>) </span><br><span class="line">       ; </span><br><span class="line">   <span class="keyword">if</span> (m-&gt;flag == <span class="number">0</span>) &#123; </span><br><span class="line">       m-&gt;flag = <span class="number">1</span>; <span class="comment">// lock is acquired </span></span><br><span class="line">       m-&gt;guard = <span class="number">0</span>; </span><br><span class="line">   &#125; <span class="keyword">else</span> &#123; </span><br><span class="line">       queue_add(m-&gt;q, gettid()); </span><br><span class="line">       m-&gt;guard = <span class="number">0</span>; </span><br><span class="line">       park(); </span><br><span class="line">   &#125; </span><br><span class="line">&#125; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">unlock</span><span class="params">(<span class="type">lock_t</span> *m)</span> &#123; </span><br><span class="line">   <span class="keyword">while</span> (TestAndSet(&amp;m-&gt;guard, <span class="number">1</span>) == <span class="number">1</span>) </span><br><span class="line">       ; </span><br><span class="line">   <span class="keyword">if</span> (queue_empty(m-&gt;q)) </span><br><span class="line">       m-&gt;flag = <span class="number">0</span>; <span class="comment">// 释放锁 </span></span><br><span class="line">   <span class="keyword">else</span> </span><br><span class="line">       unpark(queue_remove(m-&gt;q)); </span><br><span class="line">   m-&gt;guard = <span class="number">0</span>; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>将测试并设置指令和等待队列结合，实现了一个更高性能的锁。通过队列来控制谁会获得锁，避免饿死。</p>
+<p>需要注意到：</p>
+<p>unpark(threadID) 只会唤醒一个线程，不会唤醒全部等待的线程（这会导致不确定性，竞争锁）。这里的实现方法是公平锁，即唤醒队头线程。</p>
+<h4 id="锁的互斥性分析"><a href="#锁的互斥性分析" class="headerlink" title="锁的互斥性分析"></a>锁的互斥性分析</h4><p>证明不同线程获得锁是互斥的。<strong>实际上证明的是不同线程互斥地离开 lock() 函数并执行临界区代码，而非 lock() 和 unlock() 不同线程需要串行执行</strong>。</p>
+<p><strong>第一种情况</strong>：</p>
+<p>假设某时刻没有线程获得锁，m-&gt;guard 为 0，若此时刻线程 A 被调度运行，调用 lock()，当执行 while (TestAndSet(&amp;m-&gt;guard, 1) == 1) ; 时，TestAndSet(&amp;m-&gt;guard, 1) == 1 方法：</p>
+<ul>
+<li><p>原子地将 m-&gt;guard 置 1 并返回 0，通过将 m-&gt;guard 置 1 保证 lock() 和 unlock() 的互斥性，尚未标识锁已经被持有</p>
+</li>
+<li><p>线程能够跳出 while 循环继续执行。当线程执行到 if 语句，由于 m-&gt;flag 为 0，线程会执行</p>
+  <figure class="highlight c"><table><tr><td class="code"><pre><span class="line">m-&gt;flag = <span class="number">1</span>; <span class="comment">// 本线程获得了锁</span></span><br><span class="line">m-&gt;guard = <span class="number">0</span>; <span class="comment">// 打开互斥区</span></span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>然后线程会执行临界区代码，当线程离开临界区，此时 m-&gt;guard 为 0，它能够跳出循环（m-&gt;guard 已经被置 1）。并根据队列情况决定释放锁还是唤醒线程，然后再将 m-&gt;guard 置 0，打开互斥区。</p>
+<p><strong>第二种情况</strong>：</p>
+<p>假设某个线程已经持有锁，即 m-&gt;flag 为 1，本线程调用 lock()，如果持有锁的线程还没有执行到 m-&gt;guard = 0; 的语句，那么本线程会在 while 处自旋等待，如果持有锁的线程执行了 if-else 块的 if 部分，则本线程能够跳出 while，并且这会导致：</p>
+<ul>
+<li>持有锁的线程在 unlock() 的 while 处自旋</li>
+<li>其他尝试获取锁的线程在 lock() 的 while 处自旋</li>
+</ul>
+<p>本线程会继续执行 if-else 块的 else 部分，将自己加入队列（虽然进入了休眠队列，但实际上还没有休眠）、将 m-&gt;guard 置 0 打开互斥区，然后休眠。</p>
+<p>当持有锁的线程执行了 unlock() 的 else 部分，会唤醒队头线程，在持有锁的线程执行 unlock() 的 m-&gt;guard = 0; 语句之前，如果此时队头线程被调度了，它能够执行临界区的代码，但是会在 unlock() 的 while 处自旋。</p>
 <blockquote>
-<p>如果m-&gt;guard = 0; 和 park(); 互换，park后被休眠，无法执行m-&gt;guard = 0;  其他线程一直被锁住</p>
+<ol>
+<li><p>如果m-&gt;guard = 0; 和 park(); 互换，park后被休眠，无法执行m-&gt;guard = 0;  其他线程一直被锁住</p>
+</li>
+<li><p>当持有锁的线程要释放锁，如果队列不为空，它会唤醒队头的线程，同时 .m-&gt;flag 保持为 1。不需要置 flag=0，也不能置其为 0，因为被唤醒的线程会在 park 后的位置继续执行，它不会倒回去执行 flag=1</p>
+</li>
+</ol>
 </blockquote>
-<p>当 T1 要释放锁，如果队列不为空，它会唤醒队头的线程，同时 flag 保持为1</p>
-<blockquote>
-<p>不需要置flag=0，也不能置其为0，因为被唤醒的线程会在park后的位置继续执行，它不会倒回去执行flag=1</p>
-</blockquote>
-<p>唤醒/等待竞争（wakeup/waiting race）：</p>
-<p>考虑两个线程的情况。假设一个线程A将要park，在这之前，它已被加入等待队列（队列只有它）。这时切换到持有锁的线程B。持有锁的线程B会执行unpark。这导致线程B从队列中被移除，然后被唤醒。然而，线程B继续执行，会执行park，陷入休眠。</p>
-<p>由于线程B已经不在队列中，它永远无法被唤醒（可能，如果操作系统不处理这种不在调度队列且一直休眠的线程）。</p>
-<p>Solaris 通过增加了第三个系统调用separk()来解决这一问题。通过setpark()，一个线程表明自己马上要 park。如果刚好另一个线程被调度，并且调用了 unpark，那么后续的 park调用就会直接返回，而不是一直睡眠。lock()调用可以做一点小修改：</p>
+<h4 id="唤醒-等待竞争（wakeup-waiting-race）"><a href="#唤醒-等待竞争（wakeup-waiting-race）" class="headerlink" title="唤醒/等待竞争（wakeup/waiting race）"></a>唤醒/等待竞争（wakeup/waiting race）</h4><p>这种现象产生的原因是：”本线程会继续执行 if-else 块的 else 部分，将自己加入队列（虽然进入了休眠队列，但实际上还没有休眠）、将 m-&gt;guard 置 0 打开互斥区，然后休眠”</p>
+<p>考虑两个线程的情况。假设一个线程 A 将要 park，在这之前，它已被加入等待队列（队列只有它）。这时切换到持有锁的线程 B。持有锁的线程 B 会执行 unpark。这导致线程 A 从队列中被移除，然后被唤醒。然而，线程B继续执行，会执行 park，陷入休眠。由于线程 A 已经不在队列中，它永远无法被唤醒（可能，如果操作系统不处理这种不在调度队列且一直休眠的线程）。</p>
+<p>Solaris 通过增加了第三个系统调用 separk() 来解决这一问题。通过 setpark()，一个线程表明自己马上要 park。如果刚好另一个线程被调度，并且调用了 unpark，那么后续的 park调用就会直接返回，而不是一直睡眠。lock()调用可以做一点小修改：</p>
 <figure class="highlight c"><table><tr><td class="code"><pre><span class="line">queue_add(m-&gt;q, gettid()); </span><br><span class="line">setpark(); </span><br><span class="line">m-&gt;guard = <span class="number">0</span>; </span><br></pre></td></tr></table></figure>
-<h2 id="3-公平锁-VS-非公平锁"><a href="#3-公平锁-VS-非公平锁" class="headerlink" title="3 公平锁 VS 非公平锁"></a><strong>3 公平锁 VS 非公平锁</strong></h2><p>公平锁：</p>
-<p>多个线程按照申请锁的顺序来获取锁，线程直接进入队列中排队，每次唤醒队头线程，让它获得锁。</p>
-<p>优点是等待锁的线程不会饿死。缺点是与比非公平锁相比，唤起线程的开销大，因为新的线程都是先被阻塞再被唤醒。</p>
-<p>非公平锁：</p>
-<p>新的线程直接尝试获取锁，如果此时锁刚好可用，那么这个线程可以无需阻塞直接获取到锁，获取不到才会到等待队列的队尾等待。</p>
-<p>优点是可以减少唤起线程的开销，因为线程有几率不阻塞直接获得锁。缺点是处于等待队列中的线程可能会饿死，或者等很久才会获得锁。</p>
-<h2 id="4-可重入锁-VS-非可重入锁"><a href="#4-可重入锁-VS-非可重入锁" class="headerlink" title="4 可重入锁 VS 非可重入锁"></a><strong>4 可重入锁 VS 非可重入锁</strong></h2><h2 id="5-独享锁-VS-共享锁"><a href="#5-独享锁-VS-共享锁" class="headerlink" title="5 独享锁 VS 共享锁"></a><strong>5 独享锁 VS 共享锁</strong></h2><p>独享锁，是指该锁一次只能被一个线程所持有。如果线程对数据加上排它锁后，则其他线程不能再对A加任何类型的锁。获得排它锁的线程即能读数据又能修改数据。例如 synchronized 和 ReentrantLock</p>
+<h2 id="锁的分类"><a href="#锁的分类" class="headerlink" title="锁的分类"></a>锁的分类</h2><p><img src="/2022/04/07/Concurrency/1647569931834-e7d0bf33-43a6-4c34-8a33-8be6345076d0.jpeg" alt="思维导图"></p>
+<h3 id="1-乐观锁-VS-悲观锁"><a href="#1-乐观锁-VS-悲观锁" class="headerlink" title="1 乐观锁 VS 悲观锁"></a>1 乐观锁 VS 悲观锁</h3><p>悲观锁适合写操作多的场景，先加锁可以保证写操作时数据正确。</p>
+<p>乐观锁适合读操作多的场景，不加锁的特点能够使其读操作的性能大幅提升。</p>
+<h3 id="2-自旋锁-VS-适应性自旋锁"><a href="#2-自旋锁-VS-适应性自旋锁" class="headerlink" title="2 自旋锁 VS 适应性自旋锁"></a>2 自旋锁 VS 适应性自旋锁</h3><p>在许多场景中，同步资源的锁定时间很短（同步代码块执行需要的时间很短），为了这一小段时间去切换线程，线程挂起和恢复现场的花费可能会让系统得不偿失。</p>
+<p>如果有<strong>多个处理器</strong>，能够让两个或以上的线程同时执行，我们就可以让后面那个请求锁的线程不放弃 CPU 的执行时间，看看持有锁的线程是否很快就会释放锁。而为了让当前线程“稍等一下”，我们需让当前线程进行自旋，如果在自旋完成后前面锁定同步资源的线程已经释放了锁，那么当前线程就可以不必阻塞而是直接获取同步资源，从而避免切换线程的开销。这就是自旋锁。</p>
+<p>自旋锁本身是有缺点的，它不能代替阻塞。自旋等待虽然避免了线程切换的开销，但它要占用处理器时间。</p>
+<p>自适应意味着自旋的时间（次数）不再固定，而是由前一次在同一个锁上的自旋时间及锁的拥有者的状态来决定。如果在同一个锁对象上，自旋等待刚刚成功获得过锁，并且持有锁的线程正在运行中，那么虚拟机就会认为这次自旋也是很有可能再次成功，进而它将允许自旋等待持续相对更长的时间。如果对于某个锁，自旋很少成功获得过，那在以后尝试获取这个锁时将可能省略掉自旋过程，直接阻塞线程，避免浪费处理器资源。</p>
+<h3 id="3-公平锁-VS-非公平锁"><a href="#3-公平锁-VS-非公平锁" class="headerlink" title="3 公平锁 VS 非公平锁"></a>3 公平锁 VS 非公平锁</h3><p>公平锁：多个线程按照申请锁的顺序来获取锁，线程直接进入队列中排队，每次唤醒队头线程，让它获得锁。</p>
+<ul>
+<li>优点是等待锁的线程不会饿死。</li>
+<li>缺点是与比非公平锁相比，唤起线程的开销大，因为新的线程都是先被阻塞再被唤醒。</li>
+</ul>
+<p>非公平锁：新的线程直接尝试获取锁，如果此时锁刚好可用，那么这个线程可以无需阻塞直接获取到锁，获取不到才会到等待队列的队尾等待。</p>
+<ul>
+<li>优点是可以减少唤起线程的开销，因为线程有几率不阻塞直接获得锁。</li>
+<li>缺点是处于等待队列中的线程可能会饿死，或者等很久才会获得锁。</li>
+</ul>
+<h3 id="4-可重入锁-VS-非可重入锁"><a href="#4-可重入锁-VS-非可重入锁" class="headerlink" title="4 可重入锁 VS 非可重入锁"></a>4 可重入锁 VS 非可重入锁</h3><h3 id="5-独享锁-VS-共享锁"><a href="#5-独享锁-VS-共享锁" class="headerlink" title="5 独享锁 VS 共享锁"></a>5 独享锁 VS 共享锁</h3><p>独享锁，是指该锁一次只能被一个线程所持有。如果线程对数据加上排它锁后，则其他线程不能再对A加任何类型的锁。获得排它锁的线程即能读数据又能修改数据。例如 synchronized 和 ReentrantLock</p>
 <p>共享锁是指该锁可被多个线程所持有。如果线程对数据 A 加上共享锁后，则其他线程只能对 A 再加共享锁，不能加排它锁。获得共享锁的线程只能读数据，不能修改数据。</p>
-<p>独享锁与共享锁也是通过AQS来实现的，通过实现不同的方法，来实现独享或者共享。</p>
 <p>独享锁也叫排他锁、互斥锁、写锁，共享锁也叫做读锁。</p>
+<h1 id="条件变量"><a href="#条件变量" class="headerlink" title="条件变量"></a>条件变量</h1><p>在很多情况下，线程需要检查某一条件（condition）满足之后，才会继续运行。例如，父线程需要检查子线程是否执行完毕 （这常被称为 join()）。这种等待如何实现呢？</p>
+<p><strong>法 1：用一个主线程和子线程的共享变量，记录该条件的状态，主线程自旋等待</strong>。这会导致浪费CPU 时间。我们希望有某种方式让父线程休眠，直到等待的条件满足（对于 join() 即子线程完成执行）。</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">volatile</span> <span class="type">int</span> done = <span class="number">0</span>; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> *<span class="title function_">child</span><span class="params">(<span class="type">void</span> *arg)</span> &#123; </span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;child\n&quot;</span>); </span><br><span class="line">    done = <span class="number">1</span>; </span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>; </span><br><span class="line">&#125; </span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span> *argv[])</span> &#123; </span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;parent: begin\n&quot;</span>); </span><br><span class="line">    <span class="type">pthread_t</span> c; </span><br><span class="line">    Pthread_create(&amp;c, <span class="literal">NULL</span>, child, <span class="literal">NULL</span>); <span class="comment">// create child </span></span><br><span class="line">    <span class="keyword">while</span> (done == <span class="number">0</span>) </span><br><span class="line">        ; <span class="comment">// spin </span></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;parent: end\n&quot;</span>); </span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>法 2：使用条件变量</strong></p>
+<ul>
+<li><p>条件变量是一个显式队列，当某些条件（condition）不满足时，线程可以把自己加入等待队列，等待该条件满足。另外某个线程，当它改变了上述状态时，就可以唤醒一个或者多个等待线程（通过在该条件上发信号），让它们继续执行。</p>
+</li>
+<li><p>在 POSIX 中，可以用 pthread_cond_t  c  = PTHREAD_COND_INITIALIZER; 声明并初始化一个条件变量。</p>
+</li>
+<li><p>条件变量有两种相关操作：wait() 和 signal()。线程调用 wait() 会休眠，进入等待队列。当线程想唤醒等待在某个条件变量上的线程时，调用 signal()。POSIX 用以下函数执行 wait() 和 signal() ：</p>
+  <figure class="highlight c"><table><tr><td class="code"><pre><span class="line">pthread_cond_wait(<span class="type">pthread_cond_t</span> *c, <span class="type">pthread_mutex_t</span> *m);  </span><br><span class="line">pthread_cond_signal(<span class="type">pthread_cond_t</span>  *c); </span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>wait()会释放锁，并让调用线程wait的休眠。注意休眠的同时会释放锁（原子操作），本线程休眠后是走不到下面那个unlock()语句的。当线程被唤醒时（在另外某个线程发信号给它后），它必须重新获取锁，再返回调用者。（被唤醒后进入就绪状态，继续执行unlock前，必须先获得锁）</p>
+<ul>
+<li>signal() 唤醒 等待在某个条件变量上的 睡眠线程，被唤醒后处于就绪状态，等待调度</li>
+</ul>
+<h2 id="实现-join-和-exit"><a href="#实现-join-和-exit" class="headerlink" title="实现 join() 和 exit()"></a>实现 join() 和 exit()</h2><p>互斥量目的：保证 join 和exit是互斥执行的，在java多线程编程中，例如 synchronized，互斥量：this~monitor、条件变量或者说队列，其实也是monitor。而这里的自由度是很高的，可以任意设定互斥量和条件变量，reentrantlock 有类似的思想。</p>
+<p>条件变量目的：一个线程可能要等待多种条件，每个条件对应一个等待队列，用条件变量表示条件。</p>
+<p>每个条件变量需要配合一个状态变量 done。个人理解，条件变量其实只是一个等待队列的含义，它并不能表示条件是否为 true 这个东西，需要状态变量来做。也可以多个条件变量对应一个状态变量（实际上是每个条件变量对应状态变量的一个值），例子有生产者消费者问题。</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span> done = <span class="number">0</span>; <span class="comment">// 共享变量，状态变量</span></span><br><span class="line"><span class="type">pthread_mutex_t</span> m = PTHREAD_MUTEX_INITIALIZER; <span class="comment">// 锁</span></span><br><span class="line"><span class="type">pthread_cond_t</span> c  = PTHREAD_COND_INITIALIZER; <span class="comment">// 条件变量，实际上也是共享变量</span></span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">thr_join</span><span class="params">()</span> &#123; </span><br><span class="line">   Pthread_mutex_lock(&amp;m); </span><br><span class="line">   <span class="keyword">while</span> (done == <span class="number">0</span>) </span><br><span class="line">       Pthread_cond_wait(&amp;c, &amp;m); </span><br><span class="line">   Pthread_mutex_unlock(&amp;m); </span><br><span class="line">&#125; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">thr_exit</span><span class="params">()</span> &#123; </span><br><span class="line">    Pthread_mutex_lock(&amp;m); </span><br><span class="line">    done = <span class="number">1</span>; </span><br><span class="line">    Pthread_cond_signal(&amp;c); </span><br><span class="line">    Pthread_mutex_unlock(&amp;m); </span><br><span class="line">&#125; </span><br><span class="line"></span><br><span class="line"><span class="comment">// 子线程执行的函数</span></span><br><span class="line"><span class="type">void</span> *<span class="title function_">child</span><span class="params">(<span class="type">void</span> *arg)</span> &#123; </span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;child\n&quot;</span>); </span><br><span class="line">    thr_exit(); </span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>; </span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span> *argv[])</span> &#123; </span><br><span class="line">   <span class="built_in">printf</span>(<span class="string">&quot;parent: begin\n&quot;</span>); </span><br><span class="line">   <span class="type">pthread_t</span> p; </span><br><span class="line">   Pthread_create(&amp;p, <span class="literal">NULL</span>, child, <span class="literal">NULL</span>); </span><br><span class="line">   thr_join(); </span><br><span class="line">   <span class="built_in">printf</span>(<span class="string">&quot;parent: end\n&quot;</span>); </span><br><span class="line">   <span class="keyword">return</span> <span class="number">0</span>; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>通过两种情况分析 join 和 exit 设计上的正确性</p>
+<p>第一种情况是父线程创建出子线程，但自己继续运行（假设只有一个处理器），然后马上调用thr_join()等待子线程。在这种情况下，它会先获取锁，检查子进程是否完成（还没有完成），然后调用wait()，让自己休眠。子线程最终得以运行，打印出“child”，并调用thr_exit()函数唤醒父进程，这段代码会在获得锁后设置状态变量done，然后向父线程发信号唤醒它。最后，父线程会运行（从wait()调用返回并持有锁），释放锁，打印出“parent:end”</p>
+<p>第二种情况是，子线程在创建后，立刻运行，设置变量done为1，调用signal函数唤醒其他线程（这里没有其他线程），然后结束。父线程运行后，调用thr_join()时，发现done已经是1了，就直接返回</p>
+<p>如果没有互斥量</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">thr_join</span><span class="params">()</span> &#123; </span><br><span class="line">   <span class="keyword">while</span> (done == <span class="number">0</span>) </span><br><span class="line">       Pthread_cond_wait(&amp;c, &amp;m); </span><br><span class="line">&#125; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">thr_exit</span><span class="params">()</span> &#123; </span><br><span class="line">    done = <span class="number">1</span>; </span><br><span class="line">    Pthread_cond_signal(&amp;c); </span><br><span class="line">&#125; </span><br></pre></td></tr></table></figure>
+<p>如果父进程调用 thr_join()，然后检查完 done 的值为0，然后试图睡眠。但在调用wait 进入睡眠之前，父进程被中断。子线程修改变量done 为1，发出信号，同样没有等待线程。父线程再次运行时，就会长眠不醒。</p>
+<p>如果没有状态变量</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">thr_join</span><span class="params">()</span> &#123; </span><br><span class="line">   Pthread_mutex_lock(&amp;m); </span><br><span class="line">   Pthread_cond_wait(&amp;c, &amp;m); </span><br><span class="line">   Pthread_mutex_unlock(&amp;m); </span><br><span class="line">&#125; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">thr_exit</span><span class="params">()</span> &#123; </span><br><span class="line">    Pthread_mutex_lock(&amp;m); </span><br><span class="line">    Pthread_cond_signal(&amp;c); </span><br><span class="line">    Pthread_mutex_unlock(&amp;m); </span><br><span class="line">&#125; </span><br></pre></td></tr></table></figure>
+<p>则对于第二种情况，即子线程立刻运行，并且调用 thr_exit()。在这种情况下，子线程发送信号，但此时却没有在条件变量上睡眠等待的线程。父线程运行时，就会调用wait并始终休眠。</p>
+<h2 id="生产者消费者问题"><a href="#生产者消费者问题" class="headerlink" title="生产者消费者问题"></a>生产者消费者问题</h2><h2 id="实现方案-1"><a href="#实现方案-1" class="headerlink" title="实现方案 1"></a>实现方案 1</h2><figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="type">cond_t</span> cond; </span><br><span class="line"><span class="type">mutex_t</span> mutex; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> *<span class="title function_">producer</span><span class="params">(<span class="type">void</span> *arg)</span> &#123; </span><br><span class="line">    <span class="type">int</span> i; </span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; loops; i++) &#123; </span><br><span class="line">        Pthread_mutex_lock(&amp;mutex);           <span class="comment">// p1 </span></span><br><span class="line">        <span class="keyword">if</span> (count == <span class="number">1</span>)                       <span class="comment">// p2 </span></span><br><span class="line">            Pthread_cond_wait(&amp;cond, &amp;mutex); <span class="comment">// p3 </span></span><br><span class="line">        put(i);                               <span class="comment">// p4 </span></span><br><span class="line">        Pthread_cond_signal(&amp;cond);           <span class="comment">// p5 </span></span><br><span class="line">        Pthread_mutex_unlock(&amp;mutex);         <span class="comment">// p6 </span></span><br><span class="line">    &#125; </span><br><span class="line">&#125; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> *<span class="title function_">consumer</span><span class="params">(<span class="type">void</span> *arg)</span> &#123; </span><br><span class="line">   <span class="type">int</span> i; </span><br><span class="line">   <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; loops; i++) &#123; </span><br><span class="line">       Pthread_mutex_lock(&amp;mutex);           <span class="comment">// c1 </span></span><br><span class="line">       <span class="keyword">if</span> (count == <span class="number">0</span>)                       <span class="comment">// c2 </span></span><br><span class="line">           Pthread_cond_wait(&amp;cond, &amp;mutex); <span class="comment">// c3 </span></span><br><span class="line">       <span class="type">int</span> tmp = get();                      <span class="comment">// c4 </span></span><br><span class="line">       Pthread_cond_signal(&amp;cond);           <span class="comment">// c5 </span></span><br><span class="line">       Pthread_mutex_unlock(&amp;mutex);         <span class="comment">// c6 </span></span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>当只有一个生产者和一个消费者时，方案 1 的代码能够正常运行。但如果有超过一个线程（例如两个消费者），这个方案会有两个严重的问题。</p>
+<h3 id="问题与解决方法"><a href="#问题与解决方法" class="headerlink" title="问题与解决方法"></a>问题与解决方法</h3><p>Mesa 语义（Mesa semantic）：共享变量状态与预期不符</p>
+<p><strong>第一个问题与线程等待之前的 if 语句有关</strong>。假设有两个消费者（Tc1和Tc2），一个生产者（Tp）。首先，一个消费者（Tc1）先开始执行，它获得锁（c1），检查缓冲区是否可以消费（c2），然后等待（c3）（这会释放锁）。接着生产者（Tp）运行。它获取锁（p1），检查缓冲区是否满（p2），发现没满就给缓冲区加入一个数字（p4）。然后生产者发出信号，说缓冲区已满（p5），并且唤醒第一个消费者（Tc1）不再睡在条件变量上，Tc1 进入就绪队列。Tc1 现在<strong>可以运行（但还未运行）</strong>。生产者继续执行，直到发现缓冲区满后睡眠（p6,p1-p3）。这时问题发生了：<strong>另一个消费者（Tc2）抢先执行，消费了缓冲区中的值</strong>（c1,c2,c4,c5,c6，跳过了c3的等待，因为缓冲区是满的）。现在假设 Tc1 运行，在从 wait 返回之前，它获取了锁，然后返回。然后它调用了get() (p4)，但缓冲区已无法消费。（已经被 Tc2 消费）<strong>显然，我们应该设法阻止Tc1去消费，因为Tc2插进来，消费了缓冲区中之前生产的一个值。</strong></p>
+<p>解决方法：把if语句改为while。当消费者Tc1被唤醒后，立刻再次检查共享变量（c2）。如果缓冲区此时为空，消费者就会回去继续睡眠（c3）。生产者中相应的if也改为while（p2）。由于Mesa语义，我们要记住一条关于条件变量的简单规则：总是使用while循环（always use while loop）。</p>
+<p>问题2</p>
+<p>唤醒的线程是不确定的</p>
+<p>假设有两个消费者（Tc1和Tc2），一个生产者（Tp）。假设两个消费者（Tc1和Tc2）先运行，都睡眠了（c3）。生产者开始运行，在缓冲区放入一个值，唤醒了一个消费者（假定是Tc1），并开始睡眠。现在是一个消费者马上要运行（Tc1），而两个线程（消费者Tc2和生产者Tp）都等待在同一个条件变量上。</p>
+<p>消费者Tc1醒过来并从wait()调用返回（c3），重新检查条件（c2），发现缓冲区是满的，消费了这个值（c4）。这个消费者然后在该条件上发信号（c5），唤醒一个在睡眠的线程。但是，<strong>应该唤醒哪个线程</strong>呢？因为消费者已经清空了缓冲区，很显然，应该唤醒生产者。但是，如果它唤醒了Tc2（这绝对是可能的，取决于等待队列是如何管理的），问题就出现了。具体来说，消费者Tc2会醒过来，发现队列为空（c2），又继续回去睡眠（c3）。生产者Tp刚才在缓冲区中放了一个值，现在在睡眠。另一个消费者线程Tc1也回去睡眠了。3个线程都会陷入持续的睡眠</p>
+<p>解决方法：使用两个条件变量，在系统状态改变时，哪类线程应该唤醒</p>
+<p>在这离，两个条件变量共享一个状态变量，因为与状态变量的某个值唯一对应</p>
+<h2 id="实现方案-2"><a href="#实现方案-2" class="headerlink" title="实现方案 2"></a>实现方案 2</h2><figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="type">cond_t</span>  empty, fill; </span><br><span class="line"><span class="type">mutex_t</span> mutex; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> *<span class="title function_">producer</span><span class="params">(<span class="type">void</span> *arg)</span> &#123; </span><br><span class="line">    <span class="type">int</span> i; </span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; loops; i++) &#123; </span><br><span class="line">        Pthread_mutex_lock(&amp;mutex); </span><br><span class="line">        <span class="keyword">while</span> (count == <span class="number">1</span>) </span><br><span class="line">            Pthread_cond_wait(&amp;empty,  &amp;mutex); </span><br><span class="line">        put(i); </span><br><span class="line">        Pthread_cond_signal(&amp;fill); </span><br><span class="line">        Pthread_mutex_unlock(&amp;mutex); </span><br><span class="line">   &#125; </span><br><span class="line">&#125; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> *<span class="title function_">consumer</span><span class="params">(<span class="type">void</span> *arg)</span> &#123; </span><br><span class="line">   <span class="type">int</span> i; </span><br><span class="line">   <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; loops; i++) &#123; </span><br><span class="line">       Pthread_mutex_lock(&amp;mutex); </span><br><span class="line">       <span class="keyword">while</span> (count == <span class="number">0</span>) </span><br><span class="line">           Pthread_cond_wait(&amp;fill, &amp;mutex); </span><br><span class="line">       <span class="type">int</span> tmp = get(); </span><br><span class="line">       Pthread_cond_signal(&amp;empty); </span><br><span class="line">       Pthread_mutex_unlock(&amp;mutex); </span><br><span class="line">       <span class="built_in">printf</span>(<span class="string">&quot;%d\n&quot;</span>, tmp); </span><br><span class="line">   &#125; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在上述代码中，生产者线程等待条件变量empty，发信号给变量fill。相应地，消费者<br>线程等待fill，发信号给empty。这样做，从设计上避免了上述第二个问题：<strong>消费者再也不<br>**</strong>会唤醒消费者，生产者也不会唤醒生产者。**</p>
+<p>与同步无关的问题3</p>
+<p>共享变量是缓存时，空间过小导致频繁切换进程，</p>
+<h2 id="最终方案"><a href="#最终方案" class="headerlink" title="最终方案"></a>最终方案</h2><p>我们最后的修改是提高并发和效率。具体来说，增加更多缓冲区槽位，这样在睡眠之前，可以生产多个值。同样，睡眠之前可以消费多个值。单个生产者和消费者时，这种方案因为上下文切换少，提高了效率。多个生产者和消费者时，它支持并发生产和消费。</p>
+<p>第一处修改是缓冲区结构本身，以及对应的put()和get()方法（见图30.9）。我们还稍稍修改了生产者和消费者的检查条件，以便决定是否要睡眠。图30.10 展示了最终的等待和信号逻辑。生产者只有在缓冲区满了的时候才会睡眠（p2），消费者也只有在队列为空的时候睡眠（c2）。</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span> buffer[MAX]; </span><br><span class="line"><span class="type">int</span> fill  = <span class="number">0</span>; </span><br><span class="line"><span class="type">int</span> use   = <span class="number">0</span>; </span><br><span class="line"><span class="type">int</span> count = <span class="number">0</span>; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">put</span><span class="params">(<span class="type">int</span> value)</span> &#123; </span><br><span class="line">    buffer[fill] = value; </span><br><span class="line">    fill = (fill + <span class="number">1</span>) % MAX; </span><br><span class="line">    count++; </span><br><span class="line">&#125; </span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">get</span><span class="params">()</span> &#123; </span><br><span class="line">    <span class="type">int</span> tmp = buffer[use]; </span><br><span class="line">    use = (use + <span class="number">1</span>) % MAX; </span><br><span class="line">    count--; </span><br><span class="line">    <span class="keyword">return</span> tmp; </span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">cond_t</span> empty, fill; </span><br><span class="line"><span class="type">mutex_t</span> mutex; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> *<span class="title function_">producer</span><span class="params">(<span class="type">void</span> *arg)</span> &#123; </span><br><span class="line">    <span class="type">int</span> i; </span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; loops; i++) &#123; </span><br><span class="line">        Pthread_mutex_lock(&amp;mutex);              <span class="comment">// p1 </span></span><br><span class="line">        <span class="keyword">while</span> (count == MAX)                     <span class="comment">// p2 </span></span><br><span class="line">            Pthread_cond_wait(&amp;empty, &amp;mutex);   <span class="comment">// p3 </span></span><br><span class="line">        put(i);                                  <span class="comment">// p4 </span></span><br><span class="line">        Pthread_cond_signal(&amp;fill);              <span class="comment">// p5 </span></span><br><span class="line">        Pthread_mutex_unlock(&amp;mutex);            <span class="comment">// p6 </span></span><br><span class="line">    &#125; </span><br><span class="line">&#125; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> *<span class="title function_">consumer</span><span class="params">(<span class="type">void</span> *arg)</span> &#123; </span><br><span class="line">    <span class="type">int</span> i; </span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; loops; i++) &#123; </span><br><span class="line">        Pthread_mutex_lock(&amp;mutex);            <span class="comment">// c1 </span></span><br><span class="line">        <span class="keyword">while</span> (count == <span class="number">0</span>)                      <span class="comment">// c2 </span></span><br><span class="line">            Pthread_cond_wait(&amp;fill, &amp;mutex);   <span class="comment">// c3 </span></span><br><span class="line">        <span class="type">int</span> tmp = get();                        <span class="comment">// c4 </span></span><br><span class="line">        Pthread_cond_signal(&amp;empty);           <span class="comment">// c5 </span></span><br><span class="line">        Pthread_mutex_unlock(&amp;mutex);          <span class="comment">// c6 </span></span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;%d\n&quot;</span>, tmp); </span><br><span class="line">    &#125; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 ]]></content>
       <categories>
         <category>操作系统</category>
@@ -153,6 +243,7 @@
     <title>I/O 模型</title>
     <url>/2022/04/07/I-O-model/</url>
     <content><![CDATA[<p>五种IO模型，分别是：阻塞IO、非阻塞IO、多路复用IO、信号驱动IO以及异步IO。</p>
+<p>主要分析的是服务器端应该使用的 IO 模型，因为服务器端需要处理大量的 IO 请求。</p>
 <p>以下以读操作为例，对于写操作，是否可以写数据到缓冲区取决于缓冲区剩余空间是否足够。</p>
 <span id="more"></span>
 <h1 id="阻塞-IO-模型"><a href="#阻塞-IO-模型" class="headerlink" title="阻塞 IO 模型"></a>阻塞 IO 模型</h1><p>最传统的一种 IO 模型，即在读写数据过程中会发生阻塞现象。</p>
@@ -165,42 +256,139 @@
 <p> 所以事实上，在非阻塞IO模型中，用户线程需要不断地询问内核数据是否就绪（自旋），也就说非阻塞IO不会交出CPU，而会一直占用CPU。</p>
 <p>典型的非阻塞IO模型一般如下：</p>
 <figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">while</span>(<span class="literal">true</span>)&#123; </span><br><span class="line">    data = socket.read(); </span><br><span class="line">    <span class="keyword">if</span>(data!= error)&#123; </span><br><span class="line">        处理数据 </span><br><span class="line">        <span class="keyword">break</span>; </span><br><span class="line">    &#125; </span><br><span class="line">&#125; </span><br></pre></td></tr></table></figure>
-<h1 id="IO-复用模型"><a href="#IO-复用模型" class="headerlink" title="IO 复用模型"></a>IO 复用模型</h1><p>场景：对于一个应用线程 T，当多个用户向线程 T 发送请求（发送请求体的数据），为了能够同时响应多个用户，通常会选择用多个线程，每个线程来处理用户的请求，各个处理线程首先要调用 recvfrom 读取用户发过来的请求体数据。</p>
+<h1 id="IO-复用模型"><a href="#IO-复用模型" class="headerlink" title="IO 复用模型"></a>IO 复用模型</h1><p>场景：对于一个应用线程 T，当多个用户向线程 T 发送请求（发送请求体的数据），为了能够同时响应多个用户，通常会选择用多个线程，每个线程来处理用户的请求，各个处理线程首先要调用 recvfrom 读取用户发过来的请求体数据，然后再进行处理，并且，通常来说，对每个用户的处理代码应该是相同的。</p>
 <p>存在的问题：</p>
 <ul>
 <li>用户量庞大的时候，会创建大量的线程。</li>
-<li>每个线程首先基于阻塞 IO 模型或者非阻塞 IO 模型读取数据时一旦读取不到数据，它或者阻塞或者自旋，会持续占据线程资源。这种问题在大量线程读取缓冲区数据时会变得更加严重。</li>
+<li>每个线程首先基于阻塞 IO 模型或者非阻塞 IO 模型读取数据时一旦读取不到数据，它或者阻塞或者自旋，会持续占据线程资源。这种问题在大量线程读取缓冲区数据时会变得更加严重。并且，无论是否阻塞/自旋，由于创建了大量的线程，线程切换的成本十分巨大。</li>
 </ul>
 <p>在 IO 复用模型中，会有一个线程不断去轮询多个 socket 的状态，只有当 socket 真正有读写事件时，才真正调用实际的 IO 读写操作。</p>
-<p>因为在多路复用IO模型中，只需要<strong>使用一个线程就可以管理多个socket</strong>，系统不需要建立新的进程或者线程，也不必维护这些线程和进程，并且只有<strong>在真正有socket读写事件进行时，才会使用IO资源</strong>，所以它大大减少了资源占用。</p>
+<p>因为在多路复用IO模型中，只需要<strong>使用一个线程就可以管理多个socket</strong>，并且只有在真正有 socket 读写事件进行时，才会使用 IO 资源，所以它大大减少了资源占用。</p>
 <p><img src="/2022/04/07/I-O-model/1068826-20170514143622722-640397005.png" alt="多路复用IO模型" style="zoom:150%;"></p>
-<p>在Java NIO中，是通过selector.select()去查询每个通道是否有到达事件，如果没有事件，则一直阻塞在那里，因此这种方式<strong>会导致用户线程的阻塞</strong>。</p>
 <p>多路复用IO为何比非阻塞IO模型的效率高是因为在非阻塞IO中，不断地询问socket状态是通过用户线程去进行的（会造成 CPU 模式切换），而在多路复用IO中，轮询每个socket状态是内核在进行的。</p>
 <p>不过要注意的是，多路复用IO模型是通过轮询的方式来检测是否有事件到达，并且对到达的事件逐一进行响应。因此对于多路复用IO模型来说，一旦事件响应体很大，那么就会导致后续的事件迟迟得不到处理，并且会影响新的事件轮询。</p>
-<p>信号驱动IO模型</p>
-<p>在信号驱动IO模型中，当用户线程发起一个IO请求操作，会给对应的socket注册一个信号函数，然后用户线程会继续执行，当内核数据就绪时会发送一个信号给用户线程，用户线程接收到信号之后，便在信号函数中调用IO读写操作（调用socket.read()）来进行实际的IO请求操作。</p>
-<p>调用socket.read() 仍旧会阻塞用户线程，只不过相比阻塞IO模型，阻塞时间少去了等待数据的时间</p>
-<p>异步IO模型</p>
-<p>异步IO模型是最理想的IO模型，在异步IO模型中，当用户线程发起read操作之后，立刻就可以开始去做其它的事。而另一方面，从内核的角度，当它收到一个asynchronous read之后，它会立刻返回，说明read请求已经成功发起了，因此不会对用户线程产生任何block。然后，内核会等待数据准备完成，然后将数据拷贝到用户线程，当这一切都完成之后，内核会给用户线程发送一个信号，告诉它read操作完成了。也就说用户线程完全不需要知道实际的整个IO操作是如何进行的，只需要先发起一个请求，当接收内核返回的成功信号时表示IO操作已经完成，可以直接去使用数据了。</p>
-<p>相比信号驱动IO模型。在异步IO模型中，IO操作的两个阶段都不会阻塞用户线程，这两个阶段都是由内核自动完成，然后发送一个信号告知用户线程操作已完成。用户线程中不需要再次调用IO函数进行具体的读写。</p>
-<p>注意，异步IO是需要操作系统的底层支持，在Java 7中，提供了Asynchronous IO。</p>
+<p><img src="/2022/04/07/I-O-model/v2-9b720fa8bbe7108003edc2abb6df7c71_720w.jpg" alt="文件描述符的量级和CPU耗时"></p>
+<h2 id="select"><a href="#select" class="headerlink" title="select"></a>select</h2><p>select 轮询所有 socket，找出能读出数据或者写入数据的 socket，并顺序对这些 socket 进行操作。</p>
+<p><strong>select 函数接口</strong></p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/select.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/time.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> FD_SETSIZE 1024</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> NFDBITS (8 * sizeof(unsigned long))</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> __FDSET_LONGS (FD_SETSIZE/NFDBITS)</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 数据结构 (bitmap)</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">    <span class="type">unsigned</span> <span class="type">long</span> fds_bits[__FDSET_LONGS];</span><br><span class="line">&#125; fd_set;</span><br><span class="line"></span><br><span class="line"><span class="comment">// API</span></span><br><span class="line"><span class="type">int</span> <span class="title function_">select</span><span class="params">(</span></span><br><span class="line"><span class="params">    <span class="type">int</span> max_fd, </span></span><br><span class="line"><span class="params">    fd_set *readset, </span></span><br><span class="line"><span class="params">    fd_set *writeset, </span></span><br><span class="line"><span class="params">    fd_set *exceptset, </span></span><br><span class="line"><span class="params">    <span class="keyword">struct</span> timeval *timeout</span></span><br><span class="line"><span class="params">)</span>                              <span class="comment">// 返回值就绪描述符的数目</span></span><br><span class="line"></span><br><span class="line"><span class="title function_">FD_ZERO</span><span class="params">(<span class="type">int</span> fd, fd_set* fds)</span>   <span class="comment">// 清空集合</span></span><br><span class="line"><span class="title function_">FD_SET</span><span class="params">(<span class="type">int</span> fd, fd_set* fds)</span>    <span class="comment">// 将给定的描述符加入集合</span></span><br><span class="line"><span class="title function_">FD_ISSET</span><span class="params">(<span class="type">int</span> fd, fd_set* fds)</span>  <span class="comment">// 判断指定描述符是否在集合中 </span></span><br><span class="line"><span class="title function_">FD_CLR</span><span class="params">(<span class="type">int</span> fd, fd_set* fds)</span>    <span class="comment">// 将给定的描述符从文件中删除  </span></span><br></pre></td></tr></table></figure>
+<p>对 select 接口的理解</p>
+<ul>
+<li>每个 fd_set 是一个长度为 1024 的 bitmap，若 fd_set[fd] = 1，表示 fd 对应的文件资源有效。</li>
+<li>FD_SET(int fd, fd_set* fds)：将 fds 的第 fd 位置 1</li>
+<li><p>FD_ISSET(int fd, fd_set* fds)：判断 fds 的第 fd 位是否为 1</p>
+</li>
+<li><p>select 函数</p>
+<ul>
+<li>max_fd 参数告诉内核，只需要检查 fd 为 [0, max_fd-1] 区间的对应的文件资源即可。（<strong>在这个范围内，只检查 readset、writeset 和 exceptset 中为 1 的索引值 fd</strong>）</li>
+<li>*read_set 参数是 fd_set 类型，当 read_set[fd] 为 1，表示 fd 对应的文件资源可以被读</li>
+<li>select 函数会把在用户空间创建的 readset、writeset 和 exceptset 拷贝到内核空间，由内核更新这三个 fd_set 类型的数据，这会导致 <strong>CPU 模式的切换</strong>。</li>
+<li>select 的返回值是就绪文件描述符的数目。当没有就绪的文件时，select 会导致用户线程的阻塞。当有就绪的文件时，<strong>select 返回，read_set、writeset 和 exceptset 会被更新</strong></li>
+</ul>
+</li>
+</ul>
+<p>具体来说，使用 select 函数的过程一般是：先调用宏 FD_ZERO 将指定的 fd_set 清零（fd_set 可以作为 read_set、writeset 或 exceptset 传入函数），然后调用宏 FD_SET <strong>将需要测试的 fd 加入 fd_set</strong> ，接着调用函数 select <strong>测试 fd_set 中的所有 fd</strong>，最后用宏 FD_ISSET 检查某个 fd 在函数 select 调用后是否为 1。</p>
+<blockquote>
+<p>fd_set 中原来为 1 的位对应的 fd 会变内核监听，如果可读写，则保持为 1，否则，置为 0</p>
+</blockquote>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">while</span>(<span class="number">1</span>)&#123;</span><br><span class="line">    <span class="comment">// 假设外面已经定义了 fd_set 类型的变量 rset </span></span><br><span class="line">    FD_ZERO(&amp;rset);</span><br><span class="line">    <span class="comment">// 设只需要监听 5 个 fd，例如，设 fds = [1,7,9,11,40]</span></span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;<span class="number">5</span>;++i)&#123;</span><br><span class="line">        FD_SET(fds[i], &amp;rset); <span class="comment">// 将感兴趣的文件描述符加入 rset</span></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// max 在这个例子中是 40</span></span><br><span class="line">    <span class="comment">// 每次执行 select 都会拷贝 rset 到内核空间</span></span><br><span class="line">    select(max+<span class="number">1</span>, &amp;rset, <span class="literal">NULL</span>, <span class="literal">NULL</span>, <span class="literal">NULL</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;<span class="number">5</span>;++i)&#123;</span><br><span class="line">        <span class="keyword">if</span>(FD_ISSET(fds[i], &amp;rset))&#123;</span><br><span class="line">            <span class="comment">// 读取数据，不阻塞</span></span><br><span class="line">            <span class="built_in">memset</span>(buffer, <span class="number">0</span>, MAXBUF);</span><br><span class="line">            read(fds[i], buffer, MAXBUF);</span><br><span class="line">            <span class="comment">// .. 处理数据</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>select 的缺陷：</p>
+<ul>
+<li>单个进程所打开的 fd 是有限制的，通过 FD_SETSIZE 设置，默认1024。假如有 100 万个连接，每次只能处理 1024 个。</li>
+<li>fd_set 不可重用。每个 while(1) 中都要先置 0、再注册感兴趣的文件描述符</li>
+<li>会导致 CPU 模式切换</li>
+<li>当 select 返回后，有可用的文件，不确定具体是哪几个，需要遍历 fd_set 找到该文件对应的 fd，并进行 IO 操作（<strong>IO 操作不会阻塞</strong>）</li>
+</ul>
+<h2 id="poll"><a href="#poll" class="headerlink" title="poll"></a>poll</h2><p>poll 与 select 相同点：都是将用户传入的文件描述符集合拷贝到内核空间，然后轮询每个 fd 对应的文件状态</p>
+<p>poll 与 select 的区别：将 fd_set 进一步封装为 struct pollfd fds[]，由 bitmap 变为结构体数组。对于文件描述符集合的操作自然也不再是用宏，例如 FD_SET。这使得，poll 比 select 具有优点：</p>
+<ul>
+<li><p>没有最大连接数的限制</p>
+</li>
+<li><p>fd 对应的 fds[fd] 是可重用的（如果需要监听的事件 events 不变的话，否则需要重新注册）。</p>
+<blockquote>
+<p>可重用：不需要像 select 那样先置 0 再重新将感兴趣的 fd 置 1。并不代表内核空间的文件描述符集合可重用，每次仍旧要从用户空间拷贝到内核空间</p>
+</blockquote>
+</li>
+<li><p>一个 fds 可监听多种事件（设置 events 即可），不需要区分为 readset、writeset 和 exceptset</p>
+</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;poll.h&gt;</span></span></span><br><span class="line"><span class="comment">// 数据结构</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">pollfd</span> &#123;</span></span><br><span class="line">    <span class="type">int</span> fd;                         <span class="comment">// 需要监视的文件描述符</span></span><br><span class="line">    <span class="type">short</span> events;                   <span class="comment">// 需要内核监视的事件</span></span><br><span class="line">    <span class="type">short</span> revents;                  <span class="comment">// 实际发生的事件，r指real</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// API</span></span><br><span class="line"><span class="comment">// 只监听 fds 的前 nfds 个元素</span></span><br><span class="line"><span class="type">int</span> <span class="title function_">poll</span><span class="params">(<span class="keyword">struct</span> pollfd fds[], <span class="type">nfds_t</span> nfds, <span class="type">int</span> timeout)</span>;</span><br></pre></td></tr></table></figure>
+<h2 id="epoll"><a href="#epoll" class="headerlink" title="epoll"></a>epoll</h2><p>epoll 的步骤</p>
+<ol>
+<li><p>调用 epoll_create 建立一个 epoll 对象。</p>
+</li>
+<li><p>调用 epoll_ctl 向 epoll 对象中添加文件描述符句柄。（在需要的时候可以删除原有的 fd）</p>
+</li>
+<li><p>调用 epoll_wait 收集发生事件的连接。</p>
+</li>
+</ol>
+<p>在调用 epoll_create 时，内核除了帮我们在 epoll 文件系统里建了个 file 结点，在内核 cache 里建了个红黑树用于存储以后 epoll_ctl 传来的 socket 外，还会再建立一个 rdllist 双向链表，用于存储准备就绪的事件。</p>
+<p>所有添加到 epoll 中的 fd 句柄都会关联一个回调方法，这个回调方法在内核中叫做 ep_poll_callback，fd 句柄中感兴趣的事件发生时，fd 会被放到 rdllist 中。于是，内核不需要不断地遍历扫描来判断注册的 fd 是否有事件发生。</p>
+<p>当 epoll_wait 调用时，仅仅观察 rdllist 是否为空即可。如果 rdllist 不为空，则将 rdllist 复制到用户空间中，同时将事件数量返回给用户。rdlist 为空就 sleep（表现为用户线程阻塞），等到 timeout 时间到后即使链表没数据也返回。</p>
+<p><img src="/2022/04/07/I-O-model/v2-f4af10c10479a9e0ec0ec9f327d78d70_720w-16506095928067.jpg" alt="epoll示意图"></p>
+<h3 id="epoll-的两种触发模式"><a href="#epoll-的两种触发模式" class="headerlink" title="epoll 的两种触发模式"></a>epoll 的两种触发模式</h3><ul>
+<li>LT 模式（水平触发，默认）只要有数据都会触发，缓冲区剩余未读尽的数据会导致 epoll_wait 返回。</li>
+<li>ET 模式（边缘触发）只有数据到来才触发，不管缓存区中是否还有数据，缓冲区剩余未读尽的数据不会导致 epoll_wait 返回；</li>
+</ul>
+<p><img src="/2022/04/07/I-O-model/v2-e6c497d098c782ed52830da08b3e5cbe_720w.jpg" alt="img"></p>
+<h3 id="select、poll-和-epoll-对比"><a href="#select、poll-和-epoll-对比" class="headerlink" title="select、poll 和 epoll 对比"></a>select、poll 和 epoll 对比</h3><div class="table-container">
+<table>
+<thead>
+<tr>
+<th></th>
+<th>select</th>
+<th>poll</th>
+<th>epoll</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>fd 数量</td>
+<td>1024</td>
+<td>无限制</td>
+<td>无限制</td>
+</tr>
+<tr>
+<td>fd 状态判断</td>
+<td>轮询 O(N)</td>
+<td>轮询 O(N)</td>
+<td>触发式 O(1)</td>
+</tr>
+<tr>
+<td>fd 集合的重用性</td>
+<td>不可重用</td>
+<td>可重用</td>
+<td>可重用</td>
+</tr>
+<tr>
+<td>模式</td>
+<td>LT</td>
+<td>LT</td>
+<td>LT 和 ET</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>与select和poll相比，epoll为什么使用红黑树而非数组？</p>
+<p>select和poll每次调用时都会存在一个将 fd_set 从用户态向内核态中拷贝的过程，，而epoll内核中维护了一个内核事件表，它是将所有的文件描述符全部都存放在内核中，系统去检测有事件发生的时候触发回调，当你要添加新的文件描述符的时候也是调用epoll_ctl函数使用EPOLL_CTL_ADD宏来插入，epoll_wait也不是每次调用时都会重新拷贝一遍所有的文件描述符到内核态。当我现在要在内核中长久的维护一个数据结构来存放文件描述符，并且时常会有插入，查找和删除的操作发生，红黑树三个操作更高效。</p>
+<p>epoll为什么使用红黑树而不使用哈希表？</p>
+<p>红黑树占用的内存更小（仅需要为其存在的节点分配内存），而HashMap事先就应该分配足够的内存存储散列表（即使有些槽可能遭弃用），也就是说，HashMap占用的空间只有部分存储了有效的节点</p>
+<h1 id="信号驱动IO模型"><a href="#信号驱动IO模型" class="headerlink" title="信号驱动IO模型"></a>信号驱动IO模型</h1><p>在信号驱动IO模型中，当用户线程发起一个 IO 请求操作，会给对应的 socket 注册一个信号函数，然后用户线程可以继续执行，当内核数据就绪时会发送一个信号给用户线程，用户线程接收到信号之后，便在信号函数中调用 IO 读写操作（例如调用 socket.read()）来进行实际的 IO 请求操作。</p>
+<p>调用 socket.read() 仍旧会阻塞用户线程，只不过相比阻塞IO模型，阻塞时间少去了等待数据的时间</p>
+<h1 id="异步IO模型"><a href="#异步IO模型" class="headerlink" title="异步IO模型"></a>异步IO模型</h1><p>异步 IO 模型是最理想的 IO 模型，在异步 IO 模型中，当用户线程发起 read 操作之后，立刻就可以开始去做其它的事。</p>
+<p>而另一方面，从内核的角度，当它收到一个 asynchronous read 之后，它会立刻返回（不让用户线程阻塞），说明 read 请求已经成功发起了，因此不会对用户线程产生任何阻塞。然后，内核会等待数据准备完成，然后将数据拷贝到用户线程，当这一切都完成之后，内核会给用户线程发送一个信号，告诉它 read 操作完成了。</p>
+<p>也就说用户线程完全不需要知道实际的整个 IO 操作是如何进行的，只需要先发起一个请求，当接收内核返回的成功信号时表示IO操作已经完成，可以直接去使用数据了。</p>
+<p>相比信号驱动 IO 模型。在异步 IO 模型中，IO 操作的两个阶段都不会阻塞用户线程，这两个阶段都是由内核自动完成，然后发送一个信号告知用户线程操作已完成。用户线程中不需要再次调用 IO 函数进行具体的读写。</p>
+<p>异步 IO 需要操作系统的底层支持。</p>
 <blockquote>
 <p>前面四种IO模型实际上都属于同步IO，只有最后一种是真正的异步IO，因为无论是多路复用IO还是信号驱动模型，IO操作的第2个阶段都会引起用户线程阻塞，也就是内核进行数据拷贝的过程都会让用户线程阻塞。</p>
 </blockquote>
-<p>select、poll 和 epoll 之间的区别</p>
-<p>（1）select：时间复杂度 O(n)<br>select 仅仅知道有 I/O 事件发生，但并不知道是哪几个流，所以只能无差别轮询所有流，找出能读出数<br>据或者写入数据的流，并对其进行操作。所以 select 具有 O(n) 的无差别轮询复杂度，同时处理的流越<br>多，无差别轮询时间就越长。<br>（2）poll：时间复杂度 O(n)<br>poll 本质上和 select 没有区别，它将用户传入的数组拷贝到内核空间，然后查询每个 fd 对应的设备状<br>态，但是它没有最大连接数的限制，原因是它是基于链表来存储的。<br>（3）epoll：时间复杂度 O(1)<br>epoll 可以理解为 event poll，不同于忙轮询和无差别轮询，epoll 会把哪个流发生了怎样的 I/O 事件通<br>知我们。所以说 epoll 实际上是事件驱动（每个事件关联上 fd）的（触发式）。</p>
-<p>你在大学读书，你的朋友来找你：</p>
-<ul>
-<li>select版宿管阿姨，就会带着你的朋友挨个房间找，直到找到你</li>
-<li><p>epoll版阿姨，会先记下每位同学房间号， 你的朋友来时，只需告诉你的朋友你住在哪个房间即可，无需亲自带着你朋友满大楼找人</p>
-</li>
-<li><p>select 基于轮询机制</p>
-</li>
-<li>epoll基于操作系统支持的I/O通知机制 epoll支持水平触发和边沿触发两种模式。</li>
-</ul>
-<p>在Reactor模式中，会先对每个client注册感兴趣的事件，然后有一个线程专门去轮询每个client是否有事件发生，当有事件发生时，便 <strong>顺序处理</strong> 每个事件，当所有事件处理完之后，便再转去继续轮询，如下图所示：</p>
-<p>上面的五种IO模型中的多路复用IO就是采用Reactor模式。注意，上面的图中展示的 是顺序处理每个事件，当然为了提高事件处理速度，可以通过多线程或者线程池的方式来处理事件。</p>
-<p>　　在Proactor模式中，当检测到有事件发生时，会新起一个异步操作，然后交由内核线程去处理，当内核线程完成IO操作之后，发送一个通知告知操作已完成，可以得知，异步IO模型采用的就是Proactor模式。</p>
+<h1 id="Reactor-模式和-Proactor-模式"><a href="#Reactor-模式和-Proactor-模式" class="headerlink" title="Reactor 模式和 Proactor 模式"></a>Reactor 模式和 Proactor 模式</h1><p>在Reactor模式中，会先对每个client注册感兴趣的事件，然后有一个线程专门去轮询每个client是否有事件发生，当有事件发生时，便 <strong>顺序处理</strong> 每个事件，当所有事件处理完之后，便再转去继续轮询，如下图所示：</p>
+<p>注意，上面的图中展示的 是顺序处理每个事件，当然为了提高事件处理速度，可以通过多线程或者线程池的方式来处理事件。</p>
+<p>在Proactor模式中，当检测到有事件发生时，会新起一个异步操作，然后交由内核线程去处理，当内核线程完成IO操作之后，发送一个通知告知操作已完成，可以得知，异步IO模型采用的就是Proactor模式。</p>
+<h1 id="文件描述符（File-descriptor，fd）"><a href="#文件描述符（File-descriptor，fd）" class="headerlink" title="文件描述符（File descriptor，fd）"></a>文件描述符（File descriptor，fd）</h1><p>内核为<strong>每个进程</strong>维护了一个 file descriptor table，file descriptor<strong>（fd） 是</strong> file descriptor table 的<strong>索引</strong>，file descriptor table 的表项又是<strong>系统级</strong>（所有进程共享）的 file table 的索引。</p>
+<p>file table 每个表项标识一个文件资源，记录了该资源的相关信息，例如所处模式（读、写等），并且还提供了到inode table 对应表项的索引，inode table 真正的描述了底层的文件。</p>
+<p><img src="/2022/04/07/I-O-model/70.png" alt="File_table_and_inode_table"></p>
+<p>在 Unix/Linux 系统中，一个 socket 句柄，可以看做是一个文件，在 socket 上收发数据，相当于对一个文件进行读写，所以一个 socket 句柄，通常也用表示文件句柄的 fd 来表示。</p>
 ]]></content>
       <categories>
         <category>操作系统</category>
@@ -946,6 +1134,24 @@
 <p>虚拟节点在哈希环上均匀分布：注意到是按照 A、B、C 方式分布的，如果把任意两个虚拟节点放在了一起，那么实际上它们会等效为一个虚拟节点，导致不均匀分布。</p>
 <p>例如，上图中，替换 B-01 和 A-02 的位置，虚拟节点等效过后，实际上只留下了 A：2个虚拟节点、B：2个虚拟节点、C：3个虚拟节点。</p>
 <p>当某个节点被移除时，对应该节点的多个虚拟节点均会移除，而这些虚拟节点按顺时针方向的下一个虚拟节点，会对应不同的真实节点，即这些不同的真实节点共同分担了节点变化导致的压力。</p>
+<h1 id="bloom-过滤器"><a href="#bloom-过滤器" class="headerlink" title="bloom 过滤器"></a>bloom 过滤器</h1><p>在数据量极大的情况下，使用 HashMap 会遇到哈希冲突过多的问题，这会导致 HashMap 的查找时间复杂度恶化，不再是常数</p>
+<p>布隆过滤器是一个非常神奇的数据结构，通过它我们可以非常方便地判断一个给定数据是否存在于海量数据中。我们需要的就是判断 key 是否合法。</p>
+<p>具体是这样做的：把所有可能存在的请求的值都存放在布隆过滤器中，当用户请求过来，先判断用户发来的请求的值是否存在于布隆过滤器中。不存在的话，直接返回请求参数错误信息给客户端，存在的话才会走下面的流程。</p>
+<p>加入布隆过滤器之后的缓存处理流程图如下。</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2022/png/21585632/1646811033603-a9b23666-33cf-4d7f-8c04-b2037eb787cf.png" alt="img"></p>
+<p>但是，需要注意的是布隆过滤器可能会存在误判的情况。总结来说就是： <strong>布隆过滤器说某个元素存在，小概率会误判。布隆过滤器说某个元素不在，那么这个元素一定不在。</strong></p>
+<p><em>为什么会出现误判的情况呢? 我们还要从布隆过滤器的原理来说！</em></p>
+<p>我们先来看一下，<strong>当一个元素加入布隆过滤器中的时候，会进行哪些操作：</strong></p>
+<ol>
+<li>使用布隆过滤器中的哈希函数对元素值进行计算，得到哈希值（有几个哈希函数得到几个哈希值）。</li>
+<li>根据得到的哈希值，在位数组中把对应下标的值置为 1。</li>
+</ol>
+<p>我们再来看一下，<strong>当我们需要判断一个元素是否存在于布隆过滤器的时候，会进行哪些操作：</strong></p>
+<ol>
+<li>对给定元素再次进行相同的哈希计算；</li>
+<li>得到值之后判断位数组中的每个元素是否都为 1，如果值都为 1，那么说明这个值在布隆过滤器中，如果存在一个值不为 1，说明该元素不在布隆过滤器中。</li>
+</ol>
+<p>然后，一定会出现这样一种情况：<strong>不同的字符串可能哈希出来的位置相同。</strong> （可以适当增加位数组大小或者调整我们的哈希函数来降低概率）</p>
 <h1 id="ConcurrentHashMap"><a href="#ConcurrentHashMap" class="headerlink" title="ConcurrentHashMap"></a>ConcurrentHashMap</h1><h2 id="ConcurrentHashMap-数据结构"><a href="#ConcurrentHashMap-数据结构" class="headerlink" title="ConcurrentHashMap 数据结构"></a>ConcurrentHashMap 数据结构</h2><h3 id="jdk1-7"><a href="#jdk1-7" class="headerlink" title="jdk1.7"></a>jdk1.7</h3><p>由  Segment  数组组成，Segment 数组每个元素是一个  HashEntry  数组（与 jdk1.7 HashMap 结构相同，数组+链表）。</p>
 <p>Segment 继承了 ReentrantLock</p>
 <p>每一个 HashEntry  数组可以进行扩容。但是 Segment 的个数一旦初始化就不能改变，默认 Segment 的个数是 16 个，也就是说 ConcurrentHashMap 默认支持最多 16 个线程并发</p>
@@ -1056,14 +1262,19 @@ cap\geq  \lceil \frac{initialCapacity}{ssize} \rceil</script><h4 id="数组索�
 <p>例如，对于students表，如果要经常根据score列进行查询，就可以对score列创建索引：</p>
 <figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">ALTER</span> <span class="keyword">TABLE</span> students</span><br><span class="line"></span><br><span class="line"><span class="keyword">ADD</span> INDEX idx_score (score);</span><br></pre></td></tr></table></figure>
 <p>使用 <code>ADD INDEX idx_score (score)</code> 就创建了一个名称为 idx_score，使用列 score 的索引。</p>
-<h2 id="索引有哪些优缺点？"><a href="#索引有哪些优缺点？" class="headerlink" title="索引有哪些优缺点？"></a>索引有哪些优缺点？</h2><p>优点：提高了查询效率</p>
+<h2 id="索引优缺点"><a href="#索引优缺点" class="headerlink" title="索引优缺点"></a>索引优缺点</h2><p>优点：提高了查询效率</p>
 <p>缺点：</p>
 <ul>
 <li><p>时间方面：创建索引和维护索引要耗费时间，具体地，当对表中的数据进行增删改的时候，索引也要更新；</p>
 </li>
-<li><p>空间方面：索引需要占物理空间。</p>
+<li><p>空间方面：索引需要占物理空间。索引文件很大，通常保存在磁盘，这导致查找时需要读写磁盘</p>
 </li>
 </ul>
+<blockquote>
+<p>对于非常小的表、大部分情况下简单的全表扫描比建立索引更高效；</p>
+<p>对于中到大型的表，索引非常有效；</p>
+<p>但是对于特大型的表，建立和维护索引的代价可能超过了索引对查询效率的提升。这种情况下，需要用到一种技术可以直接区分出需要查询的一组数据，而不是一条记录一条记录地匹配，例如可以使用分区技术。</p>
+</blockquote>
 <h2 id="MySQL-的索引类型"><a href="#MySQL-的索引类型" class="headerlink" title="MySQL 的索引类型"></a>MySQL 的索引类型</h2><ol>
 <li><p>从数据结构上来划分：B 树、B+ 树、Hash</p>
 </li>
@@ -1071,53 +1282,40 @@ cap\geq  \lceil \frac{initialCapacity}{ssize} \rceil</script><h4 id="数组索�
 <ul>
 <li>普通索引：即一个索引只包含单个列，一个表可以有多个普通索引</li>
 <li>唯一索引：索引列的值必须唯一，但允许有空值</li>
-<li>复合索引：多列值组成一个索引，专门用于组合搜索，其效率大于索引合并</li>
+<li>复合索引：多列值组成一个索引，<strong>专门用于组合搜索，其效率大于索引合并</strong>（即创建多个独立的索引）</li>
 </ul>
 </li>
-<li><p>根据数据的物理存储顺序与键值的逻辑（索引）顺序关系： 聚集索引，非聚集索引</p>
+<li><p>叶子节点存放数据还是主键值： 聚集索引，非聚集索引</p>
 </li>
 </ol>
-<h2 id="索引数据结构选择-B-树的原因"><a href="#索引数据结构选择-B-树的原因" class="headerlink" title="索引数据结构选择 B+ 树的原因"></a>索引数据结构选择 B+ 树的原因</h2><p>B+ 树与 B 树相比：</p>
+<h2 id="索引数据结构选择-B-树的原因"><a href="#索引数据结构选择-B-树的原因" class="headerlink" title="索引数据结构选择 B+ 树的原因"></a>索引数据结构选择 B+ 树的原因</h2><p>在 MySQL 中，B+ 树的叶子节点直接存储了数据，表以主键索引构成的 B+ 树进行存储</p>
+<p>B+ 树与 B 树相比：</p>
 <ul>
-<li><p>B+ 树的磁盘读写代价更低：B+ 树的内部节点没有关键字对应的数据信息，因此其内部节点相对 B 树更小。如果把一个内部节点的关键字都存放在同一数据页中，那么一个数据页能容纳的关键字比 B 树和其他搜索树都多很多（相当于分叉数可以更多），一次性读入内存中可以查找的关键字也就越多，相对 IO 读写次数就降低了。（高度比 b树低）</p>
+<li><p>磁盘读写次数：操作系统一般将内存和磁盘分割成固定大小的块，每一块称为一页，内存与磁盘以页为单位交换数据。<strong>数据库系统将索引的一个节点的大小设置为页的大小，使得一次 I/O 就能完全载入一个节点</strong>。在这个前提下，由于 B+ 树的内部节点没有关键字对应的数据信息，因此相同大小的内部节点，B+ 树能存储更多的关键字，这直接导致了在相同数据量的情况下 B+ 树的树高比 B 树小，在查找过程中经过的节点更少，也就是说 B+ 树的磁盘读写次数更少</p>
 </li>
-<li><p>B+ 树的高度更小：相较于 B 树 B+ 树每个内部节点存储的关键字数更多，相同数据量情况下，树的高度更小。</p>
+<li><p>查找用时</p>
 <ul>
-<li><p>查询数据更快；</p>
+<li>从时间复杂度上来看，B+ 树和 B 树的查找时间复杂度都是 O(log~2~N)，但是由于 B+ 树的磁盘读写次数更少，因此省去了很多的磁盘读写时间，从而更快</li>
+<li>B+ 树查找速度稳定：B+ 树叶子节点才存储数据，每次查找都会查找到叶子节点，查找次数相同（等于树高），B 树内部节点存储数据，查找可能在内部节点就停止。但是，对于平衡树，叶子节点层的节点个数一定是最多的，经常需要查找到叶子节点，从这个意义上，即便 B 树可能在内部节点停留，我们还是可以用它在叶子节点停留的情况来与 B 树进行时间上的比较</li>
+</ul>
 </li>
-<li><p>磁盘读写代价更小</p>
-<p>  时间复杂度，个人认为还是 O(log2N)，底数不会更大，因为仍旧是二分查找。所以可能查询速度并不会快多少，甚至由于在内部节点里是顺序扫描而非二分查找，复杂度更大。主要还是磁盘读写次数变少。(导致更快，而不是算法导致的)</p>
-<p>B+ 树查找速度稳定：B+所有关键字数据地址都存在叶子节点上，所以每次查找的次数都相同所以查询速度要比B树更稳定;</p>
-<p>B+ 树适合区间查询：B+ 树所有的叶子节点数据构成了一个有序链表，适合区间查询。而 B 树若要查找区间数据，需要中序遍历。</p>
-<p>B+ 树全节点遍历更快：B+ 树遍历整棵树只需要遍历所有的叶子节点即可，而不需要像 B 树一样需要对每一层进行遍历，这有利于数据库做全表扫描。</p>
-</li>
+<li><p>区间查询</p>
+<ul>
+<li>B+ 树适合区间查询：B+ 树所有的叶子节点数据构成了一个有序链表，适合区间查询。而 B 树若要查找区间数据，需要中序遍历。</li>
+<li>B+ 树全节点遍历更快：B+ 树遍历整棵树只需要遍历所有的叶子节点即可，而不需要像 B 树一样需要对每一层进行遍历，这有利于数据库做全表扫描。</li>
 </ul>
 </li>
 </ul>
-<pre><code>&gt; MySQL 中，索引文件是存储在磁盘的，对于树结构来说，文件的数据单位是结点。因此，二分查找搜索树的过程中，每访问一个结点，都做了一次读磁盘的操作。每次从磁盘读取一个结点到内存中，与 target 进行比较，然后继续到磁盘读取下一个需要查找的结点。
-&gt;
-&gt; 读写磁盘会阻塞线程，因为耗时较长。而读写内存不会阻塞。
-&gt;
-&gt; MySQL 使用磁盘存储数据，需要考虑磁盘读写性能，而 Redis 不需要
-&gt;
-&gt; IO 读写次数：每次根据孩子指针来查找磁盘元素都是一次对磁盘的读取操作。因此，实际上，树的高度越小，IO 读写次数也越小
-&gt;
-&gt; 相关文章：[B+树高度]([终极面试：InnoDB 中B+Tree索引树有多高，以及能存多少行数据？ | 码农网 (codercto.com)](https://www.codercto.com/a/106607.html))
-
-&gt; 结点存储数据信息的方式：
-&gt;
-&gt; 假设表：
-&gt;
-&gt; name score
-&gt;
-&gt; A         99
-&gt;
-&gt; B         84
-&gt;
-&gt; 如果建立 score 列的索引，则结点的值为 score 字段的值，叶子结点存放数据信息，可以存放 score 对应的记录，也可以存放指向对应记录的指针
-</code></pre><p>B+ 树与红黑树相比：</p>
+<blockquote>
+<p>MySQL 中，索引文件是存储在磁盘的，对于树结构来说，文件的数据单位是结点。因此，二分查找搜索树的过程中，每访问一个结点，都做了一次读磁盘的操作。每次从磁盘读取一个结点到内存中，与 target 进行比较，然后继续到磁盘读取下一个需要查找的结点。</p>
+<p>读写磁盘会阻塞线程，因为耗时较长。而读写内存不会阻塞。</p>
+<p>MySQL 使用磁盘存储数据，需要考虑磁盘读写性能，而 Redis 不需要</p>
+<p>IO 读写次数：每次根据孩子指针来查找磁盘元素都是一次对磁盘的读取操作。因此，实际上，树的高度越小，IO 读写次数也越小</p>
+<p>相关文章：<a href="[终极面试：InnoDB 中B+Tree索引树有多高，以及能存多少行数据？ | 码农网 (codercto.com">B+树高度</a>](<a href="https://www.codercto.com/a/106607.html">https://www.codercto.com/a/106607.html</a>))</p>
+</blockquote>
+<p>B+ 树与红黑树相比：</p>
 <ul>
-<li>B+ 树的磁盘读写代价更低</li>
+<li>B+ 树节点的出度大，高度比红黑树低。于是 B+ 树的磁盘读写代价更低</li>
 <li>红黑树不适合区间查询</li>
 </ul>
 <p>B+ 树与 Hash 相比：</p>
@@ -1130,8 +1328,13 @@ cap\geq  \lceil \frac{initialCapacity}{ssize} \rceil</script><h4 id="数组索�
 </li>
 <li>如果有大量重复键值，存在哈希碰撞问题 。</li>
 </ul>
-<p>跳表</p>
-<p><img src="/2022/04/06/MySQL/v2-d679e616dd3312da3d002d555e3c0b7c_720w.jpg" alt="跳表内部存储结构"></p>
+<h3 id="B-树"><a href="#B-树" class="headerlink" title="B+ 树"></a>B+ 树</h3><p>B Tree 指的是 Balance Tree，也就是平衡树，所有叶子节点位于同一层。</p>
+<p>B+ Tree 具有 B Tree 的平衡性，并且通过顺序访问叶子节点来提高区间查询的性能。</p>
+<p>在 B+ Tree 中，一个节点中的 key 从左到右非递减排列，如果某个指针的左右相邻 key 分别是 keyi 和 keyi+1，且不为 null，则该指针指向节点的所有 key 大于等于 keyi 且小于等于 keyi+1。</p>
+<p><img src="/2022/04/06/MySQL/33576849-9275-47bb-ada7-8ded5f5e7c73.png" alt="img" style="zoom:80%;"></p>
+<p>查找操作：在每个节点上进行二分查找；</p>
+<p>插入删除操作会破坏平衡树的平衡性，因此在进行插入删除操作之后，需要对树进行分裂、合并、旋转等操作来维护平衡性。</p>
+<h3 id="跳表"><a href="#跳表" class="headerlink" title="跳表"></a>跳表</h3><p><img src="/2022/04/06/MySQL/v2-d679e616dd3312da3d002d555e3c0b7c_720w.jpg" alt="跳表内部存储结构"></p>
 <p>跳表空间复杂度：O(N)，各层的结点个数可以看成等比数列，最底层存放了所有结点</p>
 <p>支持区间查询：O(logN) 找到起点或终点然后遍历即可</p>
 <p>Redis 作者的话：跳表更容易实现，代码可读性好</p>
@@ -1166,45 +1369,76 @@ cap\geq  \lceil \frac{initialCapacity}{ssize} \rceil</script><h4 id="数组索�
 <blockquote>
 <p>总结：mysql 的查询优化器会对等值查询（查询 = ）进行分析，使用正确的顺序进行查询</p>
 <p>假设对 student 表建立了 (name, cid) 的联合索引，</p>
-<p>执行查询语句为</p>
+<ul>
+<li>执行查询语句为</li>
+</ul>
 <p>SELECT * FROM student WHERE cid=1 AND name=‘小红’;</p>
 <p>虽然查询顺序并不按照 (name, cid)，但是由于对 name 字段进行的是等值查询，因此 mysql 查询优化器会判断在 name 字段进行等值查询时，对于相同的 name，表已经按照 cid 有序排列，可以命中索引。因此，该语句能正确返回结果。</p>
 <p>执行查询语句为</p>
-<p>SELECT * FROM student WHERE cid=1;</p>
-<p>无法返回结果。单纯的 cid 是无序的。</p>
+<ul>
+<li>SELECT * FROM student WHERE cid=1;</li>
+</ul>
+<p>虽然是等值查询，但是无法返回结果。单纯的 cid 是无序的。</p>
 </blockquote>
-<h2 id="聚簇索引与非聚簇索引"><a href="#聚簇索引与非聚簇索引" class="headerlink" title="聚簇索引与非聚簇索引"></a>聚簇索引与非聚簇索引</h2><p>非聚集索引：索引中索引的逻辑顺序与磁盘上行的物理存储顺序不同。</p>
-<p>与聚集索引的区别在于：叶结点不存放索引对应记录全部数据，只存放对应记录的聚集索引值/主键值。</p>
+<h2 id="聚簇索引与非聚簇索引"><a href="#聚簇索引与非聚簇索引" class="headerlink" title="聚簇索引与非聚簇索引"></a>聚簇索引与非聚簇索引</h2><p>主索引的叶子节点 data 域记录着完整的数据记录，这种索引方式被称为聚簇索引。因为无法把数据行存放在两个不同的地方，所以一个表只能有一个聚簇索引。</p>
+<p><img src="/2022/04/06/MySQL/45016e98-6879-4709-8569-262b2d6d60b9.png" alt="img" style="zoom: 67%;"></p>
+<p>辅助索引的叶子节点的 data 域记录着主键的值，因此在使用辅助索引进行查找时，需要先查找到主键值，然后再到主索引中进行查找。</p>
+<p><img src="/2022/04/06/MySQL/7c349b91-050b-4d72-a7f8-ec86320307ea.png" alt="img" style="zoom:67%;"></p>
 <p>例如设非聚集索引为：username，默认聚集索引为 id。则叶结点 (username, id)</p>
 <ul>
-<li><p>从非聚集索引的节点里面可直接获得的数据：聚集索引列的值、主键值</p>
+<li><p>从非聚集索引的节点里面可直接获得的数据：聚集索引列的值、主键值。<strong>覆盖索引</strong>（索引包含所有需要查询的字段的值）</p>
 <p>  select id, username from t1 where username = ‘小明’</p>
 <p>  select username from t1 where username = ‘小明’</p>
 </li>
-<li><p>从非聚集索引的节点里面不可直接获得的数据</p>
+<li><p>从非聚集索引的节点里面不可直接获得的数据。命中了索引。但未覆盖</p>
 <p>  select username, score from t1 where username = ‘小明’</p>
 </li>
 </ul>
 <p>为了获取到 score 对应记录的其他数据，数据库会根据 id 进行聚集索引查找。这个过程叫做回表。</p>
-<h2 id="创建索引时需要注意什么？"><a href="#创建索引时需要注意什么？" class="headerlink" title="创建索引时需要注意什么？"></a>创建索引时需要注意什么？</h2><p>基本：</p>
-<ul>
+<h2 id="索引优化"><a href="#索引优化" class="headerlink" title="索引优化"></a>索引优化</h2><h3 id="基本方法"><a href="#基本方法" class="headerlink" title="基本方法"></a>基本方法</h3><ul>
 <li><p>非空字段：<strong>应该指定列为NOT NULL，除非你想存储NULL</strong>。在mysql中，含有空值的列很难进行查询优化，因为它们使得索引、索引的统计信息以及比较运算更加复杂。你应该用0、一个特殊的值或者一个空串代替空值；</p>
 </li>
-<li><p>字段取值差异大的列作为索引列：可以通过 COUNT(DISTINCT 字段名) 函数查看字段取值的个数。索引的效率取决于索引列的值是否散列，即该列的值如果越互不相同，那么索引效率越高。</p>
+<li><p>字段取值差异大的列作为索引列：列的值如果越互不相同，那么它作为索引索引效率越高。</p>
+<blockquote>
+<p>可以通过 COUNT(DISTINCT 字段名)/COUNT(*) 查看字段取值的个数/总字段个数。</p>
+</blockquote>
 </li>
 <li><p>索引字段越小越好：数据库的数据存储以页为单位，一页存储的数据越多，一次 IO 操作获取的数据越大效率越高。</p>
 </li>
-<li>避免索引失效的发生。</li>
+<li><p>避免索引失效的发生。</p>
+</li>
 </ul>
-<p>对于联合索引</p>
+<p><strong>对于联合索引</strong>：将查询需求频繁或者字段取值差异大的列放在前面。</p>
+<h3 id="前缀索引"><a href="#前缀索引" class="headerlink" title="前缀索引"></a>前缀索引</h3><p>对于 BLOB、TEXT 和 VARCHAR 类型的列，必须使用<strong>前缀索引</strong>，只索引开始的部分字符。</p>
+<p>前缀长度的选取同样可以根据索引选择性来确定。只不过这个时候需要修改一下这个表达式 <code>COUNT(DISTINCT 字段名)/COUNT(*)</code> 的分子，例如设前缀长度为 a，分子统计的是：字段 0~a-1 部分的不同取值个数。</p>
+<p>例如对于这个表格，发现 area 字段很多都是以 china 开头的，前缀长度不应该选取为 5</p>
+<p><img src="/2022/04/06/MySQL/image-20220421103641620.png" alt="image-20220421103641620"></p>
+<p><strong>前缀索引测试</strong></p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="operator">/</span><span class="operator">/</span> 创建一个测试表</span><br><span class="line"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> `x_test` (</span><br><span class="line">  `id` <span class="type">int</span>(<span class="number">11</span>) unsigned <span class="keyword">NOT</span> <span class="keyword">NULL</span> AUTO_INCREMENT,</span><br><span class="line">  `x_name` <span class="type">varchar</span>(<span class="number">255</span>) <span class="keyword">NOT</span> <span class="keyword">NULL</span>,</span><br><span class="line">  `x_time` <span class="type">int</span>(<span class="number">10</span>) <span class="keyword">NOT</span> <span class="keyword">NULL</span>,</span><br><span class="line">  <span class="keyword">PRIMARY</span> KEY (`id`)</span><br><span class="line">) ENGINE<span class="operator">=</span>InnoDB AUTO_INCREMENT<span class="operator">=</span><span class="number">4145025</span> <span class="keyword">DEFAULT</span> CHARSET<span class="operator">=</span>utf8mb4</span><br><span class="line"></span><br><span class="line"><span class="operator">/</span><span class="operator">/</span> 添加<span class="number">200</span>万条测试数据</span><br><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> x_test(x_name,x_time) <span class="keyword">SELECT</span> CONCAT(rand()<span class="operator">*</span><span class="number">3300102</span>,x_name),x_time <span class="keyword">FROM</span> x_test <span class="keyword">WHERE</span> id <span class="operator">&lt;</span> <span class="number">30000</span>;</span><br></pre></td></tr></table></figure>
+<p><img src="/2022/04/06/MySQL/webp.webp" alt="img"></p>
+<p>在无任何索引的情况下随便查询一条存在的记录</p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line">`<span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> x_test <span class="keyword">WHERE</span> x_name <span class="operator">=</span> <span class="string">&#x27;1892008.205824857823401.800099203178258.8904820949682635656.62526521254&#x27;</span>;`</span><br></pre></td></tr></table></figure>
+<p> 查询时间：2.253s</p>
 <ul>
-<li>将查询需求频繁或者字段取值差异大的列放在前面。</li>
-<li>字段取值差异大的列作为索引列时，放到联合索引的前面</li>
+<li><p>添加前缀索引，以第一位字符创建前缀索引</p>
+<p>   <code>alter table x_test add index(x_name(1))</code></p>
+<p>  再次查询相同 sql 语句，查询时间:3.291s。</p>
+<p>  当使用第一位字符创建前缀索引后，查询的时间更长了。这是因为对于第一个字符，索引字段的差异性太小，200万条数据全以数字开头的话那么平均20万条的数据都是相同的索引值</p>
+</li>
+<li><p>重新建立前缀索引，这次以前 4 位字符来创建</p>
+<p>   <code>alter table x_test add index(x_name(4));</code></p>
+<p>  再次查询相同 sql 语句</p>
+<p>  查询时间：0.703s，速度大大提升。</p>
+</li>
+<li><p>200 万条数据都以数字开头 而 0-9 排列组合 7 位则可达到千万种组合，也就是说用前 7 位来做索引几乎不会出现重复索引值的情况了（千万 &gt;&gt; 百万）</p>
+<p>   <code>alter table x_test add index(x_name(7));</code></p>
+<p>   再次查询相同 sql 语句</p>
+<p>   查询时间：0.014s  ( 首次执行无缓存状态下 )，提升巨大！</p>
+</li>
 </ul>
 <h3 id="索引失效"><a href="#索引失效" class="headerlink" title="索引失效"></a>索引失效</h3><p>索引失效，即查询语句用到了索引列，但是无法用到已经建立的索引。</p>
 <ul>
-<li><p>计算导致索引失效。包括使用函数、运算符。以使用运算符为例</p>
-<p>  例如对 score 列建立了索引，想要查询 score*2 &lt; 100 的记录，不能写：</p>
+<li><p>计算导致索引失效。包括使用函数、运算符。以使用运算符为例，例如对 score 列建立了索引，想要查询 score*2 &lt; 100 的记录，不能写：</p>
 <p>  SELECT <em> FROM student WHERE score</em>2 &lt;  100; 会导致遍历整个表计算并且判断</p>
 <p>  而应该写</p>
 <p>  SELECT * FROM student WHERE score &lt;  50; 这种写法才能用到索引</p>
@@ -1213,10 +1447,21 @@ cap\geq  \lceil \frac{initialCapacity}{ssize} \rceil</script><h4 id="数组索�
 <p>  SELECT * FROM student  WHERE name = ABC，ABC 不是字符串</p>
 </li>
 <li><p>OR 引起的索引失效 </p>
-<p>  如果 OR 连接的是同一个字段，那么索引不会失效，反之索引失效。</p>
-<p>  SELECT * FROM <code>user</code> WHERE <code>name</code> = ‘张三’ OR height = ‘175’;</p>
+<p>  如果 OR 连接的是同一个字段，那么索引不会失效，反之索引失效。（全表扫描）</p>
+<p>  SELECT * FROM user WHERE name = ‘张三’ OR height = ‘175’;</p>
 </li>
 </ul>
+<h2 id="查询性能优化"><a href="#查询性能优化" class="headerlink" title="查询性能优化"></a>查询性能优化</h2><p>减少请求的数据量</p>
+<ul>
+<li>只返回必要的列：最好不要使用 SELECT * 语句。</li>
+<li>只返回必要的行：使用 LIMIT 语句来限制返回的数据。</li>
+<li>缓存重复查询的数据.</li>
+</ul>
+<p>切分大查询</p>
+<p>一个大查询如果一次性执行的话，可能一次锁住很多数据、阻塞很多小的但重要的查询。</p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">DELETE</span> <span class="keyword">FROM</span> messages <span class="keyword">WHERE</span> <span class="keyword">create</span> <span class="operator">&lt;</span> DATE_SUB(NOW(), <span class="type">INTERVAL</span> <span class="number">3</span> <span class="keyword">MONTH</span>);</span><br></pre></td></tr></table></figure>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line">rows_affected <span class="operator">=</span> <span class="number">0</span></span><br><span class="line">do &#123;</span><br><span class="line">    rows_affected <span class="operator">=</span> do_query(</span><br><span class="line">    &quot;DELETE FROM messages WHERE create  &lt; DATE_SUB(NOW(), INTERVAL 3 MONTH) LIMIT 10000&quot;)</span><br><span class="line">&#125; while rows_affected <span class="operator">&gt;</span> <span class="number">0</span></span><br></pre></td></tr></table></figure>
+<p>每次用 LIMIT 限制查询记录数为 10000，每次只对 10000 执行删除操作。而非一次性对所有符合条件的记录执行删除操作。</p>
 <h1 id="MySQL-基础"><a href="#MySQL-基础" class="headerlink" title="MySQL 基础"></a>MySQL 基础</h1><h2 id="数据库的三范式"><a href="#数据库的三范式" class="headerlink" title="数据库的三范式"></a>数据库的三范式</h2><p>第一范式：强调的是列的原子性，即数据库表的每一列都是不可分割的原子数据项。</p>
 <p>第二范式：要求实体的属性完全依赖于主关键字。所谓完全依赖是指不能存在仅依赖主关键字一部分的属性。</p>
 <p>第三范式：任何非主属性不依赖于其它非主属性。</p>
@@ -1236,6 +1481,22 @@ cap\geq  \lceil \frac{initialCapacity}{ssize} \rceil</script><h4 id="数组索�
 <li><p>InnoDB 支持外键，而 MyISAM 不支持</p>
 </li>
 </ul>
+<h2 id="数据类型"><a href="#数据类型" class="headerlink" title="数据类型"></a>数据类型</h2><h3 id="整型"><a href="#整型" class="headerlink" title="整型"></a>整型</h3><p>TINYINT, SMALLINT, MEDIUMINT, INT, BIGINT 分别使用 1, 2, 3, 4, 8 字节存储空间。</p>
+<p>INT(11) 中的数字只是规定了交互工具显示字符的个数，对于存储和计算来说是没有意义的。</p>
+<h3 id="浮点数"><a href="#浮点数" class="headerlink" title="浮点数"></a>浮点数</h3><p>FLOAT 和 DOUBLE 为浮点类型（4 字节、8 字节），DECIMAL 为高精度小数类型。</p>
+<p>CPU 原生支持浮点运算，但是不支持 DECIMAl 类型的计算，因此 DECIMAL 的计算比浮点类型需要更高的代价。</p>
+<p>DECIMAL(18, 9) 表示总共 18 位，取 9 位存储小数部分，剩下 9 位存储整数部分。</p>
+<h3 id="字符串"><a href="#字符串" class="headerlink" title="字符串"></a>字符串</h3><p>主要有 CHAR 和 VARCHAR 两种类型，一种是定长的，一种是变长的。在进行存储和检索时，会保留 VARCHAR 末尾的空格，而会删除 CHAR 末尾的空格。</p>
+<p>VARCHAR 这种变长类型能够节省空间，因为只需要存储必要的内容。（即字符串多长就用多大的空间）</p>
+<p>但是在执行 UPDATE 时如果更新为更长的字符串，会使行变得比原来长，当超出一个页所能容纳的大小时，就要执行额外的操作。MyISAM 会将行拆成不同的片段存储，而 InnoDB 则进行页分裂，用两个数据页来存放原来一个页的数据。</p>
+<h3 id="时间和日期"><a href="#时间和日期" class="headerlink" title="时间和日期"></a>时间和日期</h3><p>MySQL 提供了两种相似的日期时间类型：DATETIME 和 TIMESTAMP。</p>
+<p>DATETIME</p>
+<p>能够保存从 1000 年到 9999 年的日期和时间，精度为秒，使用 8 字节的存储空间。它与时区无关。</p>
+<p>例如“2008-01-16 22:37:08”，这是 ANSI 标准定义的日期和时间表示方法。</p>
+<p>TIMESTAMP</p>
+<p>和 UNIX 时间戳相同，保存从 1970 年 1 月 1 日午夜（格林威治时间）以来的<strong>秒数</strong>，使用 4 个字节，只能表示从 1970 年到 2038 年。</p>
+<p>它和时区有关，也就是说一个时间戳在不同的时区所代表的具体时间是不同的。</p>
+<p>默认情况下，如果插入时没有指定 TIMESTAMP 列的值，会将这个值设置为当前时间。</p>
 <h2 id="超键、候选键、主键、外键"><a href="#超键、候选键、主键、外键" class="headerlink" title="超键、候选键、主键、外键"></a>超键、候选键、主键、外键</h2><p>超键：在关系中能唯一标识元组的属性集称为关系模式的超键。一个属性可以作为一个超键，多个属性组合在一起也可以作为一个超键。超键包含候选键和主键。</p>
 <p>候选键：是最小超键（最小的属性集），即没有冗余元素的超键。</p>
 <h3 id="主键"><a href="#主键" class="headerlink" title="主键"></a>主键</h3><p>对于关系表，有个很重要的约束，就是任意两条记录不能重复。不能重复不是指两条记录不完全相同，而是指能够通过某个字段唯一区分出不同的记录，这个字段被称为主键。</p>
@@ -1247,7 +1508,7 @@ cap\geq  \lceil \frac{initialCapacity}{ssize} \rceil</script><h4 id="数组索�
 <ol>
 <li><p>自增整数类型：数据库在插入数据时自动为每一条记录分配一个自增整数，这样我们就完全不用担心主键重复，也不用自己预先生成主键；</p>
 </li>
-<li><p>全局唯一 GUID 类型：使用一种全局唯一的字符串作为主键，类似 8f55d96b-8acc-4636-8cb8-76bf8abc2f57。GUID 算法通过网卡 MAC 地址、时间戳和随机数保证任意计算机在任意时间生成的字符串都是不同的，大部分编程语言都内置了 GUID 算法。</p>
+<li><p>全局唯一 GUID 类型：使用一种全局唯一的字符串作为主键，类似 8f55d96b-8acc-4636-8cb8-76bf8abc2f57。GUID 算法通过网卡 MAC 地址、时间戳和随机数保证任意计算机在任意时间生成的字符串都是不同的，大部分编程语言都内置了 GUID 算法。不推荐，因为无序。</p>
 </li>
 </ol>
 <blockquote>
@@ -1256,10 +1517,7 @@ cap\geq  \lceil \frac{initialCapacity}{ssize} \rceil</script><h4 id="数组索�
 <h3 id="外键"><a href="#外键" class="headerlink" title="外键"></a>外键</h3><p>在一个表中存在的另一个表的主键称此表的外键。</p>
 <p>在 students 表中，通过 class_id 字段，可以把数据与另一张表关联起来，这种列称为外键。</p>
 <p>外键并不是通过定义列名实现的，而是通过定义外键约束实现的：</p>
-<p>ALTER TABLE students</p>
-<p>ADD CONSTRAINT fk_class_id</p>
-<p>FOREIGN KEY (class_id)</p>
-<p>REFERENCES classes (id);</p>
+<figure class="highlight sql"><table><tr><td class="code"><pre><span class="line"><span class="keyword">ALTER</span> <span class="keyword">TABLE</span> students</span><br><span class="line"><span class="keyword">ADD</span> <span class="keyword">CONSTRAINT</span> fk_class_id</span><br><span class="line"><span class="keyword">FOREIGN</span> KEY (class_id)</span><br><span class="line"><span class="keyword">REFERENCES</span> classes (id);</span><br></pre></td></tr></table></figure>
 <p>fk，即 FOREIGN KEY，表示外键。外键约束的名称为 fk_class_id，FOREIGN KEY (class_id)指定了 students 表的class_id 字段作为外键，REFERENCES classes (id) 指定了这个外键将关联到 classes 表的 id 列（即 <strong>classes 表的主键</strong>）。</p>
 <blockquote>
 <p> 通过定义外键约束，关系数据库可以保证无法插入无效的数据。即如果 classes 表不存在 id=99 的记录，students 表就无法插入 class_id=99 的记录。</p>
@@ -1270,8 +1528,6 @@ cap\geq  \lceil \frac{initialCapacity}{ssize} \rceil</script><h4 id="数组索�
 <p>PRIMARY KEY/主键：字段内容不能重复，但它在一个表只允许出现一个。</p>
 <p>FOREIGN KEY/外键：用于预防破坏表之间连接的动作，也能防止非法数据插入外键列，因为它必须是它指向的那个表中的值之一。</p>
 <p>CHECK：用于控制字段的值范围。</p>
-<h2 id="drop、delete-与-truncate-的区别"><a href="#drop、delete-与-truncate-的区别" class="headerlink" title="drop、delete 与 truncate 的区别"></a>drop、delete 与 truncate 的区别</h2><p>三者都表示删除，但是三者有一些差别：</p>
-<p><img src="/2022/04/06/MySQL/image-20220407103015269.png" alt></p>
 <h1 id="事务"><a href="#事务" class="headerlink" title="事务"></a>事务</h1><p>何为事务？一言蔽之，事务是逻辑上的一组操作，要么都执行，要么都不执行。<br>假如小明要给小红转账 1000 元，这个转账会涉及到两个关键操作就是：</p>
 <ol>
 <li>将小明的余额减少 1000 元</li>
@@ -1280,11 +1536,19 @@ cap\geq  \lceil \frac{initialCapacity}{ssize} \rceil</script><h4 id="数组索�
 <p>事务会把这两个操作就可以看成逻辑上的一个整体，这个整体包含的操作要么都成功，要么都要失败。这样就不会出现小明余额减少而小红的余额却并没有增加的情况。</p>
 <h2 id="ACID-特性"><a href="#ACID-特性" class="headerlink" title="ACID 特性"></a>ACID 特性</h2><p>关系型数据库事务都有 ACID 特性：</p>
 <ol>
-<li>原子性（Atomicity） ： 事务是最小的执行单位，不允许分割。事务的原子性确保动作要么全部完成，要么全部不完成；</li>
+<li>原子性（Atomicity） ： 事务是最小的执行单位，不允许分割。事务的原子性确保动作要么全部完成，要么全部失败回滚；</li>
 <li>一致性（Consistency）： 事务执行的结果必须是使数据库从一个一致性状态变到另一个一致性状态。因此当数据库只包含成功事务提交的结果时，就说数据库处于一致性状态。如果数据库系统运行中发生故障，有些事务尚未完成就被迫中断，这些未完成事务对数据库所做的修改有一部分已写入物理数据库，这时数据库就处于一种不正确的状态，或者说是不一致的状态。例如转账业务中，无论事务是否成功，转账者和收款人的总额应该是不变的；</li>
-<li>隔离性（Isolation）： 并发访问数据库时，一个用户的事务不被其他事务所干扰，各并发事务之间数据库是独立的；</li>
+<li>隔离性（Isolation）： 一个事务所做的修改在最终提交以前，对其它事务是不可见的。</li>
 <li>持久性（Durability）： 一个事务被提交之后。它对数据库中数据的改变是持久的，即使数据库发生故障也不应该对其有任何影响。</li>
 </ol>
+<p>ACID 关系</p>
+<ul>
+<li>在无并发的情况下，事务串行执行，隔离性一定能够满足。此时只要能满足原子性，就能满足一致性。</li>
+<li>在并发的情况下，多个事务并行执行，事务不仅要满足原子性，还需要满足隔离性，才能满足一致性。</li>
+<li>事务满足持久化是为了能应对系统崩溃的情况。</li>
+</ul>
+<p>AUTOCOMMIT</p>
+<p>MySQL 默认采用自动提交模式。也就是说，如果不显式使用 START TRANSACTION 语句来开始一个事务，那么每个查询操作都会被当做一个事务并自动提交。</p>
 <h2 id="事务的实现原理-如何保证-ACID"><a href="#事务的实现原理-如何保证-ACID" class="headerlink" title="事务的实现原理/如何保证 ACID"></a>事务的实现原理/如何保证 ACID</h2><p>以 MySQL 的 InnoDB 引擎为例。</p>
 <ul>
 <li><p>MySQL InnoDB 引擎使用 redo log（重做日志） 保证事务的持久性，使用 undo log（回滚日志） 来保证事务的原子性。redo log 记录的是修改了缓存池数据页的所有命令，undo log 记录的是某个事务中所更新记录的历史版本</p>
@@ -1342,7 +1606,8 @@ cap\geq  \lceil \frac{initialCapacity}{ssize} \rceil</script><h4 id="数组索�
 <h2 id="并发事务带来哪些问题？"><a href="#并发事务带来哪些问题？" class="headerlink" title="并发事务带来哪些问题？"></a>并发事务带来哪些问题？</h2><p>脏读（Dirty Read）。一个事务会读到另一个事务更新后但未提交的数据，如果另一个事务回滚，那么当前事务读到的数据就是脏数据</p>
 <p>不可重复读（Unrepeatable read）：在一个事务内，多次读同一数据，读取的数据不一致。</p>
 <p>幻读（Phantom read）: 幻读与不可重复读类似。它发生在一个事务（T1）读取了几行数据，接着另一个并发事务（T2）插入了一些数据时。在随后的查询中，第一个事务（T1）就会发现多了一些原本不存在的记录，就好像发生了幻觉一样，所以称为幻读。</p>
-<h2 id="事务隔离级别"><a href="#事务隔离级别" class="headerlink" title="事务隔离级别"></a>事务隔离级别</h2><p>READ-UNCOMMITTED(读取未提交)： 最低的隔离级别，允许读取尚未提交的数据变更</p>
+<h2 id="事务隔离级别"><a href="#事务隔离级别" class="headerlink" title="事务隔离级别"></a>事务隔离级别</h2><p>MySQL 默认级别是可重复读（REPEATABLE READ）。在可重复读隔离级别下，通过多版本并发控制（MVCC）+ Next-Key Locking 防止幻读。</p>
+<p>READ-UNCOMMITTED(读取未提交)： 最低的隔离级别，允许读取尚未提交的数据变更</p>
 <p>READ-COMMITTED(读取已提交)： 允许读取并发事务已经提交的数据</p>
 <p>REPEATABLE-READ(可重复读)： 对同一字段的多次读取结果都是一致的，除非数据是被本身事务自己所修改</p>
 <p>SERIALIZABLE(可串行化)： 所有的事务依次逐个执行，这样事务之间就完全不可能产生干扰</p>
@@ -1384,14 +1649,42 @@ cap\geq  \lceil \frac{initialCapacity}{ssize} \rceil</script><h4 id="数组索�
 </tbody>
 </table>
 </div>
-<p><strong>隔离级别与锁的关系</strong></p>
-<p>在 Read Uncommitted 级别下，读取数据（SELECT）不需要加共享锁，这样就不会跟被修改的数据上的排他锁冲突，导致读取未提交</p>
-<p>在Read Committed级别下，读操作需要加共享锁，但是在语句执行完以后释放共享锁；多次读取到的可能是不同事务提交的结果。</p>
-<p>在Repeatable Read级别下，读操作需要加共享锁，但是在事务提交之前并不释放共享锁，也就是必须等待事务执行完毕以后才释放共享锁。</p>
-<p>SERIALIZABLE 是限制性最强的隔离级别，因为该级别锁定整个范围的键，并一直持有锁，直到事务完成。</p>
-<p>指所有事务的..操作加锁，而非只限定某个事务的隔离级别?</p>
-<p>这里说的可能不对，内部的执行机制不一定这么简单。</p>
-<h1 id="锁"><a href="#锁" class="headerlink" title="锁"></a>锁</h1><h2 id="锁的释放时机"><a href="#锁的释放时机" class="headerlink" title="锁的释放时机"></a>锁的释放时机</h2><p>在事务执行过程中，如果有加写锁操作，写锁在<strong>事务提交时</strong>释放才会被释放</p>
+<h1 id="锁"><a href="#锁" class="headerlink" title="锁"></a>锁</h1><h2 id="锁粒度"><a href="#锁粒度" class="headerlink" title="锁粒度"></a>锁粒度</h2><p>MySQL 中提供了两种锁：行级锁以及表级锁。</p>
+<p>应该尽量只锁定需要修改的那部分数据，而不是所有的资源。锁定的数据量越少，发生锁争用的可能就越小，系统的并发程度就越高。</p>
+<p>但是加锁需要消耗资源，锁的各种操作（包括获取锁、释放锁、以及检查锁状态）都会增加系统开销。因此封锁粒度越小，系统开销就越大。</p>
+<p>在选择封锁粒度时，需要在锁开销和并发程度之间做一个权衡。</p>
+<h2 id="锁类型"><a href="#锁类型" class="headerlink" title="锁类型"></a>锁类型</h2><p>读写锁</p>
+<ul>
+<li>互斥锁（Exclusive），简写为 X 锁，又称写锁。</li>
+<li>共享锁（Shared），简写为 S 锁，又称读锁。</li>
+</ul>
+<p>意向锁（Intention Locks）</p>
+<p>使用意向锁可以更容易地支持多粒度锁。</p>
+<ul>
+<li><p>在存在行级锁和表级锁的情况下，事务 T 想要对整个表 A 加 X 锁，就需要先检测是否有其它事务对表 A 或者表 A 中的任意一行加了锁，那么就需要对表 A 的每一行都检测一次，这是非常耗时的。</p>
+</li>
+<li><p>意向锁在原来的 X/S 锁之上引入了 IX/IS，IX/IS 都是<strong>表锁</strong>，用来<strong>表示一个事务想要在表中的某个数据行上加 X 锁或 S 锁</strong>（并不真正加表级锁）。有以下两个规定：</p>
+<ul>
+<li>一个事务在获得某个数据<strong>行</strong>对象的 S 锁之前，必须先获得表的 IS 锁；</li>
+<li>一个事务在获得某个数据行对象的 X 锁之前，必须先获得表的 IX 锁。</li>
+</ul>
+</li>
+</ul>
+<p>意向锁只起逻辑判断作用，本质上可以认为是一个标记值。</p>
+<p>通过引入意向锁，事务 T 想要对表 A 加 X 锁，只需要先检测是否有其它事务对<strong>表 A</strong> 加了 X/IX/S/IS 锁，如果加了就表示有其它事务正在使用这个表或者表中某一行的锁，因此事务 T 加 X 锁失败。事务 T 想要对表 A 加 S 锁，只需要先检测是否有其它事务对表 A 加了 X/IX 锁。</p>
+<h2 id="封锁协议"><a href="#封锁协议" class="headerlink" title="封锁协议"></a>封锁协议</h2><p><strong>一级封锁协议</strong></p>
+<p>事务 T 要修改数据 A 时必须加 X 锁，<strong>直到 T 提交才释放</strong>锁。（并没有强调行级锁还是表级锁，因为都可以实现目的）。</p>
+<p>可以解决丢失修改问题，因为不能同时有两个事务对同一个数据进行修改，那么事务的修改在事务提交之前不会被覆盖。</p>
+<p><img src="/2022/04/06/MySQL/image-20191207220440451.png" alt="img" style="zoom: 50%;"></p>
+<p><strong>二级封锁协议</strong></p>
+<p><strong>在一级的基础上</strong>，要求读取数据 A 时必须加 S 锁，<strong>读取完马上释放</strong> S 锁。</p>
+<p>可以解决读脏数据问题，因为如果一个事务在对数据 A 进行修改，根据一级封锁协议，会加 X 锁，那么就不能再加 S 锁了，也就是不会读入数据。</p>
+<p><img src="/2022/04/06/MySQL/image-20191207220831843.png" alt="img" style="zoom:50%;"></p>
+<p><strong>三级封锁协议</strong></p>
+<p><strong>在二级的基础上</strong>，要求读取数据 A 时必须加 S 锁，<strong>直到事务提交</strong>了才能释放 S 锁。</p>
+<p>可以解决不可重复读的问题，因为读 A 时，其它事务不能对 A 加 X 锁，从而避免了在读的期间数据发生改变。</p>
+<p><img src="/2022/04/06/MySQL/image-20191207221313819.png" alt="img" style="zoom:50%;"></p>
+<h2 id="锁的释放时机"><a href="#锁的释放时机" class="headerlink" title="锁的释放时机"></a>锁的释放时机</h2><p>在事务执行过程中，如果有加写锁操作，写锁在<strong>事务提交时</strong>释放才会被释放</p>
 <p>对于读锁，</p>
 <h2 id="加锁时机"><a href="#加锁时机" class="headerlink" title="加锁时机"></a>加锁时机</h2><p>对于 UPDATE、 DELETE 和 INSERT 语句， InnoDB会自动给涉及数据集加排他锁（X)；</p>
 <p>如果有隔离级别的SELECT？</p>
@@ -1408,10 +1701,8 @@ cap\geq  \lceil \frac{initialCapacity}{ssize} \rceil</script><h4 id="数组索�
 <li><p>普通 SELECT 语句不加锁，因此可以随意查询加了锁的记录。</p>
 </li>
 </ul>
-<p><strong>如果InnoDB表没有建立索引和主键，那么会用隐式的主键列生成的索引来进行锁定</strong></p>
-<ul>
-<li>InnoDB 行锁是通过给索引上的索引项加锁来实现的，这一点 MySQL 与 Oracle 不同，后者是通过在数据块中对相应数据行加锁来实现的。InnoDB 这种行锁实现特点意味着：只有通过索引条件检索数据，InnoDB 才使用行级锁，否则，InnoDB 将使用表锁！</li>
-</ul>
+<p>如果InnoDB表没有建立索引和主键，那么会用隐式的主键列生成的索引来进行锁定</p>
+<p>InnoDB 行锁是通过给索引上的索引项加锁来实现的，这一点 MySQL 与 Oracle 不同，后者是通过在数据块中对相应数据行加锁来实现的。InnoDB 这种行锁实现特点意味着：只有通过索引条件检索数据，InnoDB 才使用行级锁，否则，InnoDB 将使用表锁！</p>
 <h1 id="分库分表"><a href="#分库分表" class="headerlink" title="分库分表"></a>分库分表</h1><h2 id="为什么要分库分表？"><a href="#为什么要分库分表？" class="headerlink" title="为什么要分库分表？"></a>为什么要分库分表？</h2><p>分表</p>
 <p>单表数据量太大，会极大影响 sql执行的性能。</p>
 <p>分表就是把一个表的数据放到多个表中，然后查询的时候你就查一个表。比如按照用户 id 来分表，将一个用户的数据就放在一个表中。然后操作的时候你对一个用户就操作那个表就好了。这样可以控制每个表的数据量在可控的范围内，比如每个表就固定在 200 万以内。</p>
@@ -1424,7 +1715,7 @@ cap\geq  \lceil \frac{initialCapacity}{ssize} \rceil</script><h4 id="数组索�
 </ul>
 <p>垂直拆分</p>
 <ul>
-<li>就是按列/字段拆分，每个表都包含部分字段。一般来说，会将较少的访问频率很高的字段放到一个表里去，然后将较多的访问频率很低的字段放到另外一个表里去。</li>
+<li>就是按列/字段拆分，每个表都包含部分字段。通常是按照列的关系密集程度进行切分，也可以将经常被使用的列和不经常被使用的列切分到不同的表中。</li>
 <li>因为数据库是有缓存的，访问频率高的行字段越少，就可以在缓存里缓存更多的行，性能就越好。</li>
 </ul>
 ]]></content>
@@ -1938,9 +2229,7 @@ cap\geq  \lceil \frac{initialCapacity}{ssize} \rceil</script><h4 id="数组索�
   <entry>
     <title>应用层</title>
     <url>/2022/04/07/app-layer/</url>
-    <content><![CDATA[<h1 id="网络分层结构"><a href="#网络分层结构" class="headerlink" title="网络分层结构"></a>网络分层结构</h1><p><strong>TCP&#x2F;IP 五层模型：应用层、传输层、网络层、数据链路层、物理层</strong></p>
-<span id="more"></span>
-<p>应用层：为应用程序提供服务，数据单位称为报文</p>
+    <content><![CDATA[<h1 id="网络分层结构"><a href="#网络分层结构" class="headerlink" title="网络分层结构"></a>网络分层结构</h1><p><strong>TCP/IP 五层模型：应用层、传输层、网络层、数据链路层、物理层</strong><br><span id="more"></span><br>应用层：为应用程序提供服务，数据单位称为报文</p>
 <ul>
 <li>HTTP</li>
 <li>DNS（Domain Name System），将域名转化为 IP 地址</li>
@@ -1956,6 +2245,7 @@ cap\geq  \lceil \frac{initialCapacity}{ssize} \rceil</script><h4 id="数组索�
 <ul>
 <li>IP（Internet Protocol），定义了 IP 数据报的字段以及端系统和路由器如何处理 IP 数据报</li>
 <li>路由选择协议：IP 数据报根据什么样的路由从源传输到目的</li>
+<li>ICMP，因特网控制报文协议</li>
 </ul>
 <p>链路层：将 IP 数据报组装成帧，数据单位称为帧</p>
 <blockquote>
@@ -2007,7 +2297,7 @@ cap\geq  \lceil \frac{initialCapacity}{ssize} \rceil</script><h4 id="数组索�
 </ul>
 <h2 id="HTTP"><a href="#HTTP" class="headerlink" title="HTTP"></a>HTTP</h2><h3 id="HTTP-1"><a href="#HTTP-1" class="headerlink" title="HTTP"></a>HTTP</h3><p>HTTP 允许传输任意类型的数据。传输的类型由 Content-Type 加以标记。</p>
 <p>无状态。对于客户端每次发送的请求，服务器都认为是一个新的请求，上一次会话和下一次会话之间没有联系。</p>
-<p>支持客户端&#x2F;服务器模式</p>
+<p>支持客户端/服务器模式</p>
 <p><strong>HTTP 常用的请求方法</strong></p>
 <p>PUT：上传文件，向服务器添加数据，可以看作增</p>
 <p>DELETE：删除文件</p>
@@ -2019,7 +2309,6 @@ cap\geq  \lceil \frac{initialCapacity}{ssize} \rceil</script><h4 id="数组索�
 <li>请求头：格式为“属性名:属性值”，服务端根据请求头获取客户端的信息，主要有 cookie、host、connection、accept-language、accept-encoding、user-agent。</li>
 </ul>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># 请求报文示例</span><br><span class="line">POST /xxx HTTP/1.1 请求行</span><br><span class="line"></span><br><span class="line">Accept:image/gif.image/jpeg, 请求头</span><br><span class="line">Accept-Language:zh-cn</span><br><span class="line">Connection:Keep-Alive</span><br><span class="line">Host:localhost</span><br><span class="line">User-Agent:Mozila/4.0(compatible;MSIE5.01;Window NT5.0)</span><br><span class="line">Accept-Encoding:gzip,deflate</span><br><span class="line"></span><br><span class="line">username=dabin 请求体</span><br></pre></td></tr></table></figure>
-
 <p>HTTP 响应也由四个部分组成，分别是：状态行、响应头、空行和响应体</p>
 <ul>
 <li>状态行：协议版本，状态码及状态描述。</li>
@@ -2027,8 +2316,8 @@ cap\geq  \lceil \frac{initialCapacity}{ssize} \rceil</script><h4 id="数组索�
 <li>响应体：服务器返回给客户端的内容。</li>
 </ul>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"># 响应报文示例</span><br><span class="line">HTTP/1.1 200 OK</span><br><span class="line"></span><br><span class="line">Server:Apache Tomcat/5.0.12 响应头</span><br><span class="line">Date:Mon,6Oct2003 13:23:42 GMT</span><br><span class="line">Content-Length:112</span><br><span class="line"></span><br><span class="line">&lt;html&gt;</span><br><span class="line">    &lt;body&gt;响应体&lt;/body&gt;</span><br><span class="line">&lt;/html&gt;</span><br></pre></td></tr></table></figure>
-
-<h4 id="HTTP-状态码"><a href="#HTTP-状态码" class="headerlink" title="HTTP 状态码"></a>HTTP 状态码</h4><table>
+<h4 id="HTTP-状态码"><a href="#HTTP-状态码" class="headerlink" title="HTTP 状态码"></a>HTTP 状态码</h4><div class="table-container">
+<table>
 <thead>
 <tr>
 <th>状态码</th>
@@ -2036,7 +2325,8 @@ cap\geq  \lceil \frac{initialCapacity}{ssize} \rceil</script><h4 id="数组索�
 <th>含义</th>
 </tr>
 </thead>
-<tbody><tr>
+<tbody>
+<tr>
 <td>1XX</td>
 <td>Informational（信息性状态码）</td>
 <td>接收的请求正在处理</td>
@@ -2061,7 +2351,9 @@ cap\geq  \lceil \frac{initialCapacity}{ssize} \rceil</script><h4 id="数组索�
 <td>Server Error（服务器错误）</td>
 <td>服务器处理请求出错</td>
 </tr>
-</tbody></table>
+</tbody>
+</table>
+</div>
 <p>100 Continue ：表明到目前为止都很正常，客户端可以继续发送请求或者忽略这个响应。</p>
 <p>200 OK</p>
 <h4 id="HTTP1-0-和-HTTP1-1-的区别"><a href="#HTTP1-0-和-HTTP1-1-的区别" class="headerlink" title="HTTP1.0 和 HTTP1.1 的区别"></a>HTTP1.0 和 HTTP1.1 的区别</h4><ul>
@@ -2083,14 +2375,13 @@ cap\geq  \lceil \frac{initialCapacity}{ssize} \rceil</script><h4 id="数组索�
 </li>
 <li><p>服务器用一个 HTTP Response 响应客户端，响应报文首部包含 Set-cookie 字段，表示服务器为客户端分配了一个 cookie ，服务器用 cookie 值来识别用户</p>
 </li>
-<li><p>客户端保存 cookie ，之后向服务器发送 HTTP 请求时，请求的首部会包含一个 cookie 字段，而服务器的响应不需要再包含 Set-cookie 字段</p>
-</li>
+<li>客户端保存 cookie ，之后向服务器发送 HTTP 请求时，请求的首部会包含一个 cookie 字段，而服务器的响应不需要再包含 Set-cookie 字段</li>
 </ul>
 <blockquote>
 <p>Set-cookie 和 cookie 字段有多个属性，主要包括：</p>
-<p>NAME&#x3D;VALUE    要保存的 Key&#x2F;Value</p>
+<p>NAME=VALUE    要保存的 Key/Value</p>
 <p>Expires    过期时间</p>
-<p>Domain    生成该 cookie 的域名，如 domain&#x3D;”<a href="http://www.baiducom&quot;/">www.baiducom&quot;</a></p>
+<p>Domain    生成该 cookie 的域名，如 domain=”www.baiducom”</p>
 </blockquote>
 <p><strong>Cookie 和 Session 的区别？</strong></p>
 <ul>
@@ -2128,7 +2419,7 @@ cap\geq  \lceil \frac{initialCapacity}{ssize} \rceil</script><h4 id="数组索�
 <p><img src="/2022/04/07/app-layer/image-20220402105707967.png" alt="HTTPS 密钥传输过程"></p>
 <h4 id="认证"><a href="#认证" class="headerlink" title="认证"></a>认证</h4><blockquote>
 <p>非对称密钥加密方式存在的安全性问题</p>
-<p>客户端 C 和服务器 S 想要使用 SSL&#x2F;TLS 通信，由上述 SSL&#x2F;TLS 通信原理，C 需要先知道 S 的公钥，而 S 公钥的唯一获取途径，就是把 S 公钥在网络信道中传输。</p>
+<p>客户端 C 和服务器 S 想要使用 SSL/TLS 通信，由上述 SSL/TLS 通信原理，C 需要先知道 S 的公钥，而 S 公钥的唯一获取途径，就是把 S 公钥在网络信道中传输。</p>
 <p>由于 S 公钥明文在信道中传输，那么很有可能存在一个攻击者 A，发送给 C 一个诈包，假装是 S 公钥，其实是诱饵服务器（AS）的公钥。</p>
 <p>当 C 收获了 AS 的公钥（却以为是 S 的公钥），C 后续就会使用 AS 公钥对数据进行加密，并在公开信道传输，那么 A 将捕获这些加密包，用 AS 的私钥解密，就截获了 C 本要给 S 发送的内容，而 C 和 S 二人全然不知。<br>S 公钥即使做加密，也难以避免这种信任性问题，C 被 AS 拐跑了！</p>
 </blockquote>
@@ -2155,7 +2446,7 @@ cap\geq  \lceil \frac{initialCapacity}{ssize} \rceil</script><h4 id="数组索�
 <hr>
 <h2 id="DHCP"><a href="#DHCP" class="headerlink" title="DHCP"></a>DHCP</h2><p>动态主机配置协议（Dynamic Host Configuration Protocol，DHCP）提供了即插即用的连网方式，用户不再需要手动配置 IP 地址等信息。</p>
 <p>DHCP 配置的内容不仅是 IP 地址，还包括子网掩码、默认网关 IP 地址和本地 DNS 服务器地址。</p>
-<p><img src="/2022/04/07/app-layer/image-20220402110655433.png"></p>
+<p><img src="/2022/04/07/app-layer/image-20220402110655433.png" alt></p>
 <p>DHCP 工作过程如下：</p>
 <ol>
 <li>客户端发送 Discover 报文，该报文的目的地址为 255.255.255.255:67，源地址为 0.0.0.0:68，被放入 UDP 中，该报文被广播到同一个子网的所有主机上。如果客户端和 DHCP 服务器不在同一个子网，就需要使用中继代理。广播：指目的 IP 地址为：255.255.255.255</li>
@@ -2732,15 +3023,15 @@ dp[i][j] = dp[i-1][(j-1+length)\%length] + dp[i-1][(j+1)\%length]</script><figur
 <p><strong>查找前缀</strong></p>
 <p>从字典树的根开始，查找前缀。设当前字符 c 的位置对应于字典树的节点 n，若：</p>
 <ul>
-<li>children[‘c’ - ‘a’] = null，说明字典树中不包含该前缀，返回空指针。</li>
-<li>children[‘c’ - ‘a’] 非空，根据它的指向移动到子节点，继续处理下一个字符</li>
+<li>children[c - ‘a’] = null，说明字典树中不包含该前缀，返回空指针。</li>
+<li>children[c - ‘a’] 非空，根据它的指向移动到子节点，继续处理下一个字符</li>
 </ul>
 <p>若最终到的节点非空，说明前缀存在。<strong>若查找的是字符串而非前缀，判断该节点是否为字符串的结尾即可</strong></p>
 <p><strong>插入字符串</strong></p>
 <p>从字典树的根开始，插入字符串。设当前字符  c 的位置对应于字典树的节点 n，若：</p>
 <ul>
-<li>children[‘c’ - ‘a’]=null，表示节点 n 未能取值为字符c，因此需要初始化 children[‘c’ - ‘a’] 令其非空并指向新创建的一个树节点。</li>
-<li>children[‘c’ - ‘a’]非空，根据它的指向移动到子节点，继续处理下一个字符</li>
+<li>children[c - ‘a’]=null，表示节点 n 未能取值为字符c，因此需要初始化 children[c - ‘a’] 令其非空并指向新创建的一个树节点。</li>
+<li>children[c - ‘a’]非空，根据它的指向移动到子节点，继续处理下一个字符</li>
 </ul>
 <p>例如，对于 word = ”abc”，生成的是这样一个分支：</p>
 <p><img src="/2022/04/14/Create-Data-Structure-class/image-20220414154341091.png" alt="image-20220414154341091"></p>
@@ -2961,7 +3252,7 @@ Sum_{1}+Sum_{3}+...+Sum_{x}</script><h2 id="树的前缀和"><a href="#树的前
 <p>0~i-1 位置的元素即便被选中过，也不会影响这个概率计算式。</p>
 <figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Solution</span> &#123;</span><br><span class="line">    ListNode head;</span><br><span class="line">    <span class="type">Random</span> <span class="variable">random</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Random</span>(<span class="number">20220116</span>);</span><br><span class="line">    <span class="keyword">public</span> <span class="title function_">Solution</span><span class="params">(ListNode _head)</span> &#123;</span><br><span class="line">        head = _head;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">public</span> <span class="type">int</span> <span class="title function_">getRandom</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="type">int</span> <span class="variable">ans</span> <span class="operator">=</span> <span class="number">0</span>, idx = <span class="number">0</span>;</span><br><span class="line">        <span class="type">ListNode</span> <span class="variable">t</span> <span class="operator">=</span> head;</span><br><span class="line">        <span class="keyword">while</span> (t != <span class="literal">null</span> &amp;&amp; ++idx &gt;= <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="keyword">if</span> (random.nextInt(idx) == <span class="number">0</span>) ans = t.val;</span><br><span class="line">            t = t.next;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> ans;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <blockquote>
-<p>相关题目：<a href="[382. 链表随机节点 - 力扣（LeetCode） (leetcode-cn.com">链表随机节点</a>](<a href="https://leetcode-cn.com/problems/linked-list-random-node/">https://leetcode-cn.com/problems/linked-list-random-node/</a>))</p>
+<p>相关题目：<a href="https://leetcode-cn.com/problems/linked-list-random-node/">链表随机节点</a></p>
 </blockquote>
 <p>如果是从二维数组中抽取，也是可以的，二维遍历即可，循环体不需要改变。</p>
 <h2 id="无放回抽样"><a href="#无放回抽样" class="headerlink" title="无放回抽样"></a>无放回抽样</h2><p>从 n 个样本中抽取一个样本，不放回，要求每次抽取是等概率抽取。</p>
@@ -2983,7 +3274,7 @@ Sum_{1}+Sum_{3}+...+Sum_{x}</script><h2 id="树的前缀和"><a href="#树的前
 <p>以下实现方式并不显式地创建 map，而是用哈希表记录 map[0:k-1] 中被改变的坐标。</p>
 <figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Solution</span> &#123;</span><br><span class="line">    Map&lt;Integer, Integer&gt; map = <span class="keyword">new</span> <span class="title class_">HashMap</span>&lt;&gt;();</span><br><span class="line">    <span class="type">int</span> n, total; <span class="comment">// total 表示剩余为 0 的个数</span></span><br><span class="line">    <span class="type">Random</span> <span class="variable">rand</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Random</span>();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="title function_">Solution</span><span class="params">(<span class="type">int</span> m, <span class="type">int</span> n)</span> &#123;</span><br><span class="line">        <span class="built_in">this</span>.n = n;</span><br><span class="line">        <span class="built_in">this</span>.total = n;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">public</span> <span class="type">int</span>[] flip() &#123;</span><br><span class="line">        <span class="type">int</span> <span class="variable">x</span> <span class="operator">=</span> rand.nextInt(total);</span><br><span class="line">        total--;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 查找位置 x 对应的映射</span></span><br><span class="line">        <span class="type">int</span> <span class="variable">idx</span> <span class="operator">=</span> map.getOrDefault(x, x);</span><br><span class="line">        <span class="comment">// 将位置 x 对应的映射设置为位置 total 对应的映射（即用边界的坐标覆盖 map[x]）</span></span><br><span class="line">        map.put(x, map.getOrDefault(total, total));</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> idx; </span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <blockquote>
-<p>相关题目：<a href="[519. 随机翻转矩阵 - 力扣（LeetCode） (leetcode-cn.com">随机翻转矩阵</a>](<a href="https://leetcode-cn.com/problems/random-flip-matrix/">https://leetcode-cn.com/problems/random-flip-matrix/</a>))</p>
+<p>相关题目：<a href="https://leetcode-cn.com/problems/random-flip-matrix/">随机翻转矩阵</a></p>
 </blockquote>
 <p>如果是从二维数组中抽取，也是可以的，将二维坐标 (i, j) 等效为一维坐标 i*n+j 即可。</p>
 ]]></content>
@@ -3008,11 +3299,11 @@ Sum_{1}+Sum_{3}+...+Sum_{x}</script><h2 id="树的前缀和"><a href="#树的前
       </categories>
   </entry>
   <entry>
-    <title>calculate freq</title>
+    <title>统计频数</title>
     <url>/2022/04/18/calculate-freq/</url>
     <content><![CDATA[<p>统计数组中数字出现频数的方法</p>
 <span id="more"></span>
-<h1 id="频数统计的各种方法"><a href="#频数统计的各种方法" class="headerlink" title="频数统计的各种方法"></a>频数统计的各种方法</h1><h4 id="剑指-Offer-39-数组中出现次数超过一半的数字"><a href="#剑指-Offer-39-数组中出现次数超过一半的数字" class="headerlink" title="剑指 Offer 39. 数组中出现次数超过一半的数字"></a><a href="https://leetcode-cn.com/problems/shu-zu-zhong-chu-xian-ci-shu-chao-guo-yi-ban-de-shu-zi-lcof/">剑指 Offer 39. 数组中出现次数超过一半的数字</a></h4><h1 id="原地哈希"><a href="#原地哈希" class="headerlink" title="原地哈希"></a>原地哈希</h1><p>原地哈希算法通常用来统计大小在 [1, n] 范围内元素的频数。</p>
+<h1 id="原地哈希"><a href="#原地哈希" class="headerlink" title="原地哈希"></a>原地哈希</h1><p>原地哈希算法通常用来统计大小在 [1, n] 范围内元素的频数。</p>
 <h2 id="基本思路"><a href="#基本思路" class="headerlink" title="基本思路"></a>基本思路</h2><p>设数组 nums 的长度为 n，即下标范围 0~n-1。如果数组中<strong>任意元素都满足</strong>：1&lt;=x&lt;=n，则我们可以通过原地哈希的方法对 x 的频数进行统计：</p>
 <ul>
 <li>哈希函数：hash(x) = (x-1)%n，该哈希函数表示，对于数字 x，它将被映射到数组中 (x-1)%n 的位置<ul>
@@ -3032,11 +3323,14 @@ Sum_{1}+Sum_{3}+...+Sum_{x}</script><h2 id="树的前缀和"><a href="#树的前
 <p><a href="https://leetcode-cn.com/problems/find-all-numbers-disappeared-in-an-array/">448. 找到所有数组中消失的数字</a>，找频数为 0 的数</p>
 <p><a href="https://leetcode-cn.com/problems/find-all-duplicates-in-an-array/">442. 数组中重复的数据</a>，<a href="https://leetcode-cn.com/problems/find-the-duplicate-number/">287. 寻找重复数</a>，找频数为 2 的数</p>
 </blockquote>
-<h2 id="部分元素不满足大小在-1-n"><a href="#部分元素不满足大小在-1-n" class="headerlink" title="部分元素不满足大小在 [1, n]"></a>部分元素不满足大小在 [1, n]</h2><p>假设仍旧按照上面的统计 [1,n] 元素，会存在的问题是频数统计这块：</p>
-<p>若 nums[hash(x)]  不满足大小在 [1, n]，则后面无法恢复出原来的 nums[hash[x]]</p>
-<p>例题：给你一个未排序的整数数组 nums ，请你找出其中没有出现的最小的正整数。</p>
-<p><a href="https://leetcode-cn.com/problems/first-missing-positive/">41. 缺失的第一个正数</a></p>
-<p>另一种哈希映射方法，只适用频数上限为1的情况。</p>
+<h2 id="部分元素不满足大小在-1-n"><a href="#部分元素不满足大小在-1-n" class="headerlink" title="部分元素不满足大小在 [1, n]"></a>部分元素不满足大小在 [1, n]</h2><p>假设仍旧按照上面的统计 [1,n] 元素，会存在的问题是频数统计这块：若 nums[hash(x)]  不满足大小在 [1, n] 区间，则将其 +n 后，如果在后面遍历到了 nums[hash(x)]，nums[hash(x)]%n 并非原来的数。</p>
+<p>例题：给你一个未排序的整数数组 nums ，请你找出其中没有出现的最小的正整数。<a href="https://leetcode-cn.com/problems/first-missing-positive/">41. 缺失的第一个正数</a></p>
+<p>原地哈希，只适用频数为 0 和不为 0 的情况。</p>
+<p>对于 1&lt;=nums[i]&lt;=n，它将被映射到 nums[i]-1 的索引位置，并修改该位置的元素为：nums[num - 1] = -Math.abs(nums[num - 1]); 也就是保证该索引位置的元素一定是负数，多次遇到值和 nums[i] 相同的元素，始终保持 nums[num - 1] 为负数，表示 nums[i] 频数不为0</p>
+<blockquote>
+<p>注意到在将负数处理为 n+1 后，不能延用原来的原地哈希方法，因为对于 n+1， +n 后再 % n 无法恢复原来的值。</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="type">int</span> <span class="title function_">firstMissingPositive</span><span class="params">(<span class="type">int</span>[] nums)</span> &#123;</span><br><span class="line">    <span class="comment">// 法1 ：我们可以将数组所有的数放入哈希表，随后从 1 开始依次枚举正整数，并判断其是否在哈希表中</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 将法1的空间复杂度优化为 O(1)，需要使用原地哈希</span></span><br><span class="line">    <span class="comment">// 实际上，对于一个长度为 N 的数组，其中没有出现的最小正整数只能在 [1,N+1] 中。这是因为如果 [1,N] 都出现了，那么答案是 N+1，否则答案是 [1,N] 中没有出现的最小正整数。这样一来，我们将所有在 [1,N] 范围内的数放入哈希表，也可以得到最终的答案</span></span><br><span class="line">    <span class="comment">// 问题转化为统计 [1,N] 的元素频数。</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 令nums[x-1]为负数，这种方法仅局限于频数上限为1，因为再取相反数频数信息就丢失了（任意偶数），其中的减1操作同样是为了把下标变成0开始。恢复下标为 y 的元素值：nums[y]=|nums[y]|，即取绝对值</span></span><br><span class="line">    <span class="comment">// 负数的处理：由于用取负数来记录正整数的频数，因此对原来就存在的负数要处理。由于止只统计 [1,N] 的频数，因此可以把负数转化为正整数 N+1，即在这个区间外的正整数，它的频数不会被统计</span></span><br><span class="line">    <span class="type">int</span> <span class="variable">n</span> <span class="operator">=</span> nums.length;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> <span class="number">0</span>; i &lt; n; ++i) &#123;</span><br><span class="line">        <span class="keyword">if</span> (nums[i] &lt;= <span class="number">0</span>) &#123;</span><br><span class="line">            nums[i] = n + <span class="number">1</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> <span class="number">0</span>; i &lt; n; ++i) &#123;</span><br><span class="line">        <span class="type">int</span> <span class="variable">num</span> <span class="operator">=</span> Math.abs(nums[i]);</span><br><span class="line">        <span class="keyword">if</span> (num &lt;= n) &#123;</span><br><span class="line">            <span class="comment">// 注意每次取某个下标的数都要用 绝对值 来取得</span></span><br><span class="line">            nums[num - <span class="number">1</span>] = -Math.abs(nums[num - <span class="number">1</span>]);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> <span class="number">0</span>; i &lt; n; ++i) &#123;</span><br><span class="line">        <span class="keyword">if</span> (nums[i] &gt; <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span> i + <span class="number">1</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> n + <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <h1 id="摩尔投票法"><a href="#摩尔投票法" class="headerlink" title="摩尔投票法"></a>摩尔投票法</h1><p>设一个数组 nums，它的长度表示为 n。</p>
 <p>摩尔投票法的核心思想为对拼消耗。每次从序列里选择两个不相同的数字删除掉（或称为「抵消」），最后剩下一个数字或几个相同的数字，就是出现次数大于总数一半的那个元素。具体的证明过程需要参考论文，论文地址：<a href="https://leetcode-cn.com/link/?target=https%3A%2F%2Fwww.cs.ou.edu%2F~rlpage%2Fdmtools%2Fmjrty.pdf">MJRTYA Fast Majority Vote Algorithm</a></p>
 <h2 id="求出现频数-gt-n-2-的数字"><a href="#求出现频数-gt-n-2-的数字" class="headerlink" title="求出现频数 &gt; n/2 的数字"></a>求出现频数 &gt; n/2 的数字</h2><p>Boyer-Moore 算法的详细步骤：</p>
@@ -3055,6 +3349,26 @@ Sum_{1}+Sum_{3}+...+Sum_{x}</script><h2 id="树的前缀和"><a href="#树的前
 <blockquote>
 <p>能否处理频数等于 nums.length/2 的情况？</p>
 </blockquote>
+<h3 id="其他解法"><a href="#其他解法" class="headerlink" title="其他解法"></a>其他解法</h3><p><strong>以下解法中，哈希表、随机化和分治对众数的频数并没有限制（即限制频数 &gt;n/2）</strong></p>
+<ul>
+<li><p>哈希表统计</p>
+</li>
+<li><p>排序。如果将数组 nums 中的所有元素按照单调递增或单调递减的顺序排序，那么下标为 $\lfloor \dfrac{n}{2} \rfloor$ 的元素（下标从 0 开始）一定是众数。下面的图中解释了为什么这种策略是有效的。在下图中，第一个例子是 n 为奇数的情况，第二个例子是 n 为偶数的情况。</p>
+<p>  <img src="/2022/04/18/calculate-freq/a70cb9316157ecd7eeffe7900d3ca83849079824964e8a0aaefbcffd4040f175-image.png" alt="image.png" style="zoom:50%;"></p>
+<p>  对于每种情况，数组下面的线表示如果众数是数组中的最小值时覆盖的下标，数组上面的线表示如果众数是数组中的最大值时覆盖的下标。<strong>对于其他的情况，这条线会在这两种极端情况的中间</strong>。（先将边界找出）</p>
+<p>  对于这两种极端情况，它们会在下标为 $\lfloor \dfrac{n}{2} \rfloor$ 的地方有重叠。因此，无论众数是多少，返回 $\lfloor \dfrac{n}{2} \rfloor$ 下标对应的值都是正确的。</p>
+</li>
+<li><p>随机化。随机挑选一个元素检查它是否是众数，如果是就返回，否则继续随机挑选。</p>
+<p>  是放回抽样，在第 k 次抽到众数的概率是 ${(\frac{1}{2})}^k$，因此随机变量 k，即抽取次数的期望值 E(k)=2，因此期望时间复杂度是 O(N)，即抽取 E(K) 次，每次需要遍历数组判断抽到的元素是否为众数。</p>
+</li>
+<li><p>分治。如果数 <code>a</code> 是数组 <code>nums</code> 的众数，如果我们将 <code>nums</code> 分成两部分，那么 <code>a</code> 必定是至少一部分的众数。</p>
+<p>  这样一来，我们就可以使用分治法解决这个问题：将数组分成左右两部分，分别求出左半部分的众数 a1 以及右半部分的众数 a2，随后在 a1 和 a2 中选出正确的众数。</p>
+<p>  merge() 方法为：如果 a1 != a2，则判断 a2 和 a1 哪一个是区间的众数（区间 [l, r]，左半部分[l, mid]，右半部分 [mid+1, r]）</p>
+</li>
+</ul>
+<blockquote>
+<p>参考 <a href="https://leetcode-cn.com/problems/shu-zu-zhong-chu-xian-ci-shu-chao-guo-yi-ban-de-shu-zi-lcof/">剑指 Offer 39. 数组中出现次数超过一半的数字</a></p>
+</blockquote>
 <h2 id="求出现频数-gt-n-k-的数字"><a href="#求出现频数-gt-n-k-的数字" class="headerlink" title="求出现频数 &gt; n/k 的数字"></a>求出现频数 &gt; n/k 的数字</h2><p>可以用反证法证明，出现次数超过 n/k 的数<strong>最多</strong>只有 k−1 个（可能小于 k-1 个）。否则必然违背「数总共只有 n 个」或者「当前统计的是出现次数超过 n/k 的数」的前提条件。</p>
 <p>我们可以使用有限变量来代表这 k - 1 个候选数及其出现次数。</p>
 <p>假设当前遍历到的元素为 x：</p>
@@ -3070,9 +3384,225 @@ Sum_{1}+Sum_{3}+...+Sum_{x}</script><h2 id="树的前缀和"><a href="#树的前
 <p>当处理完整个数组后，这 k−1 个数可能会被填满，但不一定都是符合出现次数超过 n/k 要求的。（出现次数超过 n/k 的数<strong>最多</strong>只有 k−1 个）</p>
 <p>需要遍历数组并检查 k-1 个数每个数的出现频次，如果频次超过 n/k 才加入到结果。</p>
 <h2 id="摩尔投票法的性能分析"><a href="#摩尔投票法的性能分析" class="headerlink" title="摩尔投票法的性能分析"></a>摩尔投票法的性能分析</h2><p>用摩尔投票法求出现频次 &gt; n/2 的数字时，该数字是唯一的，因此用 O(N) 的时间和 O(1) 的空间就可以得到结果；然而，用摩尔投票法求出现频次 &gt; n/k 的数字时，需要遍历数组再次统计 k-1 个候选人的频数，这会导致时间复杂度为 O(2*N)，在这种情况下，反而不如直接使用哈希表，虽然哈希表会带来 O(N) 的空间开销。</p>
+<h1 id="统计字符串的频数"><a href="#统计字符串的频数" class="headerlink" title="统计字符串的频数"></a>统计字符串的频数</h1><p>一个字符串 s，只包含四种字符 A C G T，编写一个函数来找出所有目标子串，目标子串的长度为 10，且在 DNA 字符串 s 中出现次数超过一次。</p>
+<p>法1：哈希表的键为字符串，每个键大小 10 个字符，20 个字节；</p>
+<p>法2：哈希表的键为字符串的等效。<strong>由于 s 中只含有 4 种字符，我们可以将每个字符用 2 个比特表示</strong>：00 01 10 11，如此一来，一个长为 10 的字符串就可以用 20 个比特表示，而一个 int 整数有 32 个比特，足够容纳该字符串，因此我们可以将 s 的每个长为 10 的子串用一个 int 整数表示（只用低 20 位）。键大小一个字节。</p>
+<p>两种方法都需要用滑动窗口来获取子串。</p>
+<ul>
+<li>法1，需要维护一个可变字符串，可用 StringBuffer </li>
+<li>法2，用位运算。先左移两位，然后将高位置零，然后加上低位两个比特。由于只用到了低 20 位，需要将高位置零，可以通过和高位全 0，低 20 位全 1 的二进制数与运算来实现，该二进制数=(1 &lt;&lt; 20) - 1</li>
+</ul>
+<p>对于一个字符串数组，如果对于其中的每个字符串，需要知道它的包含字符情况。（即是否包含，不要求具体数量）</p>
+<ul>
+<li><p>若将字符串当作字符数组，判重复杂度O(L1*L2)</p>
+</li>
+<li><p>若将字符串记录为 count数组（只需要存储0、1），遍历count复杂度O(26)</p>
+</li>
+<li>假设只包含小写字母，因为 count 只需要存储 0、1（<strong>否则要用更大的进制</strong>。不推荐，不如直接用哈希表），进一步将count映射为二进制数，一个 int 足以存储，位运算复杂度 O(1)</li>
+</ul>
 ]]></content>
       <categories>
         <category>算法</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>排序算法</title>
+    <url>/2022/04/20/sort/</url>
+    <content><![CDATA[<p>排序算法的评价标准主要有：时间复杂度、空间复杂度和稳定性（待排序的序列中有两元素相等，排序之后它们的先后顺序不变）</p>
+<span id="more"></span>
+<p><img src="/2022/04/20/sort/sort.png" alt="img"></p>
+<h1 id="选择排序"><a href="#选择排序" class="headerlink" title="选择排序"></a>选择排序</h1><p>维护循环不变量，即将数组划分为 （有序区，无序区），每次在无序区中选出最小的数（通过记录当前遇到的最小值的方法），放到有序区的后面（与无序区第一个元素进行交换）。</p>
+<p><img src="/2022/04/20/sort/selectionSort.gif" alt="img"></p>
+<p>性能分析：</p>
+<ul>
+<li><p>稳定性：交换操作可能导致两相等元素的相对位置改变，因此是<strong>不稳定</strong>的</p>
+</li>
+<li><p>时间复杂度：始终为 O(N^2)</p>
+</li>
+</ul>
+<p>如果是对链表进行选择排序，可以进行适当的修改，使得选择排序是稳定的：</p>
+<p>每次在无序区中选出最小的数，放到有序区的后面。对于链表，可以让选出的最小的数对应的节点从表中断开，然后插入到（有序区，无序区）的分界位置。</p>
+<h1 id="冒泡排序"><a href="#冒泡排序" class="headerlink" title="冒泡排序"></a>冒泡排序</h1><p>维护循环不变量，即将数组划分为 （无序区，有序区），每次在无序区中<strong>通过不断交换的方法</strong>将最大的数放到无序区的最后。</p>
+<p><strong>通过不断交换的方法</strong>选出最大的数：</p>
+<ul>
+<li>比较相邻的元素。如果第一个比第二个大，就交换他们两个。</li>
+<li>对每一对相邻元素作同样的工作，从开始第一对到结尾的最后一对。这步做完后，最后的元素会是最大的数。</li>
+</ul>
+<p><img src="/2022/04/20/sort/bubbleSort.gif" alt="img"></p>
+<p>性能分析：</p>
+<ul>
+<li><p>稳定性：<strong>虽然有交换操作</strong>，但是这种交换操作不会导致两相等元素的相对位置改变，因此是稳定的</p>
+</li>
+<li><p>时间复杂度：始终为 O(N^2)</p>
+</li>
+</ul>
+<h1 id="插入排序"><a href="#插入排序" class="headerlink" title="插入排序"></a>插入排序</h1><p>维护循环不变量，即将数组划分为 （有序区，无序区），每次把无序区的第一个元素插入到有序区的合适位置中。</p>
+<p>插入操作：对于数组来说，需要执行多次的赋值操作，对于链表才是真正意义上的插入操作。</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">insertion_sort</span><span class="params">(<span class="type">int</span> arr[], <span class="type">int</span> len)</span>&#123;</span><br><span class="line">    <span class="type">int</span> i,j,key;</span><br><span class="line">    <span class="keyword">for</span> (i=<span class="number">1</span>;i&lt;len;i++)&#123;</span><br><span class="line">        key = arr[i];</span><br><span class="line">        j=i<span class="number">-1</span>;</span><br><span class="line">        <span class="keyword">while</span>((j&gt;=<span class="number">0</span>) &amp;&amp; (arr[j]&gt;key)) &#123;</span><br><span class="line">            arr[j+<span class="number">1</span>] = arr[j];</span><br><span class="line">            j--;</span><br><span class="line">        &#125;</span><br><span class="line">        arr[j+<span class="number">1</span>] = key;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><img src="/2022/04/20/sort/insertionSort.gif" alt="img"></p>
+<p>性能分析：</p>
+<ul>
+<li><p>稳定性：由于是从后往前顺序地找插入点，因此不会导致两相等元素的相对位置改变，因此是<strong>稳定</strong>的。从前往后找插入点可能会不稳定，除非在相等时继续往后走。</p>
+</li>
+<li><p>时间复杂度：始终为 O(N^2)</p>
+</li>
+</ul>
+<h1 id="快速排序"><a href="#快速排序" class="headerlink" title="快速排序"></a>快速排序</h1><h2 id="Partition算法"><a href="#Partition算法" class="headerlink" title="Partition算法"></a>Partition算法</h2><p>作用：给定一个数组 A 和数组中任意一个元素 pivot=A[r]， 通过一趟扫描，以 pivot 为分界线将数组中的元素原地重排为两部分，使得左边的数小于等于 pivot，右边的数大于 pivot。（等于号在哪一边都可以，具体实现的时候注意即可），最后返回 pivot=A[r] 排序之后的位置。</p>
+<h3 id="实现方法-1"><a href="#实现方法-1" class="headerlink" title="实现方法 1"></a>实现方法 1</h3><p>双指针实现：设数组 A[p…r]，选取 pivot=A[r]，即数组最后一个元素，便于最后返回它排序之后的位置。所谓的双指针，指的是指针 i 和 j 维护了两个区域，见下方循环不变量。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">partition</span><span class="params">(<span class="type">int</span>[] A, <span class="type">int</span> p, <span class="type">int</span> r)</span>&#123;</span><br><span class="line">	<span class="type">int</span> <span class="variable">pivot</span> <span class="operator">=</span> A[r];</span><br><span class="line">    </span><br><span class="line">    <span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> p-<span class="number">1</span>;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> j=p;j&lt;r;++j)&#123;</span><br><span class="line">        <span class="comment">// [p, i] 的元素都 &lt;= pivot，i+1 的元素不满足。将满足条件的 A[j] 与 A[i+1] 交换并移动 i 指针到 i+1 的位置</span></span><br><span class="line">        <span class="keyword">if</span>(A[j] &lt;= pivot)&#123;</span><br><span class="line">            ++i; </span><br><span class="line">            swap(A, i, j)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    swap(A, i+<span class="number">1</span>, j);</span><br><span class="line">    <span class="keyword">return</span> i+<span class="number">1</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在第 3~6 行的 for 循环的每一轮迭代的开始和结束，数组将被划分为四个区域，每一个区域都满足一定的性质，我们将这些性质作为<strong>循环不变量</strong>：</p>
+<p>在第 3~6 行的 for 循环的每一轮迭代的开始和结束（即上一轮 for 的 ++j 之后，本轮 for 的 if 语句前），对于任意下标 k，有：</p>
+<ol>
+<li><p>若 p≤k≤i，则 A[k]&lt;=x。 </p>
+</li>
+<li><p>若 i+1&lt;=k&lt;=j-1，则 A[k]&gt;x。</p>
+</li>
+<li>若 j&lt;=k&lt;=r-1，A[k] 与 x 无特定大小关系。</li>
+<li>若 k=r，则 A[k]=x。</li>
+</ol>
+<p>证明：我们需要证明这个循环不变式在第一轮迭代之前是成立的，并且在之后的每一轮迭代后仍然成立。使用<strong>归纳法</strong>证明。</p>
+<ul>
+<li><p>初始化（第一轮迭代之前）：在第一轮迭代之前，x=A[r]，i=p-1，j=p，因为区域 1 和 2 为空，所以循环不变量的前两个条件都满足，第三个条件根据赋值操作也显然满足。注意 j=p 虽然在第 3~6 行的循环体中，但是它不属于迭代更新操作。</p>
+</li>
+<li><p>保持（每一轮迭代后）：根据第四行中条件判断的不同结果，需要考虑两种情况。当 A[j]&gt;x 和当 A[j]&lt;=x，易知两种情况下，一轮迭代之后循环不变式依旧成立。</p>
+</li>
+<li><p><strong>终止</strong>：当终止时，j=r。于是，数组中的每个元素必然属于循环不变量所描述的四个区域中的一个，易知区域 3为空。当继续执行倒数第二行代码时，A[r] 将被交换到正确的位置，数组 [p, i+1] 元素都 &lt;= x，[i+2, r] 元素都 &gt; x。</p>
+</li>
+</ul>
+<p>缺陷：不高效。从直观上来说，每个小于 pivot 的值基本上都需要交换一次，而大于 pivot 的值可能要交换多次（这句话可以看区域 2 理解，每次交换会把区域 2 的头换到区域 2 中间，而之后再遇到说不定还得继续交换）。</p>
+<p><strong>关于相对位置：[p, i] 区域元素的相对位置与之前一致，[i+1, j-1] 区域元素相对位置无法保证</strong>。</p>
+<h3 id="实现方法-2"><a href="#实现方法-2" class="headerlink" title="实现方法 2"></a>实现方法 2</h3><p>双向扫描：设数组 A[p…r]，选取 pivot=A[r]。保持两个指针向中间扫描，在前面找到大于 pivot 的值，同时在后面找到小于等于 pivot 的值，把他们做一次交换，就可以一次把这两个数字放到其所属区域（这两个位置之后不会再被交换到其他地方）。</p>
+<p>相较于实现方法 1，这种方法元素交换次数更少。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">partition</span><span class="params">(<span class="type">int</span>[] A, <span class="type">int</span> p, <span class="type">int</span> r)</span>&#123;</span><br><span class="line">    <span class="type">int</span> <span class="variable">pivot</span> <span class="operator">=</span> A[r];</span><br><span class="line">    </span><br><span class="line">    <span class="type">int</span> i=p, j=r-<span class="number">1</span>;</span><br><span class="line">    <span class="keyword">while</span>(i &lt;= j)&#123;</span><br><span class="line">        <span class="keyword">while</span>(i &lt;= j &amp;&amp; A[i] &lt;= x)</span><br><span class="line">            ++i;</span><br><span class="line">        <span class="keyword">while</span>(i &lt;= j &amp;&amp; A[j] &gt; x)</span><br><span class="line">            --j;</span><br><span class="line">        <span class="keyword">if</span>(i &lt;= j)&#123;</span><br><span class="line">            swap(A, i, j);</span><br><span class="line">            ++i;</span><br><span class="line">            --j;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    swap(A, i, r);</span><br><span class="line">    <span class="keyword">return</span> i;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>每次循环结束，[0,i) 的数&lt;=x，(j,r] 的数&gt;x。while 执行完后由于 pivot 在索引 r 处，因此要把 &gt;x 的数换过来，也就是把 i 或者 j+1 位置换过来。</p>
+<h3 id="随机化-Partition"><a href="#随机化-Partition" class="headerlink" title="随机化 Partition"></a>随机化 Partition</h3><p>随机化 partition 的想法是，通过对序列的随机抽样，保证主元 pivot 是等概率从数组中选取的，因此在平均情况下，能够获得较好的期望性能。</p>
+<p>具体做法：首先随机抽样一个元素 x=A[ind]，然后将其与 A[r] 元素交换，再调用上述 partition 函数即可。</p>
+<h2 id="性能分析"><a href="#性能分析" class="headerlink" title="性能分析"></a>性能分析</h2><p>最坏时间复杂度：当数组已经有序（升序或降序）时，时间复杂度 O(N^2^)，这是因为每次 partition 操作后，子问题的大小是 N-1 和 1</p>
+<p>最好时间复杂度：O(NlogN)，即每次 partition 操作都能把主元放到中点。</p>
+<p>稳定性：不稳定，这是因为 partition 操作是不稳定的</p>
+<h2 id="相关题目"><a href="#相关题目" class="headerlink" title="相关题目"></a>相关题目</h2><p><a href="https://leetcode-cn.com/problems/sort-an-array/">912. 排序数组</a></p>
+<p><a href="https://leetcode-cn.com/problems/move-zeroes/">移动零</a></p>
+<p>给定一个数组 <code>nums</code>，编写一个函数将所有 <code>0</code> 移动到数组的末尾，同时保持非零元素的相对顺序。</p>
+<p>类似 partition，维护两段的循环不变量</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">moveZeroes</span><span class="params">(<span class="type">int</span>[] nums)</span> &#123;</span><br><span class="line">    <span class="type">int</span> <span class="variable">n</span> <span class="operator">=</span> nums.length, left = <span class="number">0</span>, right = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">while</span> (right &lt; n) &#123;</span><br><span class="line">        <span class="keyword">if</span> (nums[right] != <span class="number">0</span>) &#123;</span><br><span class="line">            swap(nums, left, right);</span><br><span class="line">            left++;</span><br><span class="line">        &#125;</span><br><span class="line">        right++;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><a href>颜色分类</a></p>
+<p>法1：两次 partition，第一次：维护 0 和 非 0；第二次：在非 0 中维护 1 和非 1</p>
+<p>法2：一次 partition，需要维护的循环不变量为三段：0、1、其他</p>
+<p>用指针 p0 维护 0 区，指针 p1 维护 1 区。用指针 i 从左向右遍历整个数组：</p>
+<ul>
+<li><p>如果遇到 1，那么将其与 nums[p1] 进行交换，并将 p1 向后移动一个位置</p>
+</li>
+<li><p>如果遇到 0，那么将其与 nums[p0] 进行交换，并将 p0 向后移动一个位置。如果 p0&lt;p1，说明 nums[p0]=1，此时会把 1 交换给 nums[i]，那么我们需要再将 nums[i] 与 nums[p1] 进行交换，并将 p1 向后移动一个位置</p>
+</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">sortColors</span><span class="params">(<span class="type">int</span>[] nums)</span> &#123;</span><br><span class="line">    <span class="type">int</span> <span class="variable">n</span> <span class="operator">=</span> nums.length;</span><br><span class="line">    <span class="type">int</span> <span class="variable">p0</span> <span class="operator">=</span> <span class="number">0</span>, p1 = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> <span class="number">0</span>; i &lt; n; ++i) &#123;</span><br><span class="line">        <span class="keyword">if</span> (nums[i] == <span class="number">1</span>) &#123;</span><br><span class="line">            swap(nums, i, p1);</span><br><span class="line">            ++p1;</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (nums[i] == <span class="number">0</span>) &#123;</span><br><span class="line">            swap(nums, i, p0);</span><br><span class="line">            <span class="keyword">if</span> (p0 &lt; p1) &#123;</span><br><span class="line">                swap(nums, i, p1);</span><br><span class="line">            &#125;</span><br><span class="line">            ++p0;</span><br><span class="line">            ++p1;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>法3：一次 partition，需要维护的循环不变量为三段：0、其他、2。过程略</p>
+<p><a href="https://leetcode-cn.com/problems/kth-largest-element-in-an-array/">数组中的第k大元素</a></p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="type">int</span> <span class="title function_">myFindKth</span><span class="params">(<span class="type">int</span>[] a, <span class="type">int</span> l, <span class="type">int</span> r, <span class="type">int</span> K)</span>&#123;</span><br><span class="line">    <span class="type">int</span> <span class="variable">x</span> <span class="operator">=</span> partition(a, l, r);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span>(x == a.length-K) <span class="keyword">return</span> a[x];</span><br><span class="line">    <span class="comment">// 注意 x-1，这是因为如果选择 [l,x]，主元 a[x] 不会被移动，partition 不生效</span></span><br><span class="line">    <span class="comment">// 并且x位置的元素也肯定不可能是解</span></span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span>(x &gt; a.length-K) <span class="keyword">return</span> myFindKth(a, l, x-<span class="number">1</span>, K);</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">return</span> myFindKth(a, x+<span class="number">1</span>, r, K);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="堆排序"><a href="#堆排序" class="headerlink" title="堆排序"></a>堆排序</h1>]]></content>
+      <categories>
+        <category>算法</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>网络层</title>
+    <url>/2022/04/21/network-layer/</url>
+    <content><![CDATA[<p>网络层：为主机之间的逻辑通信（IP寻址）提供服务，选择合适的路由和交换结点，数据单位称为数据报</p>
+<ul>
+<li>IP（Internet Protocol），定义了 IP 数据报的字段以及端系统和路由器如何处理 IP 数据报</li>
+<li>路由选择协议：IP 数据报根据什么样的路由从源传输到目的</li>
+<li>ICMP，因特网控制报文协议</li>
+</ul>
+<span id="more"></span>
+<h1 id="网络地址转换-NAT"><a href="#网络地址转换-NAT" class="headerlink" title="网络地址转换 NAT"></a>网络地址转换 NAT</h1><p>专用网内部的主机使用本地 IP 地址又想和互联网上的主机通信时，可以<strong>使用 NAT 来将本地 IP 转换为全球 IP</strong>。</p>
+<p>在以前，NAT 将本地 IP 和全球 IP 一一对应，这种方式下<strong>拥有 n 个全球 IP 地址的专用网</strong>内最多只可以同时有 n 台主机接入互联网。为了更有效地利用全球 IP 地址，现在常用的 NAT 转换表把传输层的端口号也用上了，使得多个专用网内部的主机共用一个全球 IP 地址。使用端口号的 NAT 也叫做网络地址与端口转换 NAPT。</p>
+<p><img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/2719067e-b299-4639-9065-bed6729dbf0b.png" alt="NAT 转换表"></p>
+<p>需要注意的是，NAT 使能路由器才具有 NAT 地址转换功能，该路由器拥有受限的几个全球 IP 地址</p>
+<p>所有离开 NAT 使能路由器的报文的源 IP 地址相同，所有进入 NAT 使能路由器的报文的目的 IP 地址相同。这里的 IP 地址指的是外网的 IP 地址，即图上的 172.38.1.5</p>
+<h1 id="虚拟专用网-VPN"><a href="#虚拟专用网-VPN" class="headerlink" title="虚拟专用网 VPN"></a>虚拟专用网 VPN</h1><p>由于 IP 地址的紧缺，一个机构能申请到的 IP 地址数往往远小于本机构所拥有的主机数。并且一个机构并不需要把所有的主机接入到外部的互联网中，机构内的计算机可以使用仅在本机构有效的 IP 地址（专用地址）。</p>
+<p>有三个专用地址块：</p>
+<ul>
+<li>10.0.0.0 ~ 10.255.255.255</li>
+<li>172.16.0.0 ~ 172.31.255.255</li>
+<li>192.168.0.0 ~ 192.168.255.255</li>
+</ul>
+<p>VPN 使用公用的互联网作为本机构<strong>各专用网之间的</strong>通信载体。专用指机构内的主机只与本机构内的其它主机通信；虚拟指好像是，而实际上并不是，它有经过公用的互联网。</p>
+<p>下图中，场所 A 和 B 的通信经过互联网，如果场所 A 的主机 X 要和另一个场所 B 的主机 Y 通信，IP 数据报的源地址是 10.1.0.1，目的地址是 10.2.0.3。数据报先发送到与互联网相连的路由器 R1，R1 对内部数据进行加密，然后重新加上数据报的首部，源地址是路由器 R1 的全球地址 125.1.2.3，<strong>目的地址是路由器 R2 的全球地址</strong> 194.4.5.6。路由器 R2 收到数据报后将数据部分进行解密，恢复原来的数据报，此时目的地址为 10.2.0.3，就交付给 Y。（VPN 用的这几个 NAT 路由器是已知的）</p>
+<p><img src="/2022/04/21/network-layer/1556770b-8c01-4681-af10-46f1df69202c.jpg" alt></p>
+<h1 id="路由器的结构"><a href="#路由器的结构" class="headerlink" title="路由器的结构"></a>路由器的结构</h1><p>路由器从功能上可以划分为：路由选择和分组转发。</p>
+<p>分组转发结构由三个部分组成：交换结构、一组输入端口和一组输出端口。</p>
+<p><img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/c3369072-c740-43b0-b276-202bd1d3960d.jpg" alt="路由器的结构" style="zoom:80%;"></p>
+<h1 id="路由器分组转发流程"><a href="#路由器分组转发流程" class="headerlink" title="路由器分组转发流程"></a>路由器分组转发流程</h1><ul>
+<li>从数据报的首部提取目的主机的 IP 地址 D，得到目的网络地址 N。</li>
+<li>若 N 就是与此路由器直接相连的某个网络地址，则进行直接交付；</li>
+<li>若路由表中有目的地址为 D 的特定主机路由，则把数据报传送给表中所指明的下一跳路由器；</li>
+<li>若路由表中有到达网络 N 的路由，则把数据报传送给路由表中所指明的下一跳路由器；</li>
+<li>若路由表中有一个默认路由，则把数据报传送给路由表中所指明的默认路由器；</li>
+<li>报告转发分组出错。</li>
+</ul>
+<p><img src="/2022/04/21/network-layer/1ab49e39-012b-4383-8284-26570987e3c4.jpg" alt></p>
+<h1 id="路由选择协议"><a href="#路由选择协议" class="headerlink" title="路由选择协议"></a>路由选择协议</h1><p><strong>自治系统</strong>（Autonomous System，AS）</p>
+<p>每个 AS 由一组通常处在相同管理控制下的路由器组成，例如由相同的 ISP 运营或属于相同的公司网络</p>
+<p><img src="/2022/04/21/network-layer/image-20220422100237090.png" alt="自治系统" style="zoom:80%;"></p>
+<p>在上图中，从路由器连出的细线表示直接与该路由器相连的子网，粗线表示路由器之间的连接。注意到，路由器 1b、1c、2a 和 3a 都是网关路由器（负责向本 AS 之外的路由器转发分组）</p>
+<p>可以把路由选择协议划分为两大类：</p>
+<ul>
+<li>自治系统内部的路由选择（域内路由选择）：内部网关协议 RIP 和 OSPF</li>
+<li>自治系统间的路由选择（域间路由选择）：外部网关协议 BGP</li>
+</ul>
+<blockquote>
+<p>在某个 AS 内的一台路由器，怎样知道如何将分组路由选择到位于本 AS 外部的目的地呢？</p>
+<ul>
+<li>如果本 AS 仅有一个网关路由器，沿着最低费用路径转发到网关路由器，然后由网关路由器转发到另一个 AS 的网关路由器</li>
+<li>如果本 AS 有多个网关路由器？域间路由选择协议</li>
+</ul>
+</blockquote>
+<h2 id="RIP"><a href="#RIP" class="headerlink" title="RIP"></a>RIP</h2><p>全称是路由信息协议 RIP (Routing Information Protocol) 。</p>
+<p>参考图最短路径算法，修改松弛规则为：无向图，已经知道源 s 到目的 v 的当前最短路径 s.v，对于与源 s 相邻的节点 u，易知 u 到目的 v 的当前最短路径为 edge(u, s)+s.v</p>
+<p><img src="/2022/04/21/network-layer/1620-16506253250823.png" alt="路由表更新方法" style="zoom: 67%;"></p>
+<p>RIP 协议特点</p>
+<ul>
+<li>距离矢量路由协议。用跳数评估路由代价。</li>
+<li>仅和相邻路由器交换信息。</li>
+<li>按固定的时间间隔发 RIP 报文（自己的路由选择表信息），例如，每隔 30 秒。</li>
+</ul>
+<p>RIP 协议缺陷：</p>
+<ul>
+<li>用跳数评估路由并非最佳评估方式。应该用带宽（单位时间可传输比特数）评估</li>
+<li>最大跳数限制为 15，这使得路由器无法学习到到超过 15 跳的路由器的路由表项</li>
+<li>收敛速度慢，为了避免环路，需要做额外的许多工作</li>
+</ul>
+<h2 id="OSPF"><a href="#OSPF" class="headerlink" title="OSPF"></a>OSPF</h2><p><strong>OSPF 基本原理</strong>：</p>
+<ol>
+<li>网络上的各个路由器向自己的邻接路由器发送自己的链路状态信息摘要，多次执行以后（收敛），每个路由器能建立一个全网的链路信息拓扑图（图的节点是路由器，边的权值是带宽）。</li>
+<li>对于某个路由器，由于它已经获得了全网的链路信息拓扑图，它可以以自己为源结点 s，使用 dijkstra最短路径算法来判断到任意一个节点的最优路由</li>
+</ol>
+<p><img src="/2022/04/21/network-layer/image-20220422192723421.png" alt="OSPF原理图"></p>
+<p>邻接路由器的选择：需要先发现自己的所有邻居（以广播的方式），然后在邻居中选举 DR 和 BDR，网络中所有路由器只与 DR 和 BDR 建立邻接关系。</p>
+<p><img src="/2022/04/21/network-layer/image-20220422192049617.png" alt="邻接路由器的选择"></p>
+<p><strong>OSPF 协议特点</strong></p>
+<ul>
+<li>链路状态路由协议。用链路开销（带宽）评估路由代价。（OSPF 还解决了 RIP 的另外两个缺陷）</li>
+<li>每隔 30 分钟向邻接路由器（1个或者多个邻接路由器）发送本路由器的链路状态信息摘要，或者触发式更新（网络发生变化时）</li>
+<li>增量更新，减少每次发送的链路状态信息摘要数据</li>
+</ul>
+<p><img src="/2022/04/21/network-layer/image-20220422192612690.png" alt="增量更新"></p>
+<p><strong>OSPF 分区域管理</strong></p>
+<p>当网络很庞大时，每个节点都维护一个全网的链路信息拓扑图，非常地耗费时空资源，并且实际上是很浪费的，因为节点通常只放问某个区域内的网络节点。</p>
+<p>因此，将网络分为几个区域，每个区域内，路由器维护自己区域的链路信息拓扑图，并选择一个区域边界路由器 ABR 用来连接两个不同的区域。需要注意到，一个 ABR 处于两个区域中，而非两个 ABR 连接两个区域。因此，ABR 知道两个区域的链路信息拓扑图。</p>
+<h1 id="外部网关协议-BGP"><a href="#外部网关协议-BGP" class="headerlink" title="外部网关协议 BGP"></a>外部网关协议 BGP</h1><p>BGP（Border Gateway Protocol，边界网关协议）</p>
+<p>AS 之间的路由选择很困难，主要是由于：</p>
+<ul>
+<li>互联网规模很大；</li>
+<li>各个 AS 内部使用不同的路由选择协议，无法准确定义路径的度量；</li>
+<li>AS 之间的路由选择必须考虑有关的策略，比如有些 AS 不愿意让其它 AS 经过。</li>
+</ul>
+<p>BGP 只能寻找一条比较好的路由，而不是最佳路由。</p>
+<p>每个 AS 都必须配置 BGP 发言人，通过在两个相邻 BGP 发言人之间建立 TCP 连接来交换路由信息。</p>
+<p><img src="/2022/04/21/network-layer/9cd0ae20-4fb5-4017-a000-f7d3a0eb3529.png" alt="img" style="zoom:80%;"></p>
+]]></content>
+      <categories>
+        <category>计算机网络</category>
       </categories>
   </entry>
 </search>

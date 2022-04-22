@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.1.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.loli.net/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":true},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="网络层：为主机之间的逻辑通信（IP寻址）提供服务，选择合适的路由和交换结点，数据单位称为数据报  IP（Internet Protocol），定义了 IP 数据报的字段以及端系统和路由器如何处理 IP 数据报 路由选择协议：IP 数据报根据什么样的路由从源传输到目的 ICMP，因特网控制报文协议">
+<meta property="og:type" content="article">
+<meta property="og:title" content="网络层">
+<meta property="og:url" content="http://example.com/2022/04/21/network-layer/index.html">
+<meta property="og:site_name" content="缘溪行">
+<meta property="og:description" content="网络层：为主机之间的逻辑通信（IP寻址）提供服务，选择合适的路由和交换结点，数据单位称为数据报  IP（Internet Protocol），定义了 IP 数据报的字段以及端系统和路由器如何处理 IP 数据报 路由选择协议：IP 数据报根据什么样的路由从源传输到目的 ICMP，因特网控制报文协议">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/2719067e-b299-4639-9065-bed6729dbf0b.png">
+<meta property="og:image" content="http://example.com/2022/04/21/network-layer/1556770b-8c01-4681-af10-46f1df69202c.jpg">
+<meta property="og:image" content="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/c3369072-c740-43b0-b276-202bd1d3960d.jpg">
+<meta property="og:image" content="http://example.com/2022/04/21/network-layer/1ab49e39-012b-4383-8284-26570987e3c4.jpg">
+<meta property="og:image" content="http://example.com/2022/04/21/network-layer/image-20220422100237090.png">
+<meta property="og:image" content="http://example.com/2022/04/21/network-layer/1620-16506253250823.png">
+<meta property="og:image" content="http://example.com/2022/04/21/network-layer/image-20220422192723421.png">
+<meta property="og:image" content="http://example.com/2022/04/21/network-layer/image-20220422192049617.png">
+<meta property="og:image" content="http://example.com/2022/04/21/network-layer/image-20220422192612690.png">
+<meta property="og:image" content="http://example.com/2022/04/21/network-layer/9cd0ae20-4fb5-4017-a000-f7d3a0eb3529.png">
+<meta property="article:published_time" content="2022-04-21T09:28:39.000Z">
+<meta property="article:modified_time" content="2022-04-22T12:05:39.479Z">
+<meta property="article:author" content="Cyl">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/2719067e-b299-4639-9065-bed6729dbf0b.png">
+
+<link rel="canonical" href="http://example.com/2022/04/21/network-layer/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>网络层 | 缘溪行</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">缘溪行</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">5</span></a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">22</span></a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/04/21/network-layer/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/icon1.jpg">
+      <meta itemprop="name" content="Cyl">
+      <meta itemprop="description" content="顽童大了别那么笨">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="缘溪行">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          网络层
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-04-21 17:28:39" itemprop="dateCreated datePublished" datetime="2022-04-21T17:28:39+08:00">2022-04-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-04-22 20:05:39" itemprop="dateModified" datetime="2022-04-22T20:05:39+08:00">2022-04-22</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" itemprop="url" rel="index"><span itemprop="name">计算机网络</span></a>
+                </span>
+            </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2022/04/21/network-layer/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2022/04/21/network-layer/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>网络层：为主机之间的逻辑通信（IP寻址）提供服务，选择合适的路由和交换结点，数据单位称为数据报</p>
+<ul>
+<li>IP（Internet Protocol），定义了 IP 数据报的字段以及端系统和路由器如何处理 IP 数据报</li>
+<li>路由选择协议：IP 数据报根据什么样的路由从源传输到目的</li>
+<li>ICMP，因特网控制报文协议</li>
+</ul>
+<span id="more"></span>
+<h1 id="网络地址转换-NAT"><a href="#网络地址转换-NAT" class="headerlink" title="网络地址转换 NAT"></a>网络地址转换 NAT</h1><p>专用网内部的主机使用本地 IP 地址又想和互联网上的主机通信时，可以<strong>使用 NAT 来将本地 IP 转换为全球 IP</strong>。</p>
+<p>在以前，NAT 将本地 IP 和全球 IP 一一对应，这种方式下<strong>拥有 n 个全球 IP 地址的专用网</strong>内最多只可以同时有 n 台主机接入互联网。为了更有效地利用全球 IP 地址，现在常用的 NAT 转换表把传输层的端口号也用上了，使得多个专用网内部的主机共用一个全球 IP 地址。使用端口号的 NAT 也叫做网络地址与端口转换 NAPT。</p>
+<p><img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/2719067e-b299-4639-9065-bed6729dbf0b.png" alt="NAT 转换表"></p>
+<p>需要注意的是，NAT 使能路由器才具有 NAT 地址转换功能，该路由器拥有受限的几个全球 IP 地址</p>
+<p>所有离开 NAT 使能路由器的报文的源 IP 地址相同，所有进入 NAT 使能路由器的报文的目的 IP 地址相同。这里的 IP 地址指的是外网的 IP 地址，即图上的 172.38.1.5</p>
+<h1 id="虚拟专用网-VPN"><a href="#虚拟专用网-VPN" class="headerlink" title="虚拟专用网 VPN"></a>虚拟专用网 VPN</h1><p>由于 IP 地址的紧缺，一个机构能申请到的 IP 地址数往往远小于本机构所拥有的主机数。并且一个机构并不需要把所有的主机接入到外部的互联网中，机构内的计算机可以使用仅在本机构有效的 IP 地址（专用地址）。</p>
+<p>有三个专用地址块：</p>
+<ul>
+<li>10.0.0.0 ~ 10.255.255.255</li>
+<li>172.16.0.0 ~ 172.31.255.255</li>
+<li>192.168.0.0 ~ 192.168.255.255</li>
+</ul>
+<p>VPN 使用公用的互联网作为本机构<strong>各专用网之间的</strong>通信载体。专用指机构内的主机只与本机构内的其它主机通信；虚拟指好像是，而实际上并不是，它有经过公用的互联网。</p>
+<p>下图中，场所 A 和 B 的通信经过互联网，如果场所 A 的主机 X 要和另一个场所 B 的主机 Y 通信，IP 数据报的源地址是 10.1.0.1，目的地址是 10.2.0.3。数据报先发送到与互联网相连的路由器 R1，R1 对内部数据进行加密，然后重新加上数据报的首部，源地址是路由器 R1 的全球地址 125.1.2.3，<strong>目的地址是路由器 R2 的全球地址</strong> 194.4.5.6。路由器 R2 收到数据报后将数据部分进行解密，恢复原来的数据报，此时目的地址为 10.2.0.3，就交付给 Y。（VPN 用的这几个 NAT 路由器是已知的）</p>
+<p><img src="/2022/04/21/network-layer/1556770b-8c01-4681-af10-46f1df69202c.jpg" alt></p>
+<h1 id="路由器的结构"><a href="#路由器的结构" class="headerlink" title="路由器的结构"></a>路由器的结构</h1><p>路由器从功能上可以划分为：路由选择和分组转发。</p>
+<p>分组转发结构由三个部分组成：交换结构、一组输入端口和一组输出端口。</p>
+<p><img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/c3369072-c740-43b0-b276-202bd1d3960d.jpg" alt="路由器的结构" style="zoom:80%;"></p>
+<h1 id="路由器分组转发流程"><a href="#路由器分组转发流程" class="headerlink" title="路由器分组转发流程"></a>路由器分组转发流程</h1><ul>
+<li>从数据报的首部提取目的主机的 IP 地址 D，得到目的网络地址 N。</li>
+<li>若 N 就是与此路由器直接相连的某个网络地址，则进行直接交付；</li>
+<li>若路由表中有目的地址为 D 的特定主机路由，则把数据报传送给表中所指明的下一跳路由器；</li>
+<li>若路由表中有到达网络 N 的路由，则把数据报传送给路由表中所指明的下一跳路由器；</li>
+<li>若路由表中有一个默认路由，则把数据报传送给路由表中所指明的默认路由器；</li>
+<li>报告转发分组出错。</li>
+</ul>
+<p><img src="/2022/04/21/network-layer/1ab49e39-012b-4383-8284-26570987e3c4.jpg" alt></p>
+<h1 id="路由选择协议"><a href="#路由选择协议" class="headerlink" title="路由选择协议"></a>路由选择协议</h1><p><strong>自治系统</strong>（Autonomous System，AS）</p>
+<p>每个 AS 由一组通常处在相同管理控制下的路由器组成，例如由相同的 ISP 运营或属于相同的公司网络</p>
+<p><img src="/2022/04/21/network-layer/image-20220422100237090.png" alt="自治系统" style="zoom:80%;"></p>
+<p>在上图中，从路由器连出的细线表示直接与该路由器相连的子网，粗线表示路由器之间的连接。注意到，路由器 1b、1c、2a 和 3a 都是网关路由器（负责向本 AS 之外的路由器转发分组）</p>
+<p>可以把路由选择协议划分为两大类：</p>
+<ul>
+<li>自治系统内部的路由选择（域内路由选择）：内部网关协议 RIP 和 OSPF</li>
+<li>自治系统间的路由选择（域间路由选择）：外部网关协议 BGP</li>
+</ul>
+<blockquote>
+<p>在某个 AS 内的一台路由器，怎样知道如何将分组路由选择到位于本 AS 外部的目的地呢？</p>
+<ul>
+<li>如果本 AS 仅有一个网关路由器，沿着最低费用路径转发到网关路由器，然后由网关路由器转发到另一个 AS 的网关路由器</li>
+<li>如果本 AS 有多个网关路由器？域间路由选择协议</li>
+</ul>
+</blockquote>
+<h2 id="RIP"><a href="#RIP" class="headerlink" title="RIP"></a>RIP</h2><p>全称是路由信息协议 RIP (Routing Information Protocol) 。</p>
+<p>参考图最短路径算法，修改松弛规则为：无向图，已经知道源 s 到目的 v 的当前最短路径 s.v，对于与源 s 相邻的节点 u，易知 u 到目的 v 的当前最短路径为 edge(u, s)+s.v</p>
+<p><img src="/2022/04/21/network-layer/1620-16506253250823.png" alt="路由表更新方法" style="zoom: 67%;"></p>
+<p>RIP 协议特点</p>
+<ul>
+<li>距离矢量路由协议。用跳数评估路由代价。</li>
+<li>仅和相邻路由器交换信息。</li>
+<li>按固定的时间间隔发 RIP 报文（自己的路由选择表信息），例如，每隔 30 秒。</li>
+</ul>
+<p>RIP 协议缺陷：</p>
+<ul>
+<li>用跳数评估路由并非最佳评估方式。应该用带宽（单位时间可传输比特数）评估</li>
+<li>最大跳数限制为 15，这使得路由器无法学习到到超过 15 跳的路由器的路由表项</li>
+<li>收敛速度慢，为了避免环路，需要做额外的许多工作</li>
+</ul>
+<h2 id="OSPF"><a href="#OSPF" class="headerlink" title="OSPF"></a>OSPF</h2><p><strong>OSPF 基本原理</strong>：</p>
+<ol>
+<li>网络上的各个路由器向自己的邻接路由器发送自己的链路状态信息摘要，多次执行以后（收敛），每个路由器能建立一个全网的链路信息拓扑图（图的节点是路由器，边的权值是带宽）。</li>
+<li>对于某个路由器，由于它已经获得了全网的链路信息拓扑图，它可以以自己为源结点 s，使用 dijkstra最短路径算法来判断到任意一个节点的最优路由</li>
+</ol>
+<p><img src="/2022/04/21/network-layer/image-20220422192723421.png" alt="OSPF原理图"></p>
+<p>邻接路由器的选择：需要先发现自己的所有邻居（以广播的方式），然后在邻居中选举 DR 和 BDR，网络中所有路由器只与 DR 和 BDR 建立邻接关系。</p>
+<p><img src="/2022/04/21/network-layer/image-20220422192049617.png" alt="邻接路由器的选择"></p>
+<p><strong>OSPF 协议特点</strong></p>
+<ul>
+<li>链路状态路由协议。用链路开销（带宽）评估路由代价。（OSPF 还解决了 RIP 的另外两个缺陷）</li>
+<li>每隔 30 分钟向邻接路由器（1个或者多个邻接路由器）发送本路由器的链路状态信息摘要，或者触发式更新（网络发生变化时）</li>
+<li>增量更新，减少每次发送的链路状态信息摘要数据</li>
+</ul>
+<p><img src="/2022/04/21/network-layer/image-20220422192612690.png" alt="增量更新"></p>
+<p><strong>OSPF 分区域管理</strong></p>
+<p>当网络很庞大时，每个节点都维护一个全网的链路信息拓扑图，非常地耗费时空资源，并且实际上是很浪费的，因为节点通常只放问某个区域内的网络节点。</p>
+<p>因此，将网络分为几个区域，每个区域内，路由器维护自己区域的链路信息拓扑图，并选择一个区域边界路由器 ABR 用来连接两个不同的区域。需要注意到，一个 ABR 处于两个区域中，而非两个 ABR 连接两个区域。因此，ABR 知道两个区域的链路信息拓扑图。</p>
+<h1 id="外部网关协议-BGP"><a href="#外部网关协议-BGP" class="headerlink" title="外部网关协议 BGP"></a>外部网关协议 BGP</h1><p>BGP（Border Gateway Protocol，边界网关协议）</p>
+<p>AS 之间的路由选择很困难，主要是由于：</p>
+<ul>
+<li>互联网规模很大；</li>
+<li>各个 AS 内部使用不同的路由选择协议，无法准确定义路径的度量；</li>
+<li>AS 之间的路由选择必须考虑有关的策略，比如有些 AS 不愿意让其它 AS 经过。</li>
+</ul>
+<p>BGP 只能寻找一条比较好的路由，而不是最佳路由。</p>
+<p>每个 AS 都必须配置 BGP 发言人，通过在两个相邻 BGP 发言人之间建立 TCP 连接来交换路由信息。</p>
+<p><img src="/2022/04/21/network-layer/9cd0ae20-4fb5-4017-a000-f7d3a0eb3529.png" alt="img" style="zoom:80%;"></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/04/20/sort/" rel="prev" title="排序算法">
+      <i class="fa fa-chevron-left"></i> 排序算法
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%BD%91%E7%BB%9C%E5%9C%B0%E5%9D%80%E8%BD%AC%E6%8D%A2-NAT"><span class="nav-number">1.</span> <span class="nav-text">网络地址转换 NAT</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%99%9A%E6%8B%9F%E4%B8%93%E7%94%A8%E7%BD%91-VPN"><span class="nav-number">2.</span> <span class="nav-text">虚拟专用网 VPN</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%B7%AF%E7%94%B1%E5%99%A8%E7%9A%84%E7%BB%93%E6%9E%84"><span class="nav-number">3.</span> <span class="nav-text">路由器的结构</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%B7%AF%E7%94%B1%E5%99%A8%E5%88%86%E7%BB%84%E8%BD%AC%E5%8F%91%E6%B5%81%E7%A8%8B"><span class="nav-number">4.</span> <span class="nav-text">路由器分组转发流程</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%B7%AF%E7%94%B1%E9%80%89%E6%8B%A9%E5%8D%8F%E8%AE%AE"><span class="nav-number">5.</span> <span class="nav-text">路由选择协议</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#RIP"><span class="nav-number">5.1.</span> <span class="nav-text">RIP</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#OSPF"><span class="nav-number">5.2.</span> <span class="nav-text">OSPF</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%A4%96%E9%83%A8%E7%BD%91%E5%85%B3%E5%8D%8F%E8%AE%AE-BGP"><span class="nav-number">6.</span> <span class="nav-text">外部网关协议 BGP</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Cyl"
+      src="/images/icon1.jpg">
+  <p class="site-author-name" itemprop="name">Cyl</p>
+  <div class="site-description" itemprop="description">顽童大了别那么笨</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">22</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Cyl</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+  <script defer src="/lib/three/three.min.js"></script>
+    <script defer src="/lib/three/three-waves.min.js"></script>
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'bj1pUPUVv7CB9DzNJpPiyH5u-gzGzoHsz',
+      appKey     : 'RQWkhgEzgN0MjSY1E3rSiuJc',
+      placeholder: "Just go go",
+      avatar     : 'mm',
+      meta       : guest,
+      pageSize   : '9' || 10,
+      visitor    : false,
+      lang       : 'zh-cn' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

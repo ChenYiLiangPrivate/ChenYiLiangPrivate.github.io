@@ -34,7 +34,7 @@
 <meta property="og:image" content="http://example.com/2022/04/07/app-layer/image-20220402110655433.png">
 <meta property="og:image" content="http://example.com/2022/04/07/app-layer/image-20220402105738824.png">
 <meta property="article:published_time" content="2022-04-07T14:44:48.000Z">
-<meta property="article:modified_time" content="2022-04-08T08:42:28.860Z">
+<meta property="article:modified_time" content="2022-04-22T12:05:32.792Z">
 <meta property="article:author" content="Cyl">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://example.com/2022/04/07/app-layer/image-20220402105631355.png">
@@ -132,7 +132,7 @@
   </li>
         <li class="menu-item menu-item-archives">
 
-    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">20</span></a>
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">22</span></a>
 
   </li>
       <li class="menu-item menu-item-search">
@@ -220,7 +220,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-04-08 16:42:28" itemprop="dateModified" datetime="2022-04-08T16:42:28+08:00">2022-04-08</time>
+                <time title="修改时间：2022-04-22 20:05:32" itemprop="dateModified" datetime="2022-04-22T20:05:32+08:00">2022-04-22</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -257,9 +257,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <h1 id="网络分层结构"><a href="#网络分层结构" class="headerlink" title="网络分层结构"></a>网络分层结构</h1><p><strong>TCP&#x2F;IP 五层模型：应用层、传输层、网络层、数据链路层、物理层</strong></p>
-<span id="more"></span>
-<p>应用层：为应用程序提供服务，数据单位称为报文</p>
+        <h1 id="网络分层结构"><a href="#网络分层结构" class="headerlink" title="网络分层结构"></a>网络分层结构</h1><p><strong>TCP/IP 五层模型：应用层、传输层、网络层、数据链路层、物理层</strong><br><span id="more"></span><br>应用层：为应用程序提供服务，数据单位称为报文</p>
 <ul>
 <li>HTTP</li>
 <li>DNS（Domain Name System），将域名转化为 IP 地址</li>
@@ -275,6 +273,7 @@
 <ul>
 <li>IP（Internet Protocol），定义了 IP 数据报的字段以及端系统和路由器如何处理 IP 数据报</li>
 <li>路由选择协议：IP 数据报根据什么样的路由从源传输到目的</li>
+<li>ICMP，因特网控制报文协议</li>
 </ul>
 <p>链路层：将 IP 数据报组装成帧，数据单位称为帧</p>
 <blockquote>
@@ -326,7 +325,7 @@
 </ul>
 <h2 id="HTTP"><a href="#HTTP" class="headerlink" title="HTTP"></a>HTTP</h2><h3 id="HTTP-1"><a href="#HTTP-1" class="headerlink" title="HTTP"></a>HTTP</h3><p>HTTP 允许传输任意类型的数据。传输的类型由 Content-Type 加以标记。</p>
 <p>无状态。对于客户端每次发送的请求，服务器都认为是一个新的请求，上一次会话和下一次会话之间没有联系。</p>
-<p>支持客户端&#x2F;服务器模式</p>
+<p>支持客户端/服务器模式</p>
 <p><strong>HTTP 常用的请求方法</strong></p>
 <p>PUT：上传文件，向服务器添加数据，可以看作增</p>
 <p>DELETE：删除文件</p>
@@ -338,7 +337,6 @@
 <li>请求头：格式为“属性名:属性值”，服务端根据请求头获取客户端的信息，主要有 cookie、host、connection、accept-language、accept-encoding、user-agent。</li>
 </ul>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"># 请求报文示例</span><br><span class="line">POST /xxx HTTP/1.1 请求行</span><br><span class="line"></span><br><span class="line">Accept:image/gif.image/jpeg, 请求头</span><br><span class="line">Accept-Language:zh-cn</span><br><span class="line">Connection:Keep-Alive</span><br><span class="line">Host:localhost</span><br><span class="line">User-Agent:Mozila/4.0(compatible;MSIE5.01;Window NT5.0)</span><br><span class="line">Accept-Encoding:gzip,deflate</span><br><span class="line"></span><br><span class="line">username=dabin 请求体</span><br></pre></td></tr></table></figure>
-
 <p>HTTP 响应也由四个部分组成，分别是：状态行、响应头、空行和响应体</p>
 <ul>
 <li>状态行：协议版本，状态码及状态描述。</li>
@@ -346,8 +344,8 @@
 <li>响应体：服务器返回给客户端的内容。</li>
 </ul>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"># 响应报文示例</span><br><span class="line">HTTP/1.1 200 OK</span><br><span class="line"></span><br><span class="line">Server:Apache Tomcat/5.0.12 响应头</span><br><span class="line">Date:Mon,6Oct2003 13:23:42 GMT</span><br><span class="line">Content-Length:112</span><br><span class="line"></span><br><span class="line">&lt;html&gt;</span><br><span class="line">    &lt;body&gt;响应体&lt;/body&gt;</span><br><span class="line">&lt;/html&gt;</span><br></pre></td></tr></table></figure>
-
-<h4 id="HTTP-状态码"><a href="#HTTP-状态码" class="headerlink" title="HTTP 状态码"></a>HTTP 状态码</h4><table>
+<h4 id="HTTP-状态码"><a href="#HTTP-状态码" class="headerlink" title="HTTP 状态码"></a>HTTP 状态码</h4><div class="table-container">
+<table>
 <thead>
 <tr>
 <th>状态码</th>
@@ -355,7 +353,8 @@
 <th>含义</th>
 </tr>
 </thead>
-<tbody><tr>
+<tbody>
+<tr>
 <td>1XX</td>
 <td>Informational（信息性状态码）</td>
 <td>接收的请求正在处理</td>
@@ -380,7 +379,9 @@
 <td>Server Error（服务器错误）</td>
 <td>服务器处理请求出错</td>
 </tr>
-</tbody></table>
+</tbody>
+</table>
+</div>
 <p>100 Continue ：表明到目前为止都很正常，客户端可以继续发送请求或者忽略这个响应。</p>
 <p>200 OK</p>
 <h4 id="HTTP1-0-和-HTTP1-1-的区别"><a href="#HTTP1-0-和-HTTP1-1-的区别" class="headerlink" title="HTTP1.0 和 HTTP1.1 的区别"></a>HTTP1.0 和 HTTP1.1 的区别</h4><ul>
@@ -402,14 +403,13 @@
 </li>
 <li><p>服务器用一个 HTTP Response 响应客户端，响应报文首部包含 Set-cookie 字段，表示服务器为客户端分配了一个 cookie ，服务器用 cookie 值来识别用户</p>
 </li>
-<li><p>客户端保存 cookie ，之后向服务器发送 HTTP 请求时，请求的首部会包含一个 cookie 字段，而服务器的响应不需要再包含 Set-cookie 字段</p>
-</li>
+<li>客户端保存 cookie ，之后向服务器发送 HTTP 请求时，请求的首部会包含一个 cookie 字段，而服务器的响应不需要再包含 Set-cookie 字段</li>
 </ul>
 <blockquote>
 <p>Set-cookie 和 cookie 字段有多个属性，主要包括：</p>
-<p>NAME&#x3D;VALUE    要保存的 Key&#x2F;Value</p>
+<p>NAME=VALUE    要保存的 Key/Value</p>
 <p>Expires    过期时间</p>
-<p>Domain    生成该 cookie 的域名，如 domain&#x3D;”<a target="_blank" rel="noopener" href="http://www.baiducom&quot;/">www.baiducom&quot;</a></p>
+<p>Domain    生成该 cookie 的域名，如 domain=”www.baiducom”</p>
 </blockquote>
 <p><strong>Cookie 和 Session 的区别？</strong></p>
 <ul>
@@ -447,7 +447,7 @@
 <p><img src="/2022/04/07/app-layer/image-20220402105707967.png" alt="HTTPS 密钥传输过程"></p>
 <h4 id="认证"><a href="#认证" class="headerlink" title="认证"></a>认证</h4><blockquote>
 <p>非对称密钥加密方式存在的安全性问题</p>
-<p>客户端 C 和服务器 S 想要使用 SSL&#x2F;TLS 通信，由上述 SSL&#x2F;TLS 通信原理，C 需要先知道 S 的公钥，而 S 公钥的唯一获取途径，就是把 S 公钥在网络信道中传输。</p>
+<p>客户端 C 和服务器 S 想要使用 SSL/TLS 通信，由上述 SSL/TLS 通信原理，C 需要先知道 S 的公钥，而 S 公钥的唯一获取途径，就是把 S 公钥在网络信道中传输。</p>
 <p>由于 S 公钥明文在信道中传输，那么很有可能存在一个攻击者 A，发送给 C 一个诈包，假装是 S 公钥，其实是诱饵服务器（AS）的公钥。</p>
 <p>当 C 收获了 AS 的公钥（却以为是 S 的公钥），C 后续就会使用 AS 公钥对数据进行加密，并在公开信道传输，那么 A 将捕获这些加密包，用 AS 的私钥解密，就截获了 C 本要给 S 发送的内容，而 C 和 S 二人全然不知。<br>S 公钥即使做加密，也难以避免这种信任性问题，C 被 AS 拐跑了！</p>
 </blockquote>
@@ -474,7 +474,7 @@
 <hr>
 <h2 id="DHCP"><a href="#DHCP" class="headerlink" title="DHCP"></a>DHCP</h2><p>动态主机配置协议（Dynamic Host Configuration Protocol，DHCP）提供了即插即用的连网方式，用户不再需要手动配置 IP 地址等信息。</p>
 <p>DHCP 配置的内容不仅是 IP 地址，还包括子网掩码、默认网关 IP 地址和本地 DNS 服务器地址。</p>
-<p><img src="/2022/04/07/app-layer/image-20220402110655433.png"></p>
+<p><img src="/2022/04/07/app-layer/image-20220402110655433.png" alt></p>
 <p>DHCP 工作过程如下：</p>
 <ol>
 <li>客户端发送 Discover 报文，该报文的目的地址为 255.255.255.255:67，源地址为 0.0.0.0:68，被放入 UDP 中，该报文被广播到同一个子网的所有主机上。如果客户端和 DHCP 服务器不在同一个子网，就需要使用中继代理。广播：指目的 IP 地址为：255.255.255.255</li>
@@ -580,7 +580,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">20</span>
+          <span class="site-state-item-count">22</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
