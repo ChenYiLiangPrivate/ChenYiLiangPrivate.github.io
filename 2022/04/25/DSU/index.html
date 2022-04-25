@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.1.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.loli.net/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"example.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":true},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="定义一个不相交集合数据结构（disjoint-set data structure）或者说并查集（disjoint-set union，DSU）维护了一个不相交动态集的集合 ${S{1},…,S{k}}$，不相交指的是集合中的每个元素 $S_{i}$ 是互不相交的集合，动态指的是部分集合可以根据某些规则合并为一个新的集合，新的集合在这个规则下与其他原有的集合依旧满足不相交的原则。 我们用一个代表（">
+<meta property="og:type" content="article">
+<meta property="og:title" content="并查集 DSU">
+<meta property="og:url" content="http://example.com/2022/04/25/DSU/index.html">
+<meta property="og:site_name" content="缘溪行">
+<meta property="og:description" content="定义一个不相交集合数据结构（disjoint-set data structure）或者说并查集（disjoint-set union，DSU）维护了一个不相交动态集的集合 ${S{1},…,S{k}}$，不相交指的是集合中的每个元素 $S_{i}$ 是互不相交的集合，动态指的是部分集合可以根据某些规则合并为一个新的集合，新的集合在这个规则下与其他原有的集合依旧满足不相交的原则。 我们用一个代表（">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/2022/04/25/DSU/image-20220425195432759.png">
+<meta property="og:image" content="http://example.com/2022/04/25/DSU/image-20220425195847046.png">
+<meta property="og:image" content="http://example.com/2022/04/25/DSU/image-20220425200400656.png">
+<meta property="article:published_time" content="2022-04-25T11:49:32.000Z">
+<meta property="article:modified_time" content="2022-04-25T12:09:35.114Z">
+<meta property="article:author" content="Cyl">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/2022/04/25/DSU/image-20220425195432759.png">
+
+<link rel="canonical" href="http://example.com/2022/04/25/DSU/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>并查集 DSU | 缘溪行</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">缘溪行</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">5</span></a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">25</span></a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/04/25/DSU/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/icon1.jpg">
+      <meta itemprop="name" content="Cyl">
+      <meta itemprop="description" content="顽童大了别那么笨">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="缘溪行">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          并查集 DSU
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-04-25 19:49:32 / 修改时间：20:09:35" itemprop="dateCreated datePublished" datetime="2022-04-25T19:49:32+08:00">2022-04-25</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%AE%97%E6%B3%95/" itemprop="url" rel="index"><span itemprop="name">算法</span></a>
+                </span>
+            </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2022/04/25/DSU/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2022/04/25/DSU/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h1><p>一个<strong>不相交集合数据结构</strong>（disjoint-set data structure）或者说<strong>并查集</strong>（disjoint-set union，DSU）维护了一个不相交动态集的集合 ${S<em>{1},…,S</em>{k}}$，不相交指的是集合中的每个元素 $S_{i}$ 是互不相交的集合，动态指的是部分集合可以根据某些规则合并为一个新的集合，新的集合在这个规则下与其他原有的集合依旧满足不相交的原则。</p>
+<p>我们用一个<strong>代表</strong>（representative）来标识每个集合 $S_{i}$，它是这个集合的某个成员。</p>
+<p>设 x 作为一个代表，我们希望支持以下三个操作：</p>
+<ul>
+<li>MAKE-SET(x)：建立一个新的集合，它的唯一成员是 x，x 不会出现在别的某个集合中。</li>
+<li>UNION(x, y)：将包含 x 和 y 的两个动态集合合并成为一个新的集合，满足什么样的条件能够合并需要根据具体情况具体分析。经常把其中一个集合的元素并入另一个集合中，避免 x 或者 y 仍然在原来的并查集当中，来代替删除操作。</li>
+<li>FIND-SET(x)：返回一个指针，这个指针指向包含 x 的集合。</li>
+</ul>
+<h1 id="实现方式"><a href="#实现方式" class="headerlink" title="实现方式"></a>实现方式</h1><h2 id="链表"><a href="#链表" class="headerlink" title="链表"></a>链表</h2><p><strong>每个集合 </strong>$S_{i}$ 用一个链表来表示，链表包含 head 和 tail，链表的 head 为该集合的代表。链表中的每个对象包含 head 属性、next 属性和 val 属性。如下图所示：</p>
+<p><img src="/2022/04/25/DSU/image-20220425195432759.png" alt></p>
+<p>用这种链表表示，MAKE-SET 操作复杂度为 O(1)。对于 FIND-SET(x) 操作，可以根据 x 的 head 属性直接找到链表的 head，因此复杂度也是 O(1)。对于 UNION(x, y) 操作，可以将 x 代表的链表连接到 y 后面（即令 y 代表的链表尾节点的 next 为 x），并且更改 x 所有节点的 head 属性。需要遍历链表 y 找到其尾节点，复杂度与 y 的链表大小呈线性关系。</p>
+<p>在最坏情况下，执行上述 UNION 操作的复杂度近似 O(n)，即并查集只包含 x 和 y 两个链表，而 x 只含一个对象时，把 y 合并到 x 上的时间复杂度。因此，如果<strong>为每个链表加入长度属性</strong>，在合并时，就可以<strong>把短的链表并入长的链表</strong>，从而减小复杂度。</p>
+<h2 id="森林"><a href="#森林" class="headerlink" title="森林"></a>森林</h2><p>可以使用有根树来表示集合，树中的每个结点表示一个成员，每棵树表示一个集合，每颗树的<strong>根为这个集合的代表</strong>。这样的多颗有根树构成了<strong>不相交集合森林</strong>（disjoint-set forest），如下图所示：</p>
+<p><img src="/2022/04/25/DSU/image-20220425195847046.png" alt></p>
+<p>对于图示的树，FIND-SET(x) 操作将通过沿着指向父结点的指针找到根，在寻找根的过程所访问到的结点构成了<strong>查找路径</strong>(find path)。UNION 操作可以直接让一棵树的根指向另一颗树的根。可见，用森林存储并查集，<strong>主要的损耗来自于 FIND-SET 操作</strong>。</p>
+<p>值得注意的一个问题是，如果我们手上只有上图所示的树，那么如何获取 FIND-SET 的输入 x？毕竟我们只有根结点是直接可访问的。一种解决方法是：<strong>用数组存储树上的所有结点</strong>，并且通常而言，我们的数据一开始就是用数组存放的。用这样一来，我们可以<strong>用 O(1) 的时间访问树上的任意结点</strong>。</p>
+<p>为了改进 FIND-SET 操作的复杂度，可以使用以下两种启发式策略：</p>
+<p>一、路径压缩（path compression）：让树的所有结点都指向根（与链表类似），父结点只有根（与链表的每个结点还可指向下一个元素不同）。</p>
+<p>二、按秩合并（union by rank）：类似于链表的按照长度合并，UNION操作将使具有较少结点的树的根指向具有较多结点的树的根。之所以这样做能优化 FIND-SET 操作（在不使用路径压缩的时候也能优化），是因为合并后的树在执行 FIND-SET 操作时，有较多结点的那颗树中，每个结点到新根的路径长度不会加一。在具体实施时，并不显式地记录树的大小（结点数量），而是维护树的属性：<strong>秩，它表示树的最大高度</strong>。使用按秩合并的 UNION 操作中，我们可以让具有小秩的树根指向具有大秩的树根。</p>
+<p>使用上述两种启发式策略实现不相交集合森林的伪代码如下，每个结点具有父结点属性，而根节点还额外具有秩属性。</p>
+<p>当 MAKE-SET 创建一个单元素集合时，这个树上的单结点的父结点是它本身，秩为0。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">MAKE-SET(x)&#123;</span><br><span class="line">	x.p = x;</span><br><span class="line">	x.rank = 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>带有路径压缩的 FIND-SET 操作可以通过递归来完成：如果当前结点 x不是根结点，便递归调用其父结点的 FIND-SET，这一轮递归将沿着查找路径找到根结点。递归在找到根节点时中止，然后进行递归回溯，这个过程将沿着查找路径回退更新路径上的所有结点，使其父结点被更新为根结点。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">FIND-SET(x)&#123;</span><br><span class="line">	if(x != x.p) // x 不是根节点</span><br><span class="line">		x.p = FIND-SET(x.p);</span><br><span class="line">	return x.p;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>对于某个未经过路径压缩的树，如下图：</p>
+<p><img src="/2022/04/25/DSU/image-20220425200400656.png" alt></p>
+<p>当对某个结点第一次调用 FIND-SET 时，将产生递归操作，返回值为根节点。之后如果继续对这个结点，或者是这个结点查找路径上的结点调用 FIND-SET，则可以直接找到根节点（实际上会额外调用一次 FIND-SET(根节点)）。</p>
+<p>使用按秩合并的 UNION 操作有两种情况，如果两颗树的秩不同，就让大秩的树根成为小秩的树根的父节点，大秩的树根作为新树的根节点，其秩不变。如果两颗树的秩相同，任选一个树根作为新树的根，其秩加1。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">UNION(x, y)&#123;</span><br><span class="line">	LINK(FIND-SET(x), FIND-SET(y))</span><br><span class="line">	LINK(x, y)</span><br><span class="line">	</span><br><span class="line">	if(x.rank &gt; y.rank)</span><br><span class="line">		y.p = x;</span><br><span class="line">    else </span><br><span class="line">    	x.p = y;</span><br><span class="line">	</span><br><span class="line">	if(x.rank == y.rank)</span><br><span class="line">		++y.rank;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/04/24/basic-calculation/" rel="prev" title="basic calculation">
+      <i class="fa fa-chevron-left"></i> basic calculation
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AE%9A%E4%B9%89"><span class="nav-number">1.</span> <span class="nav-text">定义</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0%E6%96%B9%E5%BC%8F"><span class="nav-number">2.</span> <span class="nav-text">实现方式</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%93%BE%E8%A1%A8"><span class="nav-number">2.1.</span> <span class="nav-text">链表</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A3%AE%E6%9E%97"><span class="nav-number">2.2.</span> <span class="nav-text">森林</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Cyl"
+      src="/images/icon1.jpg">
+  <p class="site-author-name" itemprop="name">Cyl</p>
+  <div class="site-description" itemprop="description">顽童大了别那么笨</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">25</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Cyl</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+  <script defer src="/lib/three/three.min.js"></script>
+    <script defer src="/lib/three/three-waves.min.js"></script>
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'bj1pUPUVv7CB9DzNJpPiyH5u-gzGzoHsz',
+      appKey     : 'RQWkhgEzgN0MjSY1E3rSiuJc',
+      placeholder: "Just go go",
+      avatar     : 'mm',
+      meta       : guest,
+      pageSize   : '9' || 10,
+      visitor    : false,
+      lang       : 'zh-cn' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>
