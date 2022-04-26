@@ -8,7 +8,7 @@
 <p>对于单 CPU 来说，只是提供一种程序同时执行的错觉。</p>
 <p>对于单 CPU 来说，如果没有 IO 阻塞操作（即读取磁盘操作），单线程执行多个任务，总时间更短，因为多线程单CPU无法并发执行，会导致线程切换，带来额外开销；如果有 IO 阻塞操作，多线程可以利用阻塞时间，因此多线程可能更快，应该综合考虑阻塞时间的利用和线程切换的消耗，看哪个大</p>
 <p>多线程/多进程可以利用多 CPU</p>
-<p>协程</p>
+<p>协程：编程语言中所定义的线程是虚拟的，它必须通过挂靠在操作系统上的物理线程才真正具有线程的意义。协程的基本思想就来自于此，将大批量任务用虚拟的协程执行，而让这批协程挂靠在一个线程上执行。协程的切换由编程语言内部实现，物理上避免了线程的切换。</p>
 <h1 id="锁"><a href="#锁" class="headerlink" title="锁"></a>锁</h1><h2 id="自旋锁的实现"><a href="#自旋锁的实现" class="headerlink" title="自旋锁的实现"></a>自旋锁的实现</h2><p>自旋锁基于硬件原语实现，这是因为硬件原语可以原子地获取表示锁状态的计数器。包括测试并设置指令（test-and-set）、比较并交换指令（compare-and-swap）和获取并增加指令（fetch-and-add）。</p>
 <h3 id="失败的尝试"><a href="#失败的尝试" class="headerlink" title="失败的尝试"></a>失败的尝试</h3><figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">lock_t</span> &#123;</span> </span><br><span class="line">	<span class="type">int</span> flag; <span class="comment">// 0 -&gt; lock is available, 1 -&gt; held </span></span><br><span class="line">&#125;<span class="type">lock_t</span>; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">init</span><span class="params">(<span class="type">lock_t</span> *mutex)</span> &#123;</span><br><span class="line">	mutex-&gt;flag = <span class="number">0</span>; </span><br><span class="line">&#125;</span><br><span class="line"><span class="type">void</span> <span class="title function_">lock</span><span class="params">(<span class="type">lock_t</span> *mutex)</span> &#123; </span><br><span class="line">    <span class="keyword">while</span> (mutex-&gt;flag == <span class="number">1</span>) </span><br><span class="line">    	; <span class="comment">// spin-wait (do nothing)，自旋，即不断扫描锁的状态</span></span><br><span class="line">	mutex-&gt;flag = <span class="number">1</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="type">void</span> <span class="title function_">unlock</span><span class="params">(<span class="type">lock_t</span> *mutex)</span> &#123; </span><br><span class="line">	mutex-&gt;flag = <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>如下的执行过程将导致两个线程都进入到临界区，不会有一个处于自旋等待状态。<strong>失败的原因是：获取并更新锁状态的操作不是原子的</strong></p>
@@ -28,14 +28,14 @@
 <blockquote>
 <p>存在的问题：如果一个线程调用了多次 unlock()？这是可以的</p>
 </blockquote>
-<h2 id="自旋锁的性能"><a href="#自旋锁的性能" class="headerlink" title="自旋锁的性能"></a>自旋锁的性能</h2><p>以两个线程运行在单处理器上为例，当一个线程（线程0）持有锁时，被中断。第二个线程（线程1）去获取锁，发现锁已经被持有。因此，它就开始自旋，直到，时钟中断产生，操作系统切换线程，线程 0 重新运行，它释放锁。下一次轮到线程1 时，线程 1 不需要继续自旋了，它获取了锁。</p>
+<h2 id="自旋锁的性能"><a href="#自旋锁的性能" class="headerlink" title="自旋锁的性能"></a>自旋锁的性能</h2><p>自旋等待其他线程释放锁的时候会浪费时间。尤其是在单处理器上，一个等待线程等待的目标线程甚至无法运行（至少在上下文切换之前）（处于自旋等待的线程占用 CPU，导致目标线程根本无法运行，也不可能释放锁，一个线程会一直自旋检查一个不会改变的值，浪费掉整个时间片）</p>
+<p>以两个线程运行在单处理器上为例，当一个线程（线程0）持有锁时，被中断。第二个线程（线程1）去获取锁，发现锁已经被持有。因此，它就开始自旋，直到，时钟中断产生，操作系统切换线程，线程 0 重新运行，它释放锁。下一次轮到线程1 时，线程 1 不需要继续自旋了，它获取了锁。</p>
 <p>也就是说，一个线程会一直自旋检查一个不会改变的值，浪费掉整个时间片。如果有 N个线程去竞争一个锁，情<br>况会更糟糕。同样的场景下，会浪费 N−1 个时间片。</p>
 <p>如果有多个处理器：</p>
 <ul>
 <li>持有锁的线程被中断后没有迅速被重新调度运行，也会有这个问题。</li>
 <li>持有锁的线程并没有因为 CPU 时钟中断切换线程而暂停，由于临界区代码通常较短，它可能被迅速执行完，然后释放锁。其他 CPU 上等待的线程在一个时间片内获得了锁。</li>
 </ul>
-<p>自旋等待其他线程释放锁的时候会浪费时间。尤其是在单处理器上，一个等待线程等待的目标线程甚至无法运行（至少在上下文切换之前）（处于自旋等待的线程占用 CPU，导致目标线程根本无法运行，也不可能释放锁，一个线程会一直自旋检查一个不会改变的值，浪费掉整个时间片）</p>
 <h2 id="自旋锁的优化"><a href="#自旋锁的优化" class="headerlink" title="自旋锁的优化"></a>自旋锁的优化</h2><h3 id="在要自旋的时候，放弃CPU"><a href="#在要自旋的时候，放弃CPU" class="headerlink" title="在要自旋的时候，放弃CPU"></a>在要自旋的时候，放弃CPU</h3><p>如下是测试并设置指令结合让出 CPU 实现的锁</p>
 <figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">init</span><span class="params">()</span> &#123; </span><br><span class="line">	flag = <span class="number">0</span>; </span><br><span class="line">&#125; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">lock</span><span class="params">()</span> &#123; </span><br><span class="line">    <span class="keyword">while</span> (TestAndSet(&amp;flag, <span class="number">1</span>) == <span class="number">1</span>) </span><br><span class="line">    	yield(); <span class="comment">// give up the CPU </span></span><br><span class="line">&#125; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">unlock</span><span class="params">()</span> &#123; </span><br><span class="line">	flag = <span class="number">0</span>; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>这种方法中，我们假定操作系统提供<strong>原语</strong> yield()，线程可以调用它主动放弃 CPU，让其他线程运行。线程可以处于 3 种状态之一（运行、就绪和阻塞）。yield() 系统调用能够让运行（running）态变为就绪（ready）态，从而允许其他线程运行。因此，让出线程本质上取消调度（deschedules）了它自己。</p>
@@ -120,17 +120,19 @@
 <figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">volatile</span> <span class="type">int</span> done = <span class="number">0</span>; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> *<span class="title function_">child</span><span class="params">(<span class="type">void</span> *arg)</span> &#123; </span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;child\n&quot;</span>); </span><br><span class="line">    done = <span class="number">1</span>; </span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>; </span><br><span class="line">&#125; </span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span> *argv[])</span> &#123; </span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;parent: begin\n&quot;</span>); </span><br><span class="line">    <span class="type">pthread_t</span> c; </span><br><span class="line">    Pthread_create(&amp;c, <span class="literal">NULL</span>, child, <span class="literal">NULL</span>); <span class="comment">// create child </span></span><br><span class="line">    <span class="keyword">while</span> (done == <span class="number">0</span>) </span><br><span class="line">        ; <span class="comment">// spin </span></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;parent: end\n&quot;</span>); </span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p><strong>法 2：使用条件变量</strong></p>
 <ul>
-<li><p>条件变量是一个显式队列，当某些条件（condition）不满足时，线程可以把自己加入等待队列，等待该条件满足。另外某个线程，当它改变了上述状态时，就可以唤醒一个或者多个等待线程（通过在该条件上发信号），让它们继续执行。</p>
+<li><p><strong>条件变量是一个等待队列</strong>，当某些条件不满足时，线程可以把自己加入等待队列，等待该条件满足。当另外某个线程改变了上述状态时，就可以唤醒一个或者多个等待线程（通过在该条件上发信号），让它们继续执行。</p>
 </li>
 <li><p>在 POSIX 中，可以用 pthread_cond_t  c  = PTHREAD_COND_INITIALIZER; 声明并初始化一个条件变量。</p>
 </li>
 <li><p>条件变量有两种相关操作：wait() 和 signal()。线程调用 wait() 会休眠，进入等待队列。当线程想唤醒等待在某个条件变量上的线程时，调用 signal()。POSIX 用以下函数执行 wait() 和 signal() ：</p>
   <figure class="highlight c"><table><tr><td class="code"><pre><span class="line">pthread_cond_wait(<span class="type">pthread_cond_t</span> *c, <span class="type">pthread_mutex_t</span> *m);  </span><br><span class="line">pthread_cond_signal(<span class="type">pthread_cond_t</span>  *c); </span><br></pre></td></tr></table></figure>
+<ul>
+<li><p>wait() 会释放锁，并让调用 wait 的线程休眠。注意休眠的同时会释放锁（原子操作。</p>
+</li>
+<li><p>signal() 唤醒等待在某个条件变量上的睡眠线程，当线程被唤醒后，它必须重新获取锁（变为就绪状态）才能继续执行 wait 的下一条语句</p>
 </li>
 </ul>
-<p>wait()会释放锁，并让调用线程wait的休眠。注意休眠的同时会释放锁（原子操作），本线程休眠后是走不到下面那个unlock()语句的。当线程被唤醒时（在另外某个线程发信号给它后），它必须重新获取锁，再返回调用者。（被唤醒后进入就绪状态，继续执行unlock前，必须先获得锁）</p>
-<ul>
-<li>signal() 唤醒 等待在某个条件变量上的 睡眠线程，被唤醒后处于就绪状态，等待调度</li>
+</li>
 </ul>
 <h2 id="实现-join-和-exit"><a href="#实现-join-和-exit" class="headerlink" title="实现 join() 和 exit()"></a>实现 join() 和 exit()</h2><p>互斥量目的：保证 join 和exit是互斥执行的，在java多线程编程中，例如 synchronized，互斥量：this~monitor、条件变量或者说队列，其实也是monitor。而这里的自由度是很高的，可以任意设定互斥量和条件变量，reentrantlock 有类似的思想。</p>
 <p>条件变量目的：一个线程可能要等待多种条件，每个条件对应一个等待队列，用条件变量表示条件。</p>
@@ -147,22 +149,22 @@
 <p>则对于第二种情况，即子线程立刻运行，并且调用 thr_exit()。在这种情况下，子线程发送信号，但此时却没有在条件变量上睡眠等待的线程。父线程运行时，就会调用wait并始终休眠。</p>
 <h2 id="生产者消费者问题"><a href="#生产者消费者问题" class="headerlink" title="生产者消费者问题"></a>生产者消费者问题</h2><h2 id="实现方案-1"><a href="#实现方案-1" class="headerlink" title="实现方案 1"></a>实现方案 1</h2><figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="type">cond_t</span> cond; </span><br><span class="line"><span class="type">mutex_t</span> mutex; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> *<span class="title function_">producer</span><span class="params">(<span class="type">void</span> *arg)</span> &#123; </span><br><span class="line">    <span class="type">int</span> i; </span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; loops; i++) &#123; </span><br><span class="line">        Pthread_mutex_lock(&amp;mutex);           <span class="comment">// p1 </span></span><br><span class="line">        <span class="keyword">if</span> (count == <span class="number">1</span>)                       <span class="comment">// p2 </span></span><br><span class="line">            Pthread_cond_wait(&amp;cond, &amp;mutex); <span class="comment">// p3 </span></span><br><span class="line">        put(i);                               <span class="comment">// p4 </span></span><br><span class="line">        Pthread_cond_signal(&amp;cond);           <span class="comment">// p5 </span></span><br><span class="line">        Pthread_mutex_unlock(&amp;mutex);         <span class="comment">// p6 </span></span><br><span class="line">    &#125; </span><br><span class="line">&#125; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> *<span class="title function_">consumer</span><span class="params">(<span class="type">void</span> *arg)</span> &#123; </span><br><span class="line">   <span class="type">int</span> i; </span><br><span class="line">   <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; loops; i++) &#123; </span><br><span class="line">       Pthread_mutex_lock(&amp;mutex);           <span class="comment">// c1 </span></span><br><span class="line">       <span class="keyword">if</span> (count == <span class="number">0</span>)                       <span class="comment">// c2 </span></span><br><span class="line">           Pthread_cond_wait(&amp;cond, &amp;mutex); <span class="comment">// c3 </span></span><br><span class="line">       <span class="type">int</span> tmp = get();                      <span class="comment">// c4 </span></span><br><span class="line">       Pthread_cond_signal(&amp;cond);           <span class="comment">// c5 </span></span><br><span class="line">       Pthread_mutex_unlock(&amp;mutex);         <span class="comment">// c6 </span></span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
 <p>当只有一个生产者和一个消费者时，方案 1 的代码能够正常运行。但如果有超过一个线程（例如两个消费者），这个方案会有两个严重的问题。</p>
-<h3 id="问题与解决方法"><a href="#问题与解决方法" class="headerlink" title="问题与解决方法"></a>问题与解决方法</h3><p>Mesa 语义（Mesa semantic）：共享变量状态与预期不符</p>
+<h3 id="问题与解决方法"><a href="#问题与解决方法" class="headerlink" title="问题与解决方法"></a>问题与解决方法</h3><p>问题 1：Mesa 语义（Mesa semantic）：共享变量状态与预期不符</p>
 <p><strong>第一个问题与线程等待之前的 if 语句有关</strong>。假设有两个消费者（Tc1和Tc2），一个生产者（Tp）。首先，一个消费者（Tc1）先开始执行，它获得锁（c1），检查缓冲区是否可以消费（c2），然后等待（c3）（这会释放锁）。接着生产者（Tp）运行。它获取锁（p1），检查缓冲区是否满（p2），发现没满就给缓冲区加入一个数字（p4）。然后生产者发出信号，说缓冲区已满（p5），并且唤醒第一个消费者（Tc1）不再睡在条件变量上，Tc1 进入就绪队列。Tc1 现在<strong>可以运行（但还未运行）</strong>。生产者继续执行，直到发现缓冲区满后睡眠（p6,p1-p3）。这时问题发生了：<strong>另一个消费者（Tc2）抢先执行，消费了缓冲区中的值</strong>（c1,c2,c4,c5,c6，跳过了c3的等待，因为缓冲区是满的）。现在假设 Tc1 运行，在从 wait 返回之前，它获取了锁，然后返回。然后它调用了get() (p4)，但缓冲区已无法消费。（已经被 Tc2 消费）<strong>显然，我们应该设法阻止Tc1去消费，因为Tc2插进来，消费了缓冲区中之前生产的一个值。</strong></p>
-<p>解决方法：把if语句改为while。当消费者Tc1被唤醒后，立刻再次检查共享变量（c2）。如果缓冲区此时为空，消费者就会回去继续睡眠（c3）。生产者中相应的if也改为while（p2）。由于Mesa语义，我们要记住一条关于条件变量的简单规则：总是使用while循环（always use while loop）。</p>
-<p>问题2</p>
-<p>唤醒的线程是不确定的</p>
+<p><strong>解决方法</strong>：<strong>把 if 语句改为 while</strong>。当消费者 Tc1 被唤醒后，立刻再次检查共享变量（c2）。如果缓冲区此时为空，消费者就会回去继续睡眠（c3）。生产者中相应的 if 也改为 while（p2）。</p>
+<p>由于 Mesa 语义，我们要记住一条关于条件变量的简单规则：总是使用 while 循环（always use while loop）。</p>
+<p>问题 2：唤醒的线程是不确定的（讨论此问题时假设我们已经将 if 修改为 while）</p>
 <p>假设有两个消费者（Tc1和Tc2），一个生产者（Tp）。假设两个消费者（Tc1和Tc2）先运行，都睡眠了（c3）。生产者开始运行，在缓冲区放入一个值，唤醒了一个消费者（假定是Tc1），并开始睡眠。现在是一个消费者马上要运行（Tc1），而两个线程（消费者Tc2和生产者Tp）都等待在同一个条件变量上。</p>
-<p>消费者Tc1醒过来并从wait()调用返回（c3），重新检查条件（c2），发现缓冲区是满的，消费了这个值（c4）。这个消费者然后在该条件上发信号（c5），唤醒一个在睡眠的线程。但是，<strong>应该唤醒哪个线程</strong>呢？因为消费者已经清空了缓冲区，很显然，应该唤醒生产者。但是，如果它唤醒了Tc2（这绝对是可能的，取决于等待队列是如何管理的），问题就出现了。具体来说，消费者Tc2会醒过来，发现队列为空（c2），又继续回去睡眠（c3）。生产者Tp刚才在缓冲区中放了一个值，现在在睡眠。另一个消费者线程Tc1也回去睡眠了。3个线程都会陷入持续的睡眠</p>
-<p>解决方法：使用两个条件变量，在系统状态改变时，哪类线程应该唤醒</p>
-<p>在这离，两个条件变量共享一个状态变量，因为与状态变量的某个值唯一对应</p>
-<h2 id="实现方案-2"><a href="#实现方案-2" class="headerlink" title="实现方案 2"></a>实现方案 2</h2><figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="type">cond_t</span>  empty, fill; </span><br><span class="line"><span class="type">mutex_t</span> mutex; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> *<span class="title function_">producer</span><span class="params">(<span class="type">void</span> *arg)</span> &#123; </span><br><span class="line">    <span class="type">int</span> i; </span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; loops; i++) &#123; </span><br><span class="line">        Pthread_mutex_lock(&amp;mutex); </span><br><span class="line">        <span class="keyword">while</span> (count == <span class="number">1</span>) </span><br><span class="line">            Pthread_cond_wait(&amp;empty,  &amp;mutex); </span><br><span class="line">        put(i); </span><br><span class="line">        Pthread_cond_signal(&amp;fill); </span><br><span class="line">        Pthread_mutex_unlock(&amp;mutex); </span><br><span class="line">   &#125; </span><br><span class="line">&#125; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> *<span class="title function_">consumer</span><span class="params">(<span class="type">void</span> *arg)</span> &#123; </span><br><span class="line">   <span class="type">int</span> i; </span><br><span class="line">   <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; loops; i++) &#123; </span><br><span class="line">       Pthread_mutex_lock(&amp;mutex); </span><br><span class="line">       <span class="keyword">while</span> (count == <span class="number">0</span>) </span><br><span class="line">           Pthread_cond_wait(&amp;fill, &amp;mutex); </span><br><span class="line">       <span class="type">int</span> tmp = get(); </span><br><span class="line">       Pthread_cond_signal(&amp;empty); </span><br><span class="line">       Pthread_mutex_unlock(&amp;mutex); </span><br><span class="line">       <span class="built_in">printf</span>(<span class="string">&quot;%d\n&quot;</span>, tmp); </span><br><span class="line">   &#125; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>在上述代码中，生产者线程等待条件变量empty，发信号给变量fill。相应地，消费者<br>线程等待fill，发信号给empty。这样做，从设计上避免了上述第二个问题：<strong>消费者再也不<br>**</strong>会唤醒消费者，生产者也不会唤醒生产者。**</p>
-<p>与同步无关的问题3</p>
-<p>共享变量是缓存时，空间过小导致频繁切换进程，</p>
+<p>消费者 Tc1 醒过来并从 wait() 调用返回（c3），重新检查条件（c2），发现缓冲区是满的，消费了这个值（c4）。这个消费者然后在该条件上发信号（c5），唤醒一个在睡眠的线程。但是，<strong>应该唤醒哪个线程</strong>呢？因为消费者已经清空了缓冲区，很显然，应该唤醒生产者。但是，如果它唤醒了 Tc2（这绝对是可能的，取决于等待队列是如何管理的），问题就出现了。</p>
+<p>具体来说，消费者 Tc2 会醒过来，发现队列为空（c2），又继续回去睡眠（c3）。生产者 Tp 现在也在睡眠。而消费者线程 Tc1 会继续运行到下一个 for，然后发现缓冲区为空，也进入睡眠。3个线程都会陷入持续的睡眠。</p>
+<p><strong>解决方法</strong>：<strong>使用两个条件变量</strong>，在系统状态改变时，决定哪类线程应该唤醒</p>
+<p><strong>可以让两个条件变量共享一个状态变量，令每个条件变量与状态变量的某个值唯一对应</strong></p>
+<h2 id="实现方案-2"><a href="#实现方案-2" class="headerlink" title="实现方案 2"></a>实现方案 2</h2><p>实现方案 2 解决了方案 1 中的两个问题。生产者线程等待条件变量 empty，发信号给变量 fill。相应地，消费者线程等待条件变量 fill，发信号给 empty</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="type">cond_t</span>  empty, fill; </span><br><span class="line"><span class="type">mutex_t</span> mutex; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> *<span class="title function_">producer</span><span class="params">(<span class="type">void</span> *arg)</span> &#123; </span><br><span class="line">    <span class="type">int</span> i; </span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; loops; i++) &#123; </span><br><span class="line">        Pthread_mutex_lock(&amp;mutex); </span><br><span class="line">        <span class="keyword">while</span> (count == <span class="number">1</span>) </span><br><span class="line">            Pthread_cond_wait(&amp;empty,  &amp;mutex); </span><br><span class="line">        put(i); </span><br><span class="line">        Pthread_cond_signal(&amp;fill); </span><br><span class="line">        Pthread_mutex_unlock(&amp;mutex); </span><br><span class="line">   &#125; </span><br><span class="line">&#125; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> *<span class="title function_">consumer</span><span class="params">(<span class="type">void</span> *arg)</span> &#123; </span><br><span class="line">   <span class="type">int</span> i; </span><br><span class="line">   <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; loops; i++) &#123; </span><br><span class="line">       Pthread_mutex_lock(&amp;mutex); </span><br><span class="line">       <span class="keyword">while</span> (count == <span class="number">0</span>) </span><br><span class="line">           Pthread_cond_wait(&amp;fill, &amp;mutex); </span><br><span class="line">       <span class="type">int</span> tmp = get(); </span><br><span class="line">       Pthread_cond_signal(&amp;empty); </span><br><span class="line">       Pthread_mutex_unlock(&amp;mutex); </span><br><span class="line">       <span class="built_in">printf</span>(<span class="string">&quot;%d\n&quot;</span>, tmp); </span><br><span class="line">   &#125; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>与同步无关的问题，方案 2 仍旧面临着一个问题：共享变量是缓存时，缓存空间过小导致频繁切换进程</p>
 <h2 id="最终方案"><a href="#最终方案" class="headerlink" title="最终方案"></a>最终方案</h2><p>我们最后的修改是提高并发和效率。具体来说，增加更多缓冲区槽位，这样在睡眠之前，可以生产多个值。同样，睡眠之前可以消费多个值。单个生产者和消费者时，这种方案因为上下文切换少，提高了效率。多个生产者和消费者时，它支持并发生产和消费。</p>
-<p>第一处修改是缓冲区结构本身，以及对应的put()和get()方法（见图30.9）。我们还稍稍修改了生产者和消费者的检查条件，以便决定是否要睡眠。图30.10 展示了最终的等待和信号逻辑。生产者只有在缓冲区满了的时候才会睡眠（p2），消费者也只有在队列为空的时候睡眠（c2）。</p>
-<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span> buffer[MAX]; </span><br><span class="line"><span class="type">int</span> fill  = <span class="number">0</span>; </span><br><span class="line"><span class="type">int</span> use   = <span class="number">0</span>; </span><br><span class="line"><span class="type">int</span> count = <span class="number">0</span>; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">put</span><span class="params">(<span class="type">int</span> value)</span> &#123; </span><br><span class="line">    buffer[fill] = value; </span><br><span class="line">    fill = (fill + <span class="number">1</span>) % MAX; </span><br><span class="line">    count++; </span><br><span class="line">&#125; </span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">get</span><span class="params">()</span> &#123; </span><br><span class="line">    <span class="type">int</span> tmp = buffer[use]; </span><br><span class="line">    use = (use + <span class="number">1</span>) % MAX; </span><br><span class="line">    count--; </span><br><span class="line">    <span class="keyword">return</span> tmp; </span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">cond_t</span> empty, fill; </span><br><span class="line"><span class="type">mutex_t</span> mutex; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> *<span class="title function_">producer</span><span class="params">(<span class="type">void</span> *arg)</span> &#123; </span><br><span class="line">    <span class="type">int</span> i; </span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; loops; i++) &#123; </span><br><span class="line">        Pthread_mutex_lock(&amp;mutex);              <span class="comment">// p1 </span></span><br><span class="line">        <span class="keyword">while</span> (count == MAX)                     <span class="comment">// p2 </span></span><br><span class="line">            Pthread_cond_wait(&amp;empty, &amp;mutex);   <span class="comment">// p3 </span></span><br><span class="line">        put(i);                                  <span class="comment">// p4 </span></span><br><span class="line">        Pthread_cond_signal(&amp;fill);              <span class="comment">// p5 </span></span><br><span class="line">        Pthread_mutex_unlock(&amp;mutex);            <span class="comment">// p6 </span></span><br><span class="line">    &#125; </span><br><span class="line">&#125; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> *<span class="title function_">consumer</span><span class="params">(<span class="type">void</span> *arg)</span> &#123; </span><br><span class="line">    <span class="type">int</span> i; </span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; loops; i++) &#123; </span><br><span class="line">        Pthread_mutex_lock(&amp;mutex);            <span class="comment">// c1 </span></span><br><span class="line">        <span class="keyword">while</span> (count == <span class="number">0</span>)                      <span class="comment">// c2 </span></span><br><span class="line">            Pthread_cond_wait(&amp;fill, &amp;mutex);   <span class="comment">// c3 </span></span><br><span class="line">        <span class="type">int</span> tmp = get();                        <span class="comment">// c4 </span></span><br><span class="line">        Pthread_cond_signal(&amp;empty);           <span class="comment">// c5 </span></span><br><span class="line">        Pthread_mutex_unlock(&amp;mutex);          <span class="comment">// c6 </span></span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;%d\n&quot;</span>, tmp); </span><br><span class="line">    &#125; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>第一处修改是缓冲区结构本身，以及对应的 put() 和 get() 方法。同时需要根据新的缓冲区结构修改生产者和消费者的检查条件。生产者只有在缓冲区满了的时候才会睡眠（p2），消费者也只有在队列为空的时候睡眠（c2）。</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span> buffer[MAX]; </span><br><span class="line"><span class="type">int</span> bfill  = <span class="number">0</span>; </span><br><span class="line"><span class="type">int</span> buse   = <span class="number">0</span>; </span><br><span class="line"><span class="type">int</span> count = <span class="number">0</span>; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">put</span><span class="params">(<span class="type">int</span> value)</span> &#123; </span><br><span class="line">    buffer[bfill] = value; </span><br><span class="line">    bfill = (bfill + <span class="number">1</span>) % MAX; </span><br><span class="line">    count++; </span><br><span class="line">&#125; </span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">get</span><span class="params">()</span> &#123; </span><br><span class="line">    <span class="type">int</span> tmp = buffer[buse]; </span><br><span class="line">    buse = (buse + <span class="number">1</span>) % MAX; </span><br><span class="line">    count--; </span><br><span class="line">    <span class="keyword">return</span> tmp; </span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">cond_t</span> empty, fill; </span><br><span class="line"><span class="type">mutex_t</span> mutex; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> *<span class="title function_">producer</span><span class="params">(<span class="type">void</span> *arg)</span> &#123; </span><br><span class="line">    <span class="type">int</span> i; </span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; loops; i++) &#123; </span><br><span class="line">        Pthread_mutex_lock(&amp;mutex);              <span class="comment">// p1 </span></span><br><span class="line">        <span class="keyword">while</span> (count == MAX)                     <span class="comment">// p2 缓冲区已满</span></span><br><span class="line">            Pthread_cond_wait(&amp;empty, &amp;mutex);   <span class="comment">// p3 </span></span><br><span class="line">        put(i);                                  <span class="comment">// p4 </span></span><br><span class="line">        Pthread_cond_signal(&amp;fill);              <span class="comment">// p5 </span></span><br><span class="line">        Pthread_mutex_unlock(&amp;mutex);            <span class="comment">// p6 </span></span><br><span class="line">    &#125; </span><br><span class="line">&#125; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> *<span class="title function_">consumer</span><span class="params">(<span class="type">void</span> *arg)</span> &#123; </span><br><span class="line">    <span class="type">int</span> i; </span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; loops; i++) &#123; </span><br><span class="line">        Pthread_mutex_lock(&amp;mutex);            <span class="comment">// c1 </span></span><br><span class="line">        <span class="keyword">while</span> (count == <span class="number">0</span>)                      <span class="comment">// c2 </span></span><br><span class="line">            Pthread_cond_wait(&amp;fill, &amp;mutex);   <span class="comment">// c3 </span></span><br><span class="line">        <span class="type">int</span> tmp = get();                        <span class="comment">// c4 </span></span><br><span class="line">        Pthread_cond_signal(&amp;empty);           <span class="comment">// c5 </span></span><br><span class="line">        Pthread_mutex_unlock(&amp;mutex);          <span class="comment">// c6 </span></span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;%d\n&quot;</span>, tmp); </span><br><span class="line">    &#125; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 ]]></content>
       <categories>
         <category>操作系统</category>
@@ -272,10 +274,13 @@
 <figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">WordDictionary</span> &#123;</span><br><span class="line">    <span class="keyword">private</span> Trie root;</span><br><span class="line">    <span class="keyword">public</span> <span class="title function_">WordDictionary</span><span class="params">()</span> &#123;</span><br><span class="line">        root = <span class="keyword">new</span> <span class="title class_">Trie</span>();</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">addWord</span><span class="params">(String word)</span> &#123;</span><br><span class="line">        root.insert(word);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="type">boolean</span> <span class="title function_">search</span><span class="params">(String word)</span>&#123;</span><br><span class="line">        <span class="keyword">return</span> dfs(root, <span class="number">0</span>, word);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">public</span> <span class="type">boolean</span> <span class="title function_">dfs</span><span class="params">(Trie node, <span class="type">int</span> i, String word)</span> &#123; <span class="comment">// 搜索图上每个节点由两个属性确定</span></span><br><span class="line">        <span class="keyword">if</span>(i == word.length()) </span><br><span class="line">            <span class="keyword">return</span> node.isEnd();</span><br><span class="line"></span><br><span class="line">        <span class="type">char</span> <span class="variable">ch</span> <span class="operator">=</span> word.charAt(i);</span><br><span class="line">        Trie[] chi = node.get_children();</span><br><span class="line">        <span class="keyword">if</span>(Character.isLetter(ch))&#123;</span><br><span class="line">            <span class="type">Trie</span> <span class="variable">child</span> <span class="operator">=</span> chi[ch - <span class="string">&#x27;a&#x27;</span>];</span><br><span class="line">            <span class="keyword">if</span>(child != <span class="literal">null</span> &amp;&amp; dfs(child, i+<span class="number">1</span>, word)) <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span>&#123;</span><br><span class="line">            <span class="keyword">for</span>(<span class="type">int</span> j=<span class="number">0</span>;j&lt;<span class="number">26</span>;++j)&#123;</span><br><span class="line">                <span class="type">Trie</span> <span class="variable">child</span> <span class="operator">=</span> chi[j];</span><br><span class="line">                <span class="keyword">if</span>(child != <span class="literal">null</span> &amp;&amp; dfs(child, i+<span class="number">1</span>, word)) <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Trie</span> &#123;</span><br><span class="line">    <span class="keyword">private</span> Trie[] children;</span><br><span class="line">    <span class="keyword">private</span> <span class="type">boolean</span> isEnd;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="title function_">Trie</span><span class="params">()</span> &#123;</span><br><span class="line">        children = <span class="keyword">new</span> <span class="title class_">Trie</span>[<span class="number">26</span>];</span><br><span class="line">        isEnd = <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">insert</span><span class="params">(String word)</span> &#123;</span><br><span class="line">        <span class="type">Trie</span> <span class="variable">node</span> <span class="operator">=</span> <span class="built_in">this</span>;</span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> <span class="number">0</span>; i &lt; word.length(); i++) &#123;</span><br><span class="line">            <span class="type">char</span> <span class="variable">ch</span> <span class="operator">=</span> word.charAt(i);</span><br><span class="line">            <span class="type">int</span> <span class="variable">index</span> <span class="operator">=</span> ch - <span class="string">&#x27;a&#x27;</span>;</span><br><span class="line">            <span class="keyword">if</span> (node.children[index] == <span class="literal">null</span>) &#123;</span><br><span class="line">                node.children[index] = <span class="keyword">new</span> <span class="title class_">Trie</span>();</span><br><span class="line">            &#125;</span><br><span class="line">            node = node.children[index];</span><br><span class="line">        &#125;</span><br><span class="line">        node.isEnd = <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">public</span> Trie[] get_children()&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">this</span>.children;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="type">boolean</span> <span class="title function_">isEnd</span><span class="params">()</span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">this</span>.isEnd;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Your WordDictionary object will be instantiated and called as such:</span></span><br><span class="line"><span class="comment"> * WordDictionary obj = new WordDictionary();</span></span><br><span class="line"><span class="comment"> * obj.addWord(word);</span></span><br><span class="line"><span class="comment"> * boolean param_2 = obj.search(word);</span></span><br><span class="line"><span class="comment"> */</span></span><br></pre></td></tr></table></figure>
 <h3 id="421-数组中两个数的最大异或值"><a href="#421-数组中两个数的最大异或值" class="headerlink" title="421. 数组中两个数的最大异或值"></a>421. 数组中两个数的最大异或值</h3><p>给你一个整数数组 <code>nums</code> ，返回 <code>nums[i] XOR nums[j]</code> 的最大运算结果，其中 <code>0 ≤ i ≤ j &lt; n</code> 。</p>
 <p><img src="/2022/04/14/Create-Data-Structure-class/image-20220414162454153.png" alt="image-20220414162454153" style="zoom:130%;"></p>
+<blockquote>
+<p>相关题目：<a href="https://leetcode-cn.com/problems/maximum-xor-with-an-element-from-array/">1707. 与数组中元素的最大异或值</a></p>
+</blockquote>
 <h4 id="用前缀树存储自然数的集合"><a href="#用前缀树存储自然数的集合" class="headerlink" title="用前缀树存储自然数的集合"></a>用前缀树存储自然数的集合</h4><p>设自然数集合 nums，满足 0 &lt;= nums[i] &lt;= 2^31-1，用前缀树存储 nums</p>
 <p>实际上是二叉树，前缀树的 children 大小为 2. </p>
 <p>32 位有符号整数，实际有效的数位不含符号位，只有 31 位。任意一个数都有 31 位，因此层数为固定的 31 层，不需要 isEnd 属性。</p>
-<p>类似地，按照层序遍历的方法插入和查找元素。值得注意的是，为了求最大异或值，这里是把高二进制位低层（即离 root 近的层）。</p>
+<p>类似地，按照层序遍历的方法插入和查找元素。值得注意的是，为了<strong>使用贪心的方法求最大异或值，这里是把高二进制位放在低层</strong>（即离 root 近的层）。</p>
 <p><strong>查找操作的时间复杂度是 O(31)，常数时间</strong>。</p>
 <figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Trie</span> &#123;</span><br><span class="line">    <span class="comment">// 最高位的非符号位二进制位编号为 30</span></span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">int</span> <span class="variable">HIGH_BIT</span> <span class="operator">=</span> <span class="number">30</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 左子树指向表示 0 的子节点，右子树指向表示 1 的子节点</span></span><br><span class="line">    <span class="keyword">private</span> Trie left, right;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="title function_">Trie</span><span class="params">()</span> &#123;</span><br><span class="line">        left = <span class="literal">null</span>;</span><br><span class="line">        right = <span class="literal">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line">	</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">insert</span><span class="params">(<span class="type">int</span> num)</span> &#123;</span><br><span class="line">        <span class="type">Trie</span> <span class="variable">cur</span> <span class="operator">=</span> <span class="built_in">this</span>;</span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> <span class="variable">k</span> <span class="operator">=</span> HIGH_BIT; k &gt;= <span class="number">0</span>; --k) &#123;</span><br><span class="line">            <span class="type">int</span> <span class="variable">bit</span> <span class="operator">=</span> (num &gt;&gt; k) &amp; <span class="number">1</span>;</span><br><span class="line">            <span class="keyword">if</span> (bit == <span class="number">0</span>) &#123;</span><br><span class="line">                <span class="keyword">if</span> (cur.left == <span class="literal">null</span>) &#123;</span><br><span class="line">                    cur.left = <span class="keyword">new</span> <span class="title class_">Trie</span>();</span><br><span class="line">                &#125;</span><br><span class="line">                cur = cur.left;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="keyword">if</span> (cur.right == <span class="literal">null</span>) &#123;</span><br><span class="line">                    cur.right = <span class="keyword">new</span> <span class="title class_">Trie</span>();</span><br><span class="line">                &#125;</span><br><span class="line">                cur = cur.right;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <h4 id="查找数组中两个数的最大异或值"><a href="#查找数组中两个数的最大异或值" class="headerlink" title="查找数组中两个数的最大异或值"></a>查找数组中两个数的最大异或值</h4><p>对于 nums[i]，只需要查看它前面的所有数字与它构成的二元组，就可以遍历所有的二元组。</p>
@@ -289,7 +294,7 @@
   <entry>
     <title>并查集 DSU</title>
     <url>/2022/04/25/DSU/</url>
-    <content><![CDATA[<h1 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h1><p>一个<strong>不相交集合数据结构</strong>（disjoint-set data structure）或者说<strong>并查集</strong>（disjoint-set union，DSU）维护了一个不相交动态集的集合 ${S<em>{1},…,S</em>{k}}$。</p>
+    <content><![CDATA[<h1 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h1><p>一个<strong>不相交集合数据结构</strong>（disjoint-set data structure）或者说<strong>并查集</strong>（disjoint-set union，DSU）维护了一个不相交动态集的集合 <script type="math/tex">{S_{1},...,S_{k}}</script>。</p>
 <p>不相交指的是集合中的每个元素 $S_{i}$ 是互不相交的集合，动态指的是部分集合可以根据某些规则合并为一个新的集合，新的集合在这个规则下与其他原有的集合依旧满足不相交的原则。</p>
 <span id="more"></span>
 <p>我们用一个<strong>代表</strong>（representative）来标识每个集合 $S_{i}$，它是这个集合的某个成员。</p>
@@ -422,9 +427,7 @@
 <p>在 IO 复用模型中，会有一个线程不断去轮询多个 socket 的状态，只有当 socket 真正有读写事件时，才真正调用实际的 IO 读写操作。</p>
 <p>因为在多路复用IO模型中，只需要<strong>使用一个线程就可以管理多个socket</strong>，并且只有在真正有 socket 读写事件进行时，才会使用 IO 资源，所以它大大减少了资源占用。</p>
 <p><img src="/2022/04/07/I-O-model/1068826-20170514143622722-640397005.png" alt="多路复用IO模型" style="zoom:150%;"></p>
-<p>多路复用IO为何比非阻塞IO模型的效率高是因为在非阻塞IO中，不断地询问socket状态是通过用户线程去进行的（会造成 CPU 模式切换），而在多路复用IO中，轮询每个socket状态是内核在进行的。</p>
-<p>不过要注意的是，多路复用IO模型是通过轮询的方式来检测是否有事件到达，并且对到达的事件逐一进行响应。因此对于多路复用IO模型来说，一旦事件响应体很大，那么就会导致后续的事件迟迟得不到处理，并且会影响新的事件轮询。</p>
-<p><img src="/2022/04/07/I-O-model/v2-9b720fa8bbe7108003edc2abb6df7c71_720w.jpg" alt="文件描述符的量级和CPU耗时"></p>
+<p><strong>多路复用 IO 比非阻塞 IO 模型的效率高是因为在非阻塞 IO 中，不断地询问 socket 状态是在用户模式中去进行的，每次询问都会造成 CPU 模式切换，而在多路复用IO中，轮询每个 socket 状态是内核在进行的。</strong></p>
 <h2 id="select"><a href="#select" class="headerlink" title="select"></a>select</h2><p>select 轮询所有 socket，找出能读出数据或者写入数据的 socket，并顺序对这些 socket 进行操作。</p>
 <p><strong>select 函数接口</strong></p>
 <figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/select.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/time.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> FD_SETSIZE 1024</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> NFDBITS (8 * sizeof(unsigned long))</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> __FDSET_LONGS (FD_SETSIZE/NFDBITS)</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 数据结构 (bitmap)</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">    <span class="type">unsigned</span> <span class="type">long</span> fds_bits[__FDSET_LONGS];</span><br><span class="line">&#125; fd_set;</span><br><span class="line"></span><br><span class="line"><span class="comment">// API</span></span><br><span class="line"><span class="type">int</span> <span class="title function_">select</span><span class="params">(</span></span><br><span class="line"><span class="params">    <span class="type">int</span> max_fd, </span></span><br><span class="line"><span class="params">    fd_set *readset, </span></span><br><span class="line"><span class="params">    fd_set *writeset, </span></span><br><span class="line"><span class="params">    fd_set *exceptset, </span></span><br><span class="line"><span class="params">    <span class="keyword">struct</span> timeval *timeout</span></span><br><span class="line"><span class="params">)</span>                              <span class="comment">// 返回值就绪描述符的数目</span></span><br><span class="line"></span><br><span class="line"><span class="title function_">FD_ZERO</span><span class="params">(<span class="type">int</span> fd, fd_set* fds)</span>   <span class="comment">// 清空集合</span></span><br><span class="line"><span class="title function_">FD_SET</span><span class="params">(<span class="type">int</span> fd, fd_set* fds)</span>    <span class="comment">// 将给定的描述符加入集合</span></span><br><span class="line"><span class="title function_">FD_ISSET</span><span class="params">(<span class="type">int</span> fd, fd_set* fds)</span>  <span class="comment">// 判断指定描述符是否在集合中 </span></span><br><span class="line"><span class="title function_">FD_CLR</span><span class="params">(<span class="type">int</span> fd, fd_set* fds)</span>    <span class="comment">// 将给定的描述符从文件中删除  </span></span><br></pre></td></tr></table></figure>
@@ -439,7 +442,7 @@
 <li>max_fd 参数告诉内核，只需要检查 fd 为 [0, max_fd-1] 区间的对应的文件资源即可。（<strong>在这个范围内，只检查 readset、writeset 和 exceptset 中为 1 的索引值 fd</strong>）</li>
 <li>*read_set 参数是 fd_set 类型，当 read_set[fd] 为 1，表示 fd 对应的文件资源可以被读</li>
 <li>select 函数会把在用户空间创建的 readset、writeset 和 exceptset 拷贝到内核空间，由内核更新这三个 fd_set 类型的数据，这会导致 <strong>CPU 模式的切换</strong>。</li>
-<li>select 的返回值是就绪文件描述符的数目。当没有就绪的文件时，select 会导致用户线程的阻塞。当有就绪的文件时，<strong>select 返回，read_set、writeset 和 exceptset 会被更新</strong></li>
+<li>select 的返回值是就绪文件描述符的数目。当没有就绪的文件时，select 会导致用户线程的阻塞。当有就绪的文件时，<strong>select 返回，read_set、writeset 和 exceptset 会被更新</strong>。当 select 返回后，有可用的文件，不确定具体是哪几个，需要遍历 fd_set 找到该文件对应的 fd，并进行 IO 操作（<strong>IO 操作不会阻塞</strong>）</li>
 </ul>
 </li>
 </ul>
@@ -453,7 +456,8 @@
 <li>单个进程所打开的 fd 是有限制的，通过 FD_SETSIZE 设置，默认1024。假如有 100 万个连接，每次只能处理 1024 个。</li>
 <li>fd_set 不可重用。每个 while(1) 中都要先置 0、再注册感兴趣的文件描述符</li>
 <li>会导致 CPU 模式切换</li>
-<li>当 select 返回后，有可用的文件，不确定具体是哪几个，需要遍历 fd_set 找到该文件对应的 fd，并进行 IO 操作（<strong>IO 操作不会阻塞</strong>）</li>
+<li>当没有就绪的文件时，select 会导致用户线程的阻塞。</li>
+<li>select 单线程顺序处理各个 socket，如果某个 socket 数据量很大，处理时间长，会导致其他 socket 迟迟得不到响应。</li>
 </ul>
 <h2 id="poll"><a href="#poll" class="headerlink" title="poll"></a>poll</h2><p>poll 与 select 相同点：都是将用户传入的文件描述符集合拷贝到内核空间，然后轮询每个 fd 对应的文件状态</p>
 <p>poll 与 select 的区别：将 fd_set 进一步封装为 struct pollfd fds[]，由 bitmap 变为结构体数组。对于文件描述符集合的操作自然也不再是用宏，例如 FD_SET。这使得，poll 比 select 具有优点：</p>
@@ -487,7 +491,10 @@
 <li>ET 模式（边缘触发）只有数据到来才触发，不管缓存区中是否还有数据，缓冲区剩余未读尽的数据不会导致 epoll_wait 返回；</li>
 </ul>
 <p><img src="/2022/04/07/I-O-model/v2-e6c497d098c782ed52830da08b3e5cbe_720w.jpg" alt="img"></p>
-<h3 id="select、poll-和-epoll-对比"><a href="#select、poll-和-epoll-对比" class="headerlink" title="select、poll 和 epoll 对比"></a>select、poll 和 epoll 对比</h3><div class="table-container">
+<h3 id="select、poll-和-epoll-对比"><a href="#select、poll-和-epoll-对比" class="headerlink" title="select、poll 和 epoll 对比"></a>select、poll 和 epoll 对比</h3><p>都会导致 CPU 模式切换，并且当没有就绪的文件时，都会导致用户线程的阻塞，当存在就绪文件，都需要从内核向用户复制 fd 集合信息。</p>
+<p><img src="/2022/04/07/I-O-model/v2-9b720fa8bbe7108003edc2abb6df7c71_720w.jpg" alt="文件描述符的量级和CPU耗时"></p>
+<p>由于 epoll 是触发式的，不采用轮询。因此，它在内核模式中等待就绪文件时，只消耗很少的 CPU 时间。</p>
+<div class="table-container">
 <table>
 <thead>
 <tr>
@@ -525,13 +532,13 @@
 </tbody>
 </table>
 </div>
-<p>与select和poll相比，epoll为什么使用红黑树而非数组？</p>
-<p>select和poll每次调用时都会存在一个将 fd_set 从用户态向内核态中拷贝的过程，，而epoll内核中维护了一个内核事件表，它是将所有的文件描述符全部都存放在内核中，系统去检测有事件发生的时候触发回调，当你要添加新的文件描述符的时候也是调用epoll_ctl函数使用EPOLL_CTL_ADD宏来插入，epoll_wait也不是每次调用时都会重新拷贝一遍所有的文件描述符到内核态。当我现在要在内核中长久的维护一个数据结构来存放文件描述符，并且时常会有插入，查找和删除的操作发生，红黑树三个操作更高效。</p>
-<p>epoll为什么使用红黑树而不使用哈希表？</p>
+<p>与 select 和 poll 相比，epoll 为什么使用红黑树存储 fd 集合信息而非数组？因为 fd 集合是可重用的，在 poll 的基础之上，为了更好地维护一个可重用的 fd 集合，避免每次都复制整个 fd 集合到内核空间，使用红黑树来维护，用插入、删除操作进行维护，而非每次复制。并且，红黑树的查找效率也不错。</p>
+<p>epoll 为什么使用红黑树而不使用哈希表？</p>
 <p>红黑树占用的内存更小（仅需要为其存在的节点分配内存），而HashMap事先就应该分配足够的内存存储散列表（即使有些槽可能遭弃用），也就是说，HashMap占用的空间只有部分存储了有效的节点</p>
-<h1 id="信号驱动IO模型"><a href="#信号驱动IO模型" class="headerlink" title="信号驱动IO模型"></a>信号驱动IO模型</h1><p>在信号驱动IO模型中，当用户线程发起一个 IO 请求操作，会给对应的 socket 注册一个信号函数，然后用户线程可以继续执行，当内核数据就绪时会发送一个信号给用户线程，用户线程接收到信号之后，便在信号函数中调用 IO 读写操作（例如调用 socket.read()）来进行实际的 IO 请求操作。</p>
+<h1 id="信号驱动-IO-模型"><a href="#信号驱动-IO-模型" class="headerlink" title="信号驱动 IO 模型"></a>信号驱动 IO 模型</h1><p>在信号驱动IO模型中，当用户线程发起一个 IO 请求操作，会给对应的 socket 注册一个信号函数，然后用户线程可以继续执行，当内核数据就绪时会发送一个信号给用户线程，用户线程接收到信号之后，便在信号函数中调用 IO 读写操作（例如调用 socket.read()）来进行实际的 IO 请求操作。</p>
 <p>调用 socket.read() 仍旧会阻塞用户线程，只不过相比阻塞IO模型，阻塞时间少去了等待数据的时间</p>
-<h1 id="异步IO模型"><a href="#异步IO模型" class="headerlink" title="异步IO模型"></a>异步IO模型</h1><p>异步 IO 模型是最理想的 IO 模型，在异步 IO 模型中，当用户线程发起 read 操作之后，立刻就可以开始去做其它的事。</p>
+<p>信号驱动 IO 模型，回调操作是由内核通知用户，然后在用户模式调用 IO 读写操作。区别于 epoll</p>
+<h1 id="异步-IO-模型"><a href="#异步-IO-模型" class="headerlink" title="异步 IO 模型"></a>异步 IO 模型</h1><p>异步 IO 模型是最理想的 IO 模型，在异步 IO 模型中，当用户线程发起 read 操作之后，立刻就可以开始去做其它的事。</p>
 <p>而另一方面，从内核的角度，当它收到一个 asynchronous read 之后，它会立刻返回（不让用户线程阻塞），说明 read 请求已经成功发起了，因此不会对用户线程产生任何阻塞。然后，内核会等待数据准备完成，然后将数据拷贝到用户线程，当这一切都完成之后，内核会给用户线程发送一个信号，告诉它 read 操作完成了。</p>
 <p>也就说用户线程完全不需要知道实际的整个 IO 操作是如何进行的，只需要先发起一个请求，当接收内核返回的成功信号时表示IO操作已经完成，可以直接去使用数据了。</p>
 <p>相比信号驱动 IO 模型。在异步 IO 模型中，IO 操作的两个阶段都不会阻塞用户线程，这两个阶段都是由内核自动完成，然后发送一个信号告知用户线程操作已完成。用户线程中不需要再次调用 IO 函数进行具体的读写。</p>
@@ -1292,9 +1299,9 @@
 <p>虚拟节点在哈希环上均匀分布：注意到是按照 A、B、C 方式分布的，如果把任意两个虚拟节点放在了一起，那么实际上它们会等效为一个虚拟节点，导致不均匀分布。</p>
 <p>例如，上图中，替换 B-01 和 A-02 的位置，虚拟节点等效过后，实际上只留下了 A：2个虚拟节点、B：2个虚拟节点、C：3个虚拟节点。</p>
 <p>当某个节点被移除时，对应该节点的多个虚拟节点均会移除，而这些虚拟节点按顺时针方向的下一个虚拟节点，会对应不同的真实节点，即这些不同的真实节点共同分担了节点变化导致的压力。</p>
-<h1 id="bloom-过滤器"><a href="#bloom-过滤器" class="headerlink" title="bloom 过滤器"></a>bloom 过滤器</h1><p>特点是高效地插入和查询，可以用来告诉你 “某样东西一定不存在或者可能存在”</p>
+<h1 id="bloom-过滤器"><a href="#bloom-过滤器" class="headerlink" title="bloom 过滤器"></a>bloom 过滤器</h1><p>布隆过滤器的优点：时间复杂度是常数（插入操作和查询操作），空间复杂度也是常数，占用内存小，不需要存储元素本身，具有保密性。缺点：有一定的误识别率和删除困难的问题。</p>
+<p>作用：告诉你某个元素<strong>一定不在集合内</strong>或<strong>可能在集合内</strong>。</p>
 <p>布隆过滤器的实现原理是用多个哈希函数，将一个数据映射到位图中，通过位图来判断元素是否存在。</p>
-<p>它具有运行速度快（时间效率），占用内存小的优点（空间效率）的优点，但是有一定的误识别率和删除困难的问题。它能够告诉你某个元素一定不在集合内或可能在集合内。</p>
 <h2 id="插入操作"><a href="#插入操作" class="headerlink" title="插入操作"></a>插入操作</h2><ol>
 <li>使用多个哈希函数对元素值进行计算，得到多个哈希值</li>
 <li>根据得到的哈希值，在位数组中把对应下标的值置为 1。</li>
@@ -1302,42 +1309,49 @@
 <p>可能出现哈希冲突的情况：</p>
 <p><img src="/2022/04/02/Java-Data-Structure/20220318143436146.png" alt="image-20220311154805364"></p>
 <p>当存在哈希冲突的情况下，假设 x 的哈希值为 h1, h2, h3，且发现 bitmap[h1] = bitmap[h2] = bitmap[h3] = 1，x不一定存在于数据库中。</p>
-<p>可以适当增加位数组大小或者调整我们的哈希函数来降低概率</p>
+<p>可以适当增加位数组大小或者调整我们的哈希函数来降低冲突概率。</p>
 <h2 id="删除操作"><a href="#删除操作" class="headerlink" title="删除操作"></a>删除操作</h2><p>对于有哈希冲突的情况，如果直接将待删除元素的各个 bitmap[hi] 置 0，会导致其他元素的信息丢失。</p>
 <p>如果让每个位存储被置 1 的次数，可能存在其他问题，例如溢出导致计数值是错的。</p>
-<h2 id="查找操作"><a href="#查找操作" class="headerlink" title="查找操作"></a>查找操作</h2><p>主要用来判断 非条件，即不存在的条件。假设哈希冲突比较少，判断存在也不错。</p>
-<p>布隆过滤器的查找操作是 <strong>可能</strong>在集合中：</p>
-<p>将要查询的元素给k个哈希函数</p>
-<p>得到对应于位数组上的k个位置</p>
-<p>如果k个位置有一个为0，则一定不在集合中</p>
-<p>如果k个位置全部为1，则可能在集合中</p>
-<h2 id="对比"><a href="#对比" class="headerlink" title="对比"></a>对比</h2><p>与哈希表相比，它并不能解决哈希冲突的问题，不能保证查找操作为 true positive。</p>
-<p>在数据量极大的情况下，使用 HashMap 会遇到哈希冲突过多的问题，这会导致 HashMap 的查找时间复杂度恶化，不再是常数</p>
-<p>常用的数据结构，如hashmap，set，bit array都能用来测试一个元素是否存在于一个集合中，相对于这些数据结构，BloomFilter有什么方面的优势呢？</p>
-<p>相比于其它的数据结构，布隆过滤器在空间和时间方面都有巨大的优势。布隆过滤器存储空间和插入/查询时间都是常数。布隆过滤器不需要存储元素本身，在某些对保密要求非常严格的场合有优势。</p>
-<p>位图：N个元素，范围 min,max 需要 max-min+1 个位，存在性是绝对的</p>
-<p>32位机器上，对于一个整型数，比如<code>int a = 1</code> 在内存中占<code>32 bit</code>位，这是为了方便计算机的运算。但是对于某些应用场景而言，这属于一种巨大的浪费，因为我们可以用对应的<code>32 bit</code>位对应存储十进制的<code>0 - 31</code>个数，而这就是<code>Bit-map</code>的基本思想</p>
+<h2 id="对比"><a href="#对比" class="headerlink" title="对比"></a>对比</h2><p>哈希表和位图都能用来判断一个元素是否存在于一个集合中。</p>
+<p>布隆过滤器与哈希表的对比：</p>
 <ul>
-<li>相对于hashmap和set，BloomFilter在返回元素可能存在的情况中，有一定的误判率，这时候，调用者在误判的时候，会做一些不必要的工作，而对于hashmap和set，不会存在误判情况</li>
+<li>时间复杂度，都是常数复杂度，都会受哈希冲突影响。可以分别对插入操作和查询操作详细分析</li>
+<li>空间复杂度，哈希表会存储所有数据，需要 O(N) 的空间，而<strong>布隆过滤器不需要存储元素本身，只需要常数空间</strong></li>
+<li>查询操作：哈希表可以保证查找操作为 true positive，不会误判</li>
 </ul>
-<h2 id="应用场景"><a href="#应用场景" class="headerlink" title="应用场景"></a>应用场景</h2><p>给两个文件，分别有100亿个query，我们只有1G内存，如何找到两个文件交集？分别给出精确算法和近似算法？<br>思路：精确算法利用位图来实现。100个query，通常是线性递增一个请求索引<br>近似算法利用布隆过滤器实现，将一个文件的中100亿个query放在一个布隆过滤器中，另个一个文件中的数据到布隆过滤器中去查找，若查找到则说明是这两个文件的交集。</p>
-<p>大数据场景下判断数据是否存在</p>
+<p>位图：</p>
+<p>基本原理：设 N 个元素，取值范围 [min,max]，则用 max-min+1 大小的数组来存储，bitmap[i] = 1 表示存在值为 i 的元素</p>
+<p>拓展：</p>
+<ul>
+<li><p>位图<strong>本质上是一个计数器</strong>，我们可以改变它的元素类型，让他可以存多种状态，而不仅限于存在和不存在两种状态</p>
+</li>
+<li><p>当存在负数，需要加一个偏置放到正数索引。</p>
+</li>
+<li>位图需要额外的位数，这是因为将集合中的数据唯一且不冲突映射到某个索引位置，这基本是不可能实现的</li>
+<li>建立位图的难点：如果元素类型是对象而非整数值，如何建立元素到位图的唯一映射？</li>
+</ul>
+<p>布隆过滤器与位图的对比：</p>
+<ul>
+<li>时间复杂度，都是常数复杂度，位图不存在哈希冲突</li>
+<li>空间复杂度，都是常数复杂度，但是位图需要的空间比布隆过滤器更大，通过下标可以得到原始数据，布隆过滤器不需要存储元素本身</li>
+<li>查询操作：<strong>位图可以保证查找操作为 true positive</strong>，不会误判</li>
+</ul>
+<p>总的来说，使用布隆过滤器主要是因为它需要的空间比位图小、比哈希表小很多。</p>
+<h2 id="应用场景"><a href="#应用场景" class="headerlink" title="应用场景"></a>应用场景</h2><p>大数据场景下判断数据是否存在</p>
 <ol>
-<li>网页爬虫对URL的去重，避免爬取相同的URL地址</li>
+<li>网页爬虫对 URL 的去重，避免爬取相同的URL地址</li>
 <li>反垃圾邮件，从数十亿个垃圾邮件列表中判断某邮箱是否垃圾邮箱（同理，垃圾短信）</li>
-<li>缓存穿透，将所有可能存在的数据缓存放到布隆过滤器中，当黑客访问不存在的缓存时迅速返回避免缓存及DB挂掉。</li>
+<li>缓存穿透，将所有可能存在的数据缓存放到布隆过滤器中，当黑客访问不存在的缓存时迅速返回避免缓存及DB 挂掉。</li>
 </ol>
-<h3 id="布隆过滤器误判率表"><a href="#布隆过滤器误判率表" class="headerlink" title="布隆过滤器误判率表"></a><strong>布隆过滤器误判率表</strong></h3><p><img src="/2022/04/02/Java-Data-Structure/SouthEast.png" alt></p>
-<p>需要判重的网页有 10 亿，那我们可以用一个 10 倍大小的位图来存储，也就是 100 亿个二进制位，换算成字节，那就是大约 1.2GB。之前我们用散列表判重，设每个 URL 平均长度为 64 字节，需要至少 100GB 的空间。相比来讲，布隆过滤器在存储空间的消耗上，降低了非常多。</p>
-<p>假设一个 URL 的平均长度是 64 字节，那单纯存储这 10 亿个 URL，需要大约 60GB 的内存空间。因为散列表必须维持较小的装载因子，才能保证不会出现过多的散列冲突，导致操作的性能下降。而且，用链表法解决冲突的散列表，还会存储链表指针。所以，如果将这 10 亿个 URL 构建成散列表，那需要的内存空间会远大于 60GB，有可能会超过 100GB。</p>
-<p>如何选择哈希函数个数和布隆过滤器长度：<br>如果一个数据要映射多个位置，如果布隆过滤器较小，则会导致数据马上全部映射满，此时无论进行什么操作，都会存在大量的误报率。也就是说，布隆过滤器的长度与误报率成反比，与空间利用率成反比<br>哈希函数的个数也值得思考，哈希函数越多，映射的位置也就越多，此时准确性也就越高，但随之带来的问题就是效率的降低。也就是说，哈希函数的个数与效率成反比，准确率成正比</p>
-<p>k = hash函数个数</p>
-<p>n = 数据量大小。如：现有一个100万文件的文件夹，我手中有一个文件不知道这个文件夹中是否有这个文件，如果没有就放进去，有的话我再另外处理。此时n则是100万</p>
-<p>m = 位数组长度。如上上面经过hash计算的值是小于一个最大值的，这个最大值则是这个位数组的长度。</p>
-<p>r=m/n</p>
-<p>p = 布隆过滤器正确率</p>
-<p><img src="/2022/04/02/Java-Data-Structure/image-20220424160831946.png" alt="image-20220424160831946"></p>
-<p>也就是说，如果数据量为100万，那么位数组长度需要700万才能保证使用5个hash函数时误判率小于5%。700万位，约等于875kb。如果一个文件只有1k大小，总大小也将近1G了。通过布隆过滤器，只需要875k的内存大小便能快速判断某个文件是否在这个文件夹中，且准确率高达96.8%。</p>
+<h3 id="布隆过滤器误判率表"><a href="#布隆过滤器误判率表" class="headerlink" title="布隆过滤器误判率表"></a><strong>布隆过滤器误判率表</strong></h3><p>如何选择哈希函数个数和布隆过滤器长度：</p>
+<ul>
+<li>哈希函数越多，准确性越高（独立分布），但是多次计算哈希会导致效率的降低。</li>
+<li>位数组越长，可供映射的位置越多，哈希冲突越少，准确率越高，但是空间利用率会降低</li>
+</ul>
+<p>k = hash函数个数，n = 数据量大小，m = 位数组长度，r=m/n，p = 布隆过滤器误判率</p>
+<p><img src="/2022/04/02/Java-Data-Structure/image-20220424160831946.png" alt></p>
+<p>根据上图，如果数据量为 100万，使用 5 个 hash 函数，那么位数组长度需要 700万 才能保证时误判率小于 5%。</p>
+<p>700 万位，约等于 875kb。如果一个文件只有 1k 大小，文件夹总大小约为 1G。通过布隆过滤器，只需要 875kb 的内存大小便能快速判断某个文件是否在这个文件夹中，且准确率高达 96.8%。</p>
 <h1 id="ConcurrentHashMap"><a href="#ConcurrentHashMap" class="headerlink" title="ConcurrentHashMap"></a>ConcurrentHashMap</h1><h2 id="ConcurrentHashMap-数据结构"><a href="#ConcurrentHashMap-数据结构" class="headerlink" title="ConcurrentHashMap 数据结构"></a>ConcurrentHashMap 数据结构</h2><h3 id="jdk1-7"><a href="#jdk1-7" class="headerlink" title="jdk1.7"></a>jdk1.7</h3><p>由  Segment  数组组成，Segment 数组每个元素是一个  HashEntry  数组（与 jdk1.7 HashMap 结构相同，数组+链表）。</p>
 <p>Segment 继承了 ReentrantLock</p>
 <p>每一个 HashEntry  数组可以进行扩容。但是 Segment 的个数一旦初始化就不能改变，默认 Segment 的个数是 16 个，也就是说 ConcurrentHashMap 默认支持最多 16 个线程并发</p>
@@ -1372,14 +1386,7 @@ cap\geq  \lceil \frac{initialCapacity}{ssize} \rceil</script><h4 id="数组索�
   <entry>
     <title>Java 基础知识</title>
     <url>/2022/04/17/Java-basis/</url>
-    <content><![CDATA[<p>Java 模运算，当被除数为负数时取模结果为负数，需要纠正，因此：</p>
-<p>(preSum % k + k) % k = Math.floorMod(preSum, k)</p>
-<p> <img src="/2022/04/17/Java-basis/image-20220417193828072.png" alt="image-20220417193828072"></p>
-<p>关于 % 和 Math.floorMod，前者是取余运算，后者是取模运算</p>
-<p>​                               </p>
-<p>取模运算，在求a/b的时候是把结果向下取整。取余运算，在求a/b的时候是把结果向0取整</p>
-<p>因此，当商为正数的时候，%等价于floorMod，但是当商为负数的时候，%就不能代替floorMod了</p>
-<p>Java 语言使用 final 关键字来定义一个常量</p>
+    <content><![CDATA[<p>Java 语言使用 final 关键字来定义一个常量</p>
 ]]></content>
       <categories>
         <category>Java</category>
@@ -2419,13 +2426,13 @@ U_{user}=\frac{L/R}{RTT+L/R}=\frac{0.008}{30}=0.027\%</script><p>可以看到，
 <p><strong>LRU 和 LFU 的优缺点</strong></p>
 <p>LRU </p>
 <p>优点：实现简单，通常具有高命中率</p>
-<p>缺点：如果一些不常使用的数据一次性出现过多，那么链表表头都是无用的数据，从而会导致缓存命中率低下</p>
+<p>缺点：如果一些不常使用的数据<strong>一次性</strong>出现过多，那么链表表头都是无用的数据，从而会导致缓存命中率低下</p>
 <p>LFU 缺点</p>
 <ul>
 <li>需要为每个记录项维护频率信息，带来额外开销</li>
 <li>对突发性的稀疏流量无力，因为前期经常访问的记录已经占用了缓存，偶然的流量不太可能会被保留下来，而且过去的一些大量被访问的记录在将来也不一定会使用上，这样就一直把“坑”占着了。</li>
 </ul>
-<p>LFU优点：如果数据的分布在一段时间内是固定的话，那么LFU可以达到最高的命中率</p>
+<p>LFU优点：如果数据的分布在一段时间内是固定的话（高频和低频次的数据是稳定的），那么 LFU 可以达到最高的命中率</p>
 <p><strong>先进先出</strong></p>
 <p>使用队列，最新进入的页面放在表尾，最早进入的页面放在表头。当缺页中断时，淘汰表头的页面并把新调入的页面加到表尾。</p>
 <ul>
@@ -2833,9 +2840,214 @@ U_{user}=\frac{L/R}{RTT+L/R}=\frac{0.008}{30}=0.027\%</script><p>可以看到，
       </categories>
   </entry>
   <entry>
-    <title>basic calculation</title>
+    <title>基本运算</title>
     <url>/2022/04/24/basic-calculation/</url>
-    <content><![CDATA[]]></content>
+    <content><![CDATA[<p>求余和求模运算、加法、乘法、除法、幂运算、异或运算</p>
+<span id="more"></span>
+<h1 id="求余运算和求模运算"><a href="#求余运算和求模运算" class="headerlink" title="求余运算和求模运算"></a>求余运算和求模运算</h1><p>求余运算在计算商值向 0 方向舍弃小数位，求模运算在计算商值向负无穷方向舍弃小数位</p>
+<ul>
+<li><p>当商是正数的时候，0 方向和负无穷方向自然是一致的。</p>
+<p>  3 % 10 = 3，3 mod 10 = 3</p>
+</li>
+<li><p>当商是负数的时候，</p>
+<p>  -3/10 = -0.3</p>
+<p>  -3 % 10 = 0…-3，-3 mod 10 = -1…-7</p>
+</li>
+</ul>
+<p>Java 中取余是 %，取模是 Math.floorMod</p>
+<p>用 $\odot $ 作为求余运算符，求余运算的性质：</p>
+<ul>
+<li><p>乘法性质</p>
+<script type="math/tex; mode=display">
+  (xy)\odot p=[(x\odot p)(y\odot p)]\odot p</script></li>
+<li><p>加法性质</p>
+</li>
+</ul>
+<script type="math/tex; mode=display">
+(x+y)\odot p=[(x\odot p)+(y\odot p)]\odot p</script><h2 id="大数取余"><a href="#大数取余" class="headerlink" title="大数取余"></a>大数取余</h2><p>大数：x*y（x 和 y 在 int32 内）超出 int32 的取值范围</p>
+<p><strong>大数求余问题1</strong>： 在仅使用 int32 类型存储的前提下，正确计算并存储 x*y 对 p 求余的值。<a href="https://leetcode-cn.com/problems/jian-sheng-zi-ii-lcof/solution/mian-shi-ti-14-ii-jian-sheng-zi-iitan-xin-er-fen-f/">大数求余</a></p>
+<p>基于求余运算乘法性质，存储乘法后求余的结果，而非存储乘法结果。$[(x\odot p)(y\odot p)]$ 可能溢出，该中括号的结果可能需要用 long 以上存储</p>
+<p>当 大数为 x 的幂次方时，基于求余运算乘法性质，有两种方法</p>
+<ul>
+<li>循环求余</li>
+<li>快速幂求余</li>
+</ul>
+<p><strong>大数求余问题2</strong></p>
+<p>大数：x+y</p>
+<p>基于求余运算加法性质，存储加法后求余的结果，而非存储加法结果</p>
+<p>例如，ans = a+b+c+d+…，由于不断累积可能导致溢出，题目要求最终输出 ans % MOD。则每一步存储 a % MOD，b % MOD，…，最终(a % MOD+ b % MOD+…) % MOD = ans % MOD</p>
+<p>为了应用此方法，</p>
+<ul>
+<li><p>$[(x\odot p)+(y\odot p)]$ 可能溢出，该中括号的结果可能需要用 long 以上存储</p>
+</li>
+<li><p>x += y 需等效为 x=x+y</p>
+</li>
+</ul>
+<h1 id="加法运算"><a href="#加法运算" class="headerlink" title="加法运算"></a>加法运算</h1><h2 id="位运算实现加法运算"><a href="#位运算实现加法运算" class="headerlink" title="位运算实现加法运算"></a>位运算实现加法运算</h2><p>两个一比特数的加法运算的真值表。</p>
+<p>输入是两个数，输出是两个数：本位和、进位。</p>
+<p><img src="/2022/04/24/basic-calculation/image-20220426104700623.png" alt></p>
+<p><img src="/2022/04/24/basic-calculation/image-20220426104708155.png" alt></p>
+<p>注意 c 是与运算后左移，左移是为了符合其真实的位置。实际的结果：n + c</p>
+<p>对于两个整数，不需要逐个对二进制位进行以上位运算，<strong>可以直接推广到两个整数的加法运算</strong>：</p>
+<p>设 a 和 b 是两个整数，a+b 的非进位和 = a^b，a+b 的进位 = a&amp;b&lt;&lt;1</p>
+<p><a href="https://leetcode-cn.com/problems/bu-yong-jia-jian-cheng-chu-zuo-jia-fa-lcof/">剑指 Offer 65. 不用加减乘除做加法</a></p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="type">int</span> <span class="title function_">add</span><span class="params">(<span class="type">int</span> a, <span class="type">int</span> b)</span> &#123;</span><br><span class="line">    <span class="keyword">while</span>(b != <span class="number">0</span>) &#123; <span class="comment">// 当进位为 0 时跳出</span></span><br><span class="line">        <span class="type">int</span> <span class="variable">c</span> <span class="operator">=</span> (a &amp; b) &lt;&lt; <span class="number">1</span>; <span class="comment">// c = 进位</span></span><br><span class="line">        a ^= b; <span class="comment">// a = 非进位和</span></span><br><span class="line">        b = c; <span class="comment">// 令b = 进位</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> a;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="字符串（十进制数）的加法运算"><a href="#字符串（十进制数）的加法运算" class="headerlink" title="字符串（十进制数）的加法运算"></a>字符串（十进制数）的加法运算</h2><p>两个十进制数用字符串表示，进行加法运算</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">add</span> <span class="params">(string num1, string num2)</span> <span class="comment">// 低位在索引大的地方</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">int</span> <span class="variable">carry</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line">    <span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> num1.size() - <span class="number">1</span>, j = num2.size() - <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">    <span class="type">StringBuffer</span> <span class="variable">res</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">StringBuffer</span>();</span><br><span class="line">    <span class="keyword">while</span> (i &gt;= <span class="number">0</span> || j &gt;= <span class="number">0</span> || carry)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="type">int</span> <span class="variable">x</span> <span class="operator">=</span> i &gt;= <span class="number">0</span> ? num1[i] : <span class="number">0</span>;</span><br><span class="line">        <span class="type">int</span> <span class="variable">y</span> <span class="operator">=</span> j &gt;= <span class="number">0</span> ? num2[j] : <span class="number">0</span>;</span><br><span class="line">        <span class="type">int</span> <span class="variable">temp</span> <span class="operator">=</span> x + y + carry; </span><br><span class="line">        res += temp % <span class="number">10</span><span class="comment">// 非进位和</span></span><br><span class="line">            carry = temp / <span class="number">10</span>;</span><br><span class="line">        i--;</span><br><span class="line">        j--;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    reverse(res); <span class="comment">// 反转为最终的结果</span></span><br><span class="line">    <span class="keyword">return</span> res;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="字符串（多进制数）加法运算"><a href="#字符串（多进制数）加法运算" class="headerlink" title="字符串（多进制数）加法运算"></a>字符串（多进制数）加法运算</h2><p>多进制数加法运算的基本思路：</p>
+<p>设 a 和 b 是两个 k 进制数，对于第 i 位之和 ai+bi，先将 ai 和 bi 转化为十进制数，计算 ai+bi 的非进位和、进位，然后把非进位和转化为 k 进制数，继续计算下一位和。</p>
+<p>与进制小于 10 的整数加法不同的地方在于，进制 &gt;10 的整数需要用字符串表示。</p>
+<p>基于字符串（十进制数）的加法运算修改</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="type">char</span> <span class="title function_">getChar</span><span class="params">(<span class="type">int</span> n)</span> <span class="comment">// 将 0~35 （一位36进制数对应的十进制数）转化为36进制数</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (n &lt;= <span class="number">9</span>)</span><br><span class="line">        <span class="keyword">return</span> n + <span class="string">&#x27;0&#x27;</span>;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        <span class="keyword">return</span> n - <span class="number">10</span> + <span class="string">&#x27;a&#x27;</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">getInt</span><span class="params">(<span class="type">char</span> ch)</span> <span class="comment">// 将一位36进制数转化为十进制数（0~35）</span></span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="string">&#x27;0&#x27;</span> &lt;= ch &amp;&amp; ch &lt;= <span class="string">&#x27;9&#x27;</span>)</span><br><span class="line">        <span class="keyword">return</span> ch - <span class="string">&#x27;0&#x27;</span>;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        <span class="keyword">return</span> ch - <span class="string">&#x27;a&#x27;</span> + <span class="number">10</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">String <span class="title function_">add36Strings</span><span class="params">(string num1, string num2)</span> <span class="comment">// 低位在索引大的地方</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">int</span> <span class="variable">carry</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line">    <span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> num1.size() - <span class="number">1</span>, j = num2.size() - <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">    <span class="type">StringBuffer</span> <span class="variable">res</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">StringBuffer</span>();</span><br><span class="line">    <span class="keyword">while</span> (i &gt;= <span class="number">0</span> || j &gt;= <span class="number">0</span> || carry)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="type">int</span> <span class="variable">x</span> <span class="operator">=</span> i &gt;= <span class="number">0</span> ? getInt(num1[i]) : <span class="number">0</span>;</span><br><span class="line">        <span class="type">int</span> <span class="variable">y</span> <span class="operator">=</span> j &gt;= <span class="number">0</span> ? getInt(num2[j]) : <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">        <span class="type">int</span> <span class="variable">temp</span> <span class="operator">=</span> x + y + carry; </span><br><span class="line">        res += getChar(temp % <span class="number">36</span>); <span class="comment">// 非进位和 %36</span></span><br><span class="line">        carry = temp / <span class="number">36</span>; <span class="comment">// 进位 /36</span></span><br><span class="line">        i--;</span><br><span class="line">        j--;</span><br><span class="line">    &#125;</span><br><span class="line">    reverse(res); <span class="comment">// 反转</span></span><br><span class="line">    <span class="keyword">return</span> res;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="进制转换"><a href="#进制转换" class="headerlink" title="进制转换"></a>进制转换</h2><p>十进制数转换为多进制数</p>
+<p>设 26 进制数</p>
+<p>A -&gt; 1</p>
+<p>B -&gt; 2</p>
+<p>C -&gt; 3</p>
+<p>…</p>
+<p>Z -&gt; 26</p>
+<p>AA -&gt; 27</p>
+<p>AB -&gt; 28 </p>
+<p>每次取10进制数的最低位：x%10 , x/=10。</p>
+<p>将十进制数转换为26进制数。就是把10进制数当成26进制数，每次取26进制数的最低位。</p>
+<p>StringBuffer sb = new StringBuffer();</p>
+<p>​    while (x != 0) {</p>
+<p>​      —x;</p>
+<p>​      sb.append((char)(x % 26 + ‘A’));</p>
+<p>​      x /= 26;</p>
+<p>​    }</p>
+<p>​    return sb.reverse().toString();</p>
+<h1 id="乘法运算"><a href="#乘法运算" class="headerlink" title="乘法运算"></a>乘法运算</h1><p>讨论整数乘法。<a href="https://leetcode-cn.com/problems/multiply-strings/">43. 字符串相乘</a></p>
+<h2 id="竖式乘法"><a href="#竖式乘法" class="headerlink" title="竖式乘法"></a>竖式乘法</h2><p>竖式运算思想，以 num1 为 123，num2 为 456 为例分析：</p>
+<p><img src="/2022/04/24/basic-calculation/image-20220426105757303.png" alt></p>
+<p>模拟：</p>
+<p>法1：按行相加。求各行加数的时候，需要注意将加数乘10</p>
+<p>法2：按列相加。</p>
+<p>性质：num1[i] * num2[j] 的结果为 tmp（位数为两位，”0y”,”xy”的形式），令高位对应低索引。其第一位位于 res[i+j]，第二位 y 位于 res[i+j+1]。</p>
+<p>由性质易知：设 num1 长度为M，num2 长度为N，则 res 长度至多为 M+N</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span>[] res = <span class="keyword">new</span> <span class="title class_">int</span>[num1.length() + num2.length()];</span><br><span class="line"></span><br><span class="line"><span class="comment">// 注意两重循环顺序，保证res由十进制最低位（索引最大）到十进制最高位不断更新</span></span><br><span class="line"><span class="comment">// 否则，进位和无法正确处理</span></span><br><span class="line"><span class="keyword">for</span> (<span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> num1.length() - <span class="number">1</span>; i &gt;= <span class="number">0</span>; i--) &#123;</span><br><span class="line">    <span class="type">int</span> <span class="variable">n1</span> <span class="operator">=</span> num1.charAt(i) - <span class="string">&#x27;0&#x27;</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> <span class="variable">j</span> <span class="operator">=</span> num2.length() - <span class="number">1</span>; j &gt;= <span class="number">0</span>; j--) &#123;</span><br><span class="line">        <span class="type">int</span> <span class="variable">n2</span> <span class="operator">=</span> num2.charAt(j) - <span class="string">&#x27;0&#x27;</span>;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 更新res</span></span><br><span class="line">        <span class="type">int</span> <span class="variable">sum</span> <span class="operator">=</span> res[i + j + <span class="number">1</span>] + n1 * n2;</span><br><span class="line">        res[i + j + <span class="number">1</span>] = sum % <span class="number">10</span>;</span><br><span class="line">        res[i + j] += sum / <span class="number">10</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="位运算实现乘法"><a href="#位运算实现乘法" class="headerlink" title="位运算实现乘法"></a>位运算实现乘法</h2><p>A*B，可以看成 A 个 B 相加。</p>
+<p>先分析特定的一位，设 B 的第 i 位为 1，A 个 B 相加，那么这一位对最后结果的贡献就是：A&lt;&lt;i</p>
+<p>实际上就是说：第 0 位加 A 个 1=A，第 i 位加 A 个 1=A&lt;&lt;i。</p>
+<p>推广到所有二进制位，A*B 求法如下。遍历 B 的二进制位，当遍历到 B 的低 i 位时，加数应该是 A &lt;&lt;i </p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">quickMulti</span><span class="params">(<span class="type">int</span> A, <span class="type">int</span> B)</span>&#123;</span><br><span class="line">    <span class="type">int</span> <span class="variable">ans</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span>(;B;B &gt;&gt;= <span class="number">1</span>)&#123;</span><br><span class="line">        <span class="keyword">if</span>(B &amp; <span class="number">1</span>)</span><br><span class="line">            ans += A;</span><br><span class="line">        A &lt;&lt;= <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> ans;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>注意该算法的风险在于 A&lt;&lt;i 太大的话，存储位数不够，可能溢出。</p>
+<p>实际上，该过程等价于将十进制数表示为二进制数，并列出竖式乘法式子：5<em>3 = 101 </em> 011 =</p>
+<p><img src="/2022/04/24/basic-calculation/image-20220426110101126.png" alt></p>
+<p>例题：<a href="https://leetcode-cn.com/problems/qiu-12n-lcof/">剑指 Offer 64. 求1+2+…+n</a></p>
+<ul>
+<li><p>法1：根据等差数列求和，1+…+n = n*(n+1)/2，式中的乘法可以用位运算实现，/2 也可以用右移一位实现</p>
+<p>  警惕在位运算符前后使用其他符号，位运算式子经常需要括号括起来。</p>
+</li>
+<li><p>法2：记sum(n) = 1+…+n，sum(n) = n + sum(n-1)，递归。可以避免循环体</p>
+</li>
+</ul>
+<h1 id="除法运算"><a href="#除法运算" class="headerlink" title="除法运算"></a>除法运算</h1><p><a href="https://leetcode-cn.com/problems/divide-two-integers/">29. 两数相除</a></p>
+<p>法1</p>
+<p>二分查找除法运算结果。</p>
+<p>设除法运算式为：A/B = x</p>
+<p>则一定满足x*B &gt;= A</p>
+<p>对于二分查找的每一个 x，需要计算x*B，可以使用位运算计算乘法。可以不完整算出x*B的结果，只要在计算过程中发现tmpres &gt;= A就可返回。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Solution</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="type">int</span> <span class="title function_">divide</span><span class="params">(<span class="type">int</span> a, <span class="type">int</span> b)</span> &#123;</span><br><span class="line">        <span class="type">long</span> <span class="variable">x</span> <span class="operator">=</span> a, y = b;</span><br><span class="line">        <span class="type">boolean</span> <span class="variable">isNeg</span> <span class="operator">=</span> <span class="literal">false</span>;</span><br><span class="line">        <span class="keyword">if</span> ((x &gt; <span class="number">0</span> &amp;&amp; y &lt; <span class="number">0</span>) || (x &lt; <span class="number">0</span> &amp;&amp; y &gt; <span class="number">0</span>)) isNeg = <span class="literal">true</span>;</span><br><span class="line">        <span class="keyword">if</span> (x &lt; <span class="number">0</span>) x = -x;</span><br><span class="line">        <span class="keyword">if</span> (y &lt; <span class="number">0</span>) y = -y;</span><br><span class="line">        <span class="type">long</span> <span class="variable">l</span> <span class="operator">=</span> <span class="number">0</span>, r = x;</span><br><span class="line">        <span class="keyword">while</span> (l &lt; r) &#123;</span><br><span class="line">            <span class="type">long</span> <span class="variable">mid</span> <span class="operator">=</span> l + r + <span class="number">1</span> &gt;&gt; <span class="number">1</span>;</span><br><span class="line">            <span class="keyword">if</span> (mul(mid, y) &lt;= x) &#123;</span><br><span class="line">                l = mid;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                r = mid - <span class="number">1</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="type">long</span> <span class="variable">ans</span> <span class="operator">=</span> isNeg ? -l : l;</span><br><span class="line">        <span class="keyword">if</span> (ans &gt; Integer.MAX_VALUE || ans &lt; Integer.MIN_VALUE) <span class="keyword">return</span> Integer.MAX_VALUE;</span><br><span class="line">        <span class="keyword">return</span> (<span class="type">int</span>)ans;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 位运算实现乘法</span></span><br><span class="line">    <span class="type">long</span> <span class="title function_">mul</span><span class="params">(<span class="type">long</span> a, <span class="type">long</span> k)</span> &#123;</span><br><span class="line">        <span class="type">long</span> <span class="variable">ans</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">while</span> (k &gt; <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="keyword">if</span> ((k &amp; <span class="number">1</span>) == <span class="number">1</span>) ans += a;</span><br><span class="line">            k &gt;&gt;= <span class="number">1</span>;</span><br><span class="line">            a += a;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> ans;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>法2</p>
+<p>设A/B = x…y，即A = x*B + y</p>
+<p>逼近</p>
+<p>基本思想：A每次减去一个B，直到减不动，记录减法的次数</p>
+<p>优化：每次尽量减去B的倍数中最大的</p>
+<p>2 按照二进制位逼近。首先，除法的结果 x 必定能表示成一个二进制数，也就是说，我们只要找一个二进制数x，令x*B 是小于等于 y 的最大数。而根据之前所述位运算与乘法的关系，如果 x 的第 i 位为1，那么这一位对x*B的贡献就是：B&lt;&lt;i。因此，我们可以做减法来找x。</p>
+<p>只需要找二进制1</p>
+<p>先找x的最高位1，让B从左移到可能的最高位到左移0位尝试，第一个B&lt;&lt;i小于等于y则找到第i位为1，然后令A-=x，重复上述操作。</p>
+<p>上述操作默认都是正数，分析的是对正数原码/补码的操作。</p>
+<p>如果存在负数，可以仍旧算正数除法，即先判断相除后的负号，对绝对值求除法</p>
+<p>问题1：需要注意−2^31^，相反数是本身。需要特别列出−2^31^作为被除数或除数的结果。</p>
+<p>排除了−2^31^参与计算的情况后，被除数和除数的取值范围变成[-(2^31^ – 1), 2^31^ − 1]，运算数能够被int存储，并且，此时除法运算的最小值=-(2^31^ – 1)，最大值=2^31^ – 1，也在存储范围[−2^31^, 2^31^ − 1]内，能够被int存储。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Solution</span> &#123;</span><br><span class="line">    <span class="type">int</span> <span class="title function_">divide</span><span class="params">(<span class="type">int</span> dividend, <span class="type">int</span> divisor)</span> &#123;</span><br><span class="line">        <span class="keyword">if</span>(dividend == <span class="number">0</span>) <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">if</span>(divisor == <span class="number">1</span>) <span class="keyword">return</span> dividend;</span><br><span class="line">        <span class="keyword">if</span>(divisor == -<span class="number">1</span>)&#123;</span><br><span class="line">            <span class="keyword">if</span>(dividend&gt;INT_MIN) <span class="keyword">return</span> -dividend;<span class="comment">// 只要不是最小的那个整数，都是直接返回相反数就好啦</span></span><br><span class="line">            <span class="keyword">return</span> INT_MAX;<span class="comment">// 是最小的那个，那就返回最大的整数啦</span></span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="type">long</span> <span class="variable">a</span> <span class="operator">=</span> dividend;</span><br><span class="line">        <span class="type">long</span> <span class="variable">b</span> <span class="operator">=</span> divisor;</span><br><span class="line">        <span class="type">int</span> <span class="variable">sign</span> <span class="operator">=</span> <span class="number">1</span>; </span><br><span class="line">        <span class="keyword">if</span>((a &gt; <span class="number">0</span> &amp;&amp; b &lt; <span class="number">0</span>) || (a &lt; <span class="number">0</span> &amp;&amp; b &gt; <span class="number">0</span>))&#123;</span><br><span class="line">            sign = -<span class="number">1</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        a = a&gt;<span class="number">0</span>?a:-a; <span class="comment">// 求正数除法</span></span><br><span class="line">        b = b&gt;<span class="number">0</span>?b:-b;</span><br><span class="line">        <span class="type">long</span> <span class="variable">res</span> <span class="operator">=</span> div(a,b);</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span>(sign&gt;<span class="number">0</span>)<span class="keyword">return</span> res&gt;INT_MAX?INT_MAX:res;</span><br><span class="line">        <span class="keyword">return</span> -res;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="type">int</span> <span class="title function_">div</span><span class="params">(<span class="type">long</span> a, <span class="type">long</span> b)</span>&#123;  </span><br><span class="line">        <span class="keyword">if</span>(a &lt; b) <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">        </span><br><span class="line">        <span class="type">long</span> <span class="variable">count</span> <span class="operator">=</span> <span class="number">1</span>;</span><br><span class="line">        <span class="type">long</span> <span class="variable">tb</span> <span class="operator">=</span> b; </span><br><span class="line">        <span class="comment">// 找到当前能减的最大值</span></span><br><span class="line">        <span class="keyword">while</span>((tb+tb)&lt;=a)&#123;</span><br><span class="line">            count &lt;&lt;= <span class="number">1</span>; </span><br><span class="line">            tb &lt;&lt;= <span class="number">1</span>; </span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> count + div(a-tb,b); <span class="comment">// 递归调用</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h1 id="幂运算"><a href="#幂运算" class="headerlink" title="幂运算"></a>幂运算</h1><h2 id="整数次幂"><a href="#整数次幂" class="headerlink" title="整数次幂"></a>整数次幂</h2><h3 id="递归"><a href="#递归" class="headerlink" title="递归"></a>递归</h3><p>当我们要计算 x^n（n为整数）时，我们可以先计算出 y = x^⌊n/2⌋，其中 ⌊n/2⌋ 表示进行下取整；</p>
+<p>如果 n 为偶数，那么 x^n = y^2 </p>
+<p>如果 n 为奇数，那么 x^n = y^2*x；（如果n是负数，那么/x）</p>
+<p>边界条件 n = 0</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="type">double</span> <span class="title function_">myPow</span><span class="params">(<span class="type">double</span> x, <span class="type">int</span> n)</span> &#123;</span><br><span class="line">    <span class="keyword">if</span>(n == <span class="number">0</span>) <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">    <span class="type">double</span> <span class="variable">y</span> <span class="operator">=</span> myPow(x, n/<span class="number">2</span>); <span class="comment">// 存储为y，避免重复计算y</span></span><br><span class="line">    <span class="type">double</span> <span class="variable">yy</span> <span class="operator">=</span> y*y;</span><br><span class="line">    <span class="keyword">if</span>(n % <span class="number">2</span> == <span class="number">0</span>) </span><br><span class="line">        <span class="keyword">return</span> yy;</span><br><span class="line">    <span class="keyword">else</span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(n &lt; <span class="number">0</span>) <span class="keyword">return</span> yy/x;</span><br><span class="line">        <span class="keyword">return</span> yy*x;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="快速幂"><a href="#快速幂" class="headerlink" title="快速幂"></a>快速幂</h3><p><strong>快速幂</strong></p>
+<p>例如，求x^77^</p>
+<p>利用幂运算的性质：x^a^ * x^b^ = x^a+b^，因此，只需要找到一组数，令它们之和为77。</p>
+<p>将 77 写作二进制表示， (1001101)，容易知道 77= 1 + 100 + 1000 + 1000000，写成十进制即：77=1+4+8+64</p>
+<p>注意这种算法<strong>要求 n 为正数（负数的二进制表示是补码），若n为负数需要先转化为正数</strong></p>
+<p>因此，我们递推 x^1^，x^2^，x^4^，x^8^，x^16^，x^32^，x^64^，对于有用的幂次方 1、4、8、64 拿来 计算。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="type">double</span> <span class="title function_">quickMul</span><span class="params">(<span class="type">double</span> x, <span class="type">long</span> N)</span> &#123;</span><br><span class="line">    <span class="type">double</span> <span class="variable">ans</span> <span class="operator">=</span> <span class="number">1.0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 贡献的初始值为 x</span></span><br><span class="line">    <span class="type">double</span> <span class="variable">x_contribute</span> <span class="operator">=</span> x;</span><br><span class="line">    <span class="keyword">while</span> (N &gt; <span class="number">0</span>) &#123; <span class="comment">// 遍历二进制位，递推x_contribute ，x^1, x^2, x^4,…,x^64</span></span><br><span class="line">        <span class="keyword">if</span> (N % <span class="number">2</span> == <span class="number">1</span>) &#123;</span><br><span class="line">            ans *= x_contribute;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 递推</span></span><br><span class="line">        x_contribute *= x_contribute;</span><br><span class="line"></span><br><span class="line">        N &gt;&gt;= <span class="number">2</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> ans;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="幂不为整数"><a href="#幂不为整数" class="headerlink" title="幂不为整数"></a>幂不为整数</h2><p>当n不为整数，例如当n=1/2，即计算根号x时：<a href="https://leetcode-cn.com/problems/sqrtx/">69. x 的平方根 </a></p>
+<p>二分查找结果，需要注意溢出问题，即判断a*a与x的大小关系时，a*a有可能溢出</p>
+<p>牛顿迭代法（基于二阶泰勒）</p>
+<h1 id="异或运算"><a href="#异或运算" class="headerlink" title="异或运算"></a>异或运算</h1><p><img src="/2022/04/24/basic-calculation/image-20220426111659514.png" alt></p>
+<p>性质5推广：</p>
+<p>设函数</p>
+<script type="math/tex; mode=display">
+sumXOR(x)=0⊕1⊕⋯⊕x</script><p>——根据性质5，易知：对于任意整数 i，以 4i 为开头的连续四个整数异或的结果为 0，因此，将 0~x 按每四个数为一组分别求异或进行化简得：</p>
+<p><img src="/2022/04/24/basic-calculation/image-20220426111752200.png" alt></p>
+<p>利用异或运算性质易知：任意连续整数序列的异或和</p>
+<script type="math/tex; mode=display">
+a⊕(a+1)⊕⋯⊕(a+n)=sumXOR(a+n)⊕sumXOR(a-1)</script><p>例题：<a href="https://leetcode-cn.com/problems/xor-operation-in-an-array/">1486. 数组异或操作</a></p>
+<p>给你两个整数，n 和 start 。</p>
+<p>数组 nums 定义为：nums[i] = start + 2*i（下标从 0 开始）且 n == nums.length 。</p>
+<p>请返回 nums 中所有元素按位异或（XOR）后得到的结果。</p>
+<p>求：</p>
+<script type="math/tex; mode=display">
+ans=start⊕(start+2)⊕…⊕(start+2(n-1))</script><p>考虑用性质 5 推论求解。需要将式中的运算数化为连续整数。</p>
+<p>为此，我们尝试将每个运算数除以 2（向下取整），得：</p>
+<script type="math/tex; mode=display">
+ans=2×[s⊕(s+1)⊕…⊕(s+(n-1))]+e</script><p>式中，$s=\lfloor start/2 \rfloor$，e 表示 ans 的最低位。向下取整是因为我们实际上做的是对每个运算数右移一位的操作。乘 2 实际上是左移操作。</p>
+<p>如下证明该式的正确性：</p>
+<p>1 根据移位运算性质有：</p>
+<script type="math/tex; mode=display">
+(a+b)≫1=(a≫1)+(b≫1)</script><p>2 证</p>
+<script type="math/tex; mode=display">
+a⊕b=2×[(a≫1)⊕(b≫1)]+e</script><p><img src="/2022/04/24/basic-calculation/image-20220426112044386.png" alt></p>
+<p>于是，</p>
+<script type="math/tex; mode=display">
+\begin{align*}
+ans&=sumXOR(s+n-1)⊕sumXOR(s-1)\\ 
+e &=n\&start\&1
+
+\end{align*}</script><h2 id="只出现一次的数字"><a href="#只出现一次的数字" class="headerlink" title="只出现一次的数字"></a>只出现一次的数字</h2><p><strong>基本问题</strong></p>
+<p>如果除了一个数字以外，其他数字都出现了两次，那么如何找到出现一次的数字？</p>
+<p>全员进行异或操作，结果就是那个出现了一次的数字。也可以用扩展内容的方法。</p>
+<p><strong>拓展</strong></p>
+<p>在一个数组 nums 中除一个数字只出现一次之外，其他数字都出现了三次。请找出那个只出现一次的数字。</p>
+<p>观察所有数的某一比特位。对于只出现了一次的数字的第 i 个二进制位，它可能为 0 或 1。对于数组中其他的元素，每一个元素都出现了 3 次，对应着第 i 个二进制位的 3 个 0 或 3 个 1，无论是哪一种情况，它们的和（十进制和）都是 3 的倍数（即和为 0 或 3）。</p>
+<p>因此，<strong>数组中所有元素的第 i 个二进制位之和（十进制求和）除以 3 的余数等于只出现一次的数字的第i位</strong></p>
+<p>这样一来，对于数组中的每一个元素 x，我们使用位运算(x &gt;&gt; i) &amp; 1 得到 x 的第 i 个二进制位，并将它们相加再对 3 取余，得到的结果一定为 0 或 1，即为答案的第 i 个二进制位。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Solution</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="type">int</span> <span class="title function_">singleNumber</span><span class="params">(<span class="type">int</span>[] nums)</span> &#123;</span><br><span class="line">        <span class="type">int</span>[] counts = <span class="keyword">new</span> <span class="title class_">int</span>[<span class="number">32</span>];</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> num : nums) &#123;</span><br><span class="line">            <span class="keyword">for</span>(<span class="type">int</span> <span class="variable">j</span> <span class="operator">=</span> <span class="number">0</span>; j &lt; <span class="number">32</span>; j++) &#123;</span><br><span class="line">                counts[j] += num &amp; <span class="number">1</span>;</span><br><span class="line">                num &gt;&gt;&gt;= <span class="number">1</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="type">int</span> <span class="variable">res</span> <span class="operator">=</span> <span class="number">0</span>, m = <span class="number">3</span>;</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> <span class="number">0</span>; i &lt; <span class="number">32</span>; i++) &#123;</span><br><span class="line">            res &lt;&lt;= <span class="number">1</span>;</span><br><span class="line">            res |= counts[<span class="number">31</span> - i] % m;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> res;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>实际上，通用解法不需要每次求状态转移方程和输出方程，容易直接推广到：</p>
+<p>在一个数组 nums 中除一个数字只出现一次之外，其他数字都出现了 m 次</p>
+<p>上述方法中，我们是依次处理32个比特位的。对于每个二进制位的运算结果（即求和再对 3 取余），实际上满足以下关系：</p>
+<p><img src="/2022/04/24/basic-calculation/image-20220426112431394.png" alt></p>
+<p>这其实是一个状态机的图。为了用一个关系式描述来描述这个状态机，依据数电的知识，首先需要用两个二进制位来表示 3 个状态，状态机的变量就是两个二进制位。</p>
+<p><img src="/2022/04/24/basic-calculation/image-20220426112457632.png" alt></p>
+<p>接下来，需要通过 <strong>状态转移表</strong> 导出 <strong>状态转移的公式</strong> </p>
+<p><img src="/2022/04/24/basic-calculation/image-20220426112510102.png" alt></p>
+<p>根据此表中新的ai为1的行，可得新的ai的求法：</p>
+<script type="math/tex; mode=display">
+a_{i}^{'}=\bar{a_{i}}b_{i}x_{i}+a_{i}\bar{b_{i}}x_{i}</script><p>同理得新的bi的求法：</p>
+<script type="math/tex; mode=display">
+b_{i}^{'}=\bar{a_{i}}\bar{b_{i}}x_{i}+\bar{a_{i}}b_{i}\bar{x_{i}}=\bar{a_{i}}(b_{i}⊕x_{i})</script><p>通常我们还需要画出输出状态表，便于得到每次状态转移后对应的输出，但由于此题只需要最终的输出值，因此不需要记录输出变量。</p>
+<p>当我们遍历完数组中的所有元素后，aibi要么是 00，表示答案的第 i 位是 0；要么是 01，表示答案的第 i 位是 1。注意，不存在状态机中的10状态，该状态只在未遍历完成时有可能出现。因此我们只需要返回 b 作为答案即可。</p>
+<p>由于每个二进制位满足如上两个关系式，因此我们可以把两个二进制位的位运算推广到两个整数的位运算，即设整数a、b，遍历数组中任意一个整数，代入上述两个位运算公式改变a、b。</p>
+<h2 id="两个只出现一次的数字"><a href="#两个只出现一次的数字" class="headerlink" title="两个只出现一次的数字"></a>两个只出现一次的数字</h2><p>如果除了两个数字以外，其他数字都出现了两次，那么如何找到两个只出现一次的数字？<a href="https://leetcode-cn.com/problems/single-number-iii/">260. 只出现一次的数字 III</a></p>
+<p>如果我们可以把所有数字分成两组，使得：</p>
+<p>两个只出现一次的数字在不同的组中；</p>
+<p>相同的数字会被分到相同的组中。</p>
+<p>相当于分解成了基础问题：一个数组中只出现一次的数字。那么对两个组分别进行异或操作，即可得到答案的两个数字。</p>
+<p>如何实现这样的分组呢？</p>
+<p>结论1：若数组中每个数字都出现了两次，任选一个二进制位<em>i</em>，将该位为1的分为一组，该位为0的分为一组，可以保证每组中仍满足每个数字都出现了两次，即相同元素（任意二进制位相同）必被分为同组</p>
+<p>记这两个只出现了一次的数字为 <em>a</em> 和 <em>b</em>，设 <em>a</em> 和 <em>b</em> 异或结果为<em>x</em>，设<em>xi</em>表示<em>x</em>二进制第<em>i</em>位，<em>ai</em>表示<em>a</em>二进制第<em>i</em>位，<em>bi</em>表示<em>b</em>二进制第<em>i</em>位.</p>
+<p>因为a≠b，所以a和b一定存在不同的二进制位。设<em>xi</em>=1，即<em>ai</em> ≠ <em>bi</em>，因此根据第<em>i</em>位，能将<em>a</em>和<em>b</em>分开。</p>
+<p>结合结论1，有：</p>
+<p>结论2：将数组看作<em>a</em>、<em>b</em>、其他数字的集合（每个数字都出现了两次），按照第<em>i</em>位分成两组，可以保证每组只含<em>a</em>或<em>b</em>，组中剩余数字（每个数字都出现了两次）</p>
+<p>实际操作：先对所有数字异或得到数字<em>x</em>=<em>a</em>^<em>b</em>。然后任取满足<em>xi</em>=1的位<em>i</em>（由于a≠b，因此该位必定存在），分为两组。在每个组内进行异或操作，得到两个数字。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="type">int</span>[] singleNumber(<span class="type">int</span>[] nums) &#123;</span><br><span class="line">    <span class="type">int</span> <span class="variable">xorsum</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> x : nums) &#123;</span><br><span class="line">        xorsum ^= x;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="type">int</span> <span class="variable">div</span> <span class="operator">=</span> <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">while</span> ((div &amp; xorsum) == <span class="number">0</span>) &#123; <span class="comment">// 找到所有元素异或和为1的位置i，该位置用1&lt;&lt;i表示，而不用第i位表示</span></span><br><span class="line">        div &lt;&lt;= <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="type">int</span> <span class="variable">a</span> <span class="operator">=</span> <span class="number">0</span>, b = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> x : nums) &#123;</span><br><span class="line">        <span class="keyword">if</span> ((div &amp; x) != <span class="number">0</span>) &#123; <span class="comment">// 分组，该位为0的分到一组</span></span><br><span class="line">            a ^= x;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            b ^= x;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">int</span>[]&#123;a, b&#125;;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+]]></content>
+      <categories>
+        <category>算法</category>
+      </categories>
   </entry>
   <entry>
     <title>统计频数</title>
@@ -3128,7 +3340,7 @@ dp[i][j] = dp[i-1][(j-1+length)\%length] + dp[i-1][(j+1)\%length]</script><figur
       </categories>
   </entry>
   <entry>
-    <title>graph alg</title>
+    <title>图算法</title>
     <url>/2022/04/24/graph-alg/</url>
     <content><![CDATA[<p>图的存储方式、搜索遍历方式，图的各种算法</p>
 <span id="more"></span>
@@ -3250,7 +3462,9 @@ dp[i][j] = dp[i-1][(j-1+length)\%length] + dp[i-1][(j+1)\%length]</script><figur
 <p><a href="https://leetcode-cn.com/problems/combination-sum-ii/">40. 组合总和 II</a></p>
 <p>设 candidates = [2, 1, 2, 2, 5], target = 5。为了去重以及第一个break，先将它排序 </p>
 <p><img src="/2022/04/24/graph-alg/image-20220425112047920.png" alt="image-20220425112047920"></p>
-<h1 id="拓扑排序"><a href="#拓扑排序" class="headerlink" title="拓扑排序"></a>拓扑排序</h1><p>许多实际应用都用有向无环图来指明事件的优先次序、顺序逻辑。例如穿衣服可以这么穿：</p>
+<h4 id><a href="#" class="headerlink" title=" "></a> </h4><p> <a href="https://leetcode-cn.com/problems/reordered-power-of-2/">869. 重新排序得到 2 的幂</a></p>
+<p><a href="https://leetcode-cn.com/problems/letter-combinations-of-a-phone-number/">17. 电话号码的字母组合</a></p>
+<h4 id="-1"><a href="#-1" class="headerlink" title=" "></a> </h4><h1 id="拓扑排序"><a href="#拓扑排序" class="headerlink" title="拓扑排序"></a>拓扑排序</h1><p>许多实际应用都用有向无环图来指明事件的优先次序、顺序逻辑。例如穿衣服可以这么穿：</p>
 <p><img src="/2022/04/24/graph-alg/image-20220425143754658.png" alt></p>
 <p>上图描述的是经过拓扑排序后的节点次序，这个<strong>次序与节点的完成时间正好相反</strong></p>
 <p>可以将图的拓扑排序看做是将图的 <strong>所有</strong> 结点在一条水平线上展开，图的所有边都由左指向右。如果存在多个入度为 0 的节点，能构成多个线性排序的子图，仍旧可以把它们放到一条水平线上，虽然存在断点。</p>
@@ -3297,7 +3511,67 @@ dp[i][j] = dp[i-1][(j-1+length)\%length] + dp[i-1][(j+1)\%length]</script><figur
 <p>常见的一些实现方式中，并没有维护最小优先队列，而是遍历剩余未添加到树 A 的节点，并查看其 key 属性，找到符合条件的节点。</p>
 <p><strong>Prim 算法的 Java 实现</strong></p>
 <figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Node</span>&#123;</span><br><span class="line">    <span class="type">int</span> key;</span><br><span class="line">    <span class="type">int</span> parent; <span class="comment">// 标记本节点的父结点，-1 表示不存在</span></span><br><span class="line">    <span class="type">int</span> val; <span class="comment">// 标记本节点</span></span><br><span class="line">    <span class="type">boolean</span> inQueue; <span class="comment">// true 表示该节点在队列中</span></span><br><span class="line"></span><br><span class="line">    Node(<span class="type">int</span> k, <span class="type">int</span> p, <span class="type">int</span> v, <span class="type">boolean</span> iQ)&#123;</span><br><span class="line">        <span class="built_in">this</span>.key = k;</span><br><span class="line">        <span class="built_in">this</span>.parent = p;</span><br><span class="line">        <span class="built_in">this</span>.val = v;</span><br><span class="line">        <span class="built_in">this</span>.inQueue = iQ;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 邻接矩阵存储图，0 表示无连接</span></span><br><span class="line"><span class="keyword">public</span> List&lt;Node&gt; <span class="title function_">mstPrim</span><span class="params">(<span class="type">int</span>[][] graph)</span>&#123;</span><br><span class="line">    PriorityQueue&lt;Node&gt; q = <span class="keyword">new</span> <span class="title class_">PriorityQueue</span>&lt;&gt;(<span class="keyword">new</span> <span class="title class_">Comparator</span>&lt;Node&gt;() &#123;</span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="keyword">public</span> <span class="type">int</span> <span class="title function_">compare</span><span class="params">(Node e1, Node e2)</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> e1.key - e2.key;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">    List&lt;Node&gt; nodes = <span class="keyword">new</span> <span class="title class_">ArrayList</span>&lt;&gt;(); <span class="comment">// nodes 中 inQueue 属性为 false 的节点即为树 A 中的节点</span></span><br><span class="line">    <span class="type">int</span> <span class="variable">N</span> <span class="operator">=</span> graph.length;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;N;++i)&#123;</span><br><span class="line">        <span class="type">Node</span> <span class="variable">n</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Node</span>(Integer.MAX_VALUE, -<span class="number">1</span>, i, <span class="literal">true</span>);</span><br><span class="line">        <span class="keyword">if</span>(i == <span class="number">0</span>)</span><br><span class="line">            n.key = <span class="number">0</span>; <span class="comment">// 保证一开始的队头元素符合要求</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">// 传递引用</span></span><br><span class="line">        q.offer(n); </span><br><span class="line">        nodes.add(n);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span>(!q.isEmpty())&#123;</span><br><span class="line">        <span class="type">Node</span> <span class="variable">u</span> <span class="operator">=</span> q.poll();</span><br><span class="line">        u.inQueue = <span class="literal">false</span>;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;N;++i)&#123;</span><br><span class="line">            <span class="keyword">if</span>(graph[u.val][i] != <span class="number">0</span>)&#123;</span><br><span class="line">                <span class="type">Node</span> <span class="variable">v</span> <span class="operator">=</span> nodes.get(i);</span><br><span class="line"></span><br><span class="line">                <span class="keyword">if</span>(v.inQueue &amp;&amp; graph[u.val][i] &lt; v.key)&#123;</span><br><span class="line">                    v.parent = u.val;</span><br><span class="line">                    v.key = graph[u.val][i];</span><br><span class="line"></span><br><span class="line">                    <span class="comment">// 删除再加入，维护队列性质</span></span><br><span class="line">                    q.remove(v);</span><br><span class="line">                    q.offer(v);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> nodes; <span class="comment">// 通过节点的 parent 属性得到树结构</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h1 id="最短路径"><a href="#最短路径" class="headerlink" title="最短路径"></a>最短路径</h1>]]></content>
+<h1 id="单源最短路径"><a href="#单源最短路径" class="headerlink" title="单源最短路径"></a>单源最短路径</h1><p><strong>单源最短路径问题</strong>：给定一个图 G=(V, E)，我们希望找到从给定源结点 s 到每个节点的最短路径。</p>
+<p><strong>最短路径的表示</strong>：在通常情况下，我们不但希望计算出最短路径的权重，还希望知道路径上的结点。因此，对于每个节点，维护属性 p，它并不表示在有向图中的父结点，而用于存储从源结点到本节点的最短路径中，自己的父结点。在一开始，所有节点的属性 p 为 NULL</p>
+<h2 id="松弛操作"><a href="#松弛操作" class="headerlink" title="松弛操作"></a>松弛操作</h2><p>对每个结点 v 来说，我们维持一个属性 v.d，v.d 为源结点 s 到结点 v 的<strong>最短路径估计</strong>，使用以下初始化算法对各个结点的最短路径估计和前驱结点进行初始化。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">INITIALIZE-SINGLE-SOURCE(G, s)</span><br><span class="line">	for v in G.V:</span><br><span class="line">		v.d = INF</span><br><span class="line">		v.p = NULL</span><br><span class="line">	s.d = 0 // 覆盖上面对 s.d = INF 的修改</span><br></pre></td></tr></table></figure>
+<p>对边 (u, v) 的<strong>松弛</strong>操作就是根据源结点 s 到结点 u 的最短路径估计来更新：</p>
+<ul>
+<li>源结点 s 到结点 v 的最短路径估计 <strong>v.d</strong></li>
+<li>节点 v 的最短路径估计的前驱节点 <strong>v.p</strong></li>
+</ul>
+<p>对边 (u, v) 的松弛过程可用如下伪代码描述。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">RELAX(u, v)</span><br><span class="line">	if v.d &gt; u.d+w(u, v)</span><br><span class="line">		v.d = u.d+w(u, v)</span><br><span class="line">		v.p = u</span><br></pre></td></tr></table></figure>
+<h2 id="最短路径具有的性质"><a href="#最短路径具有的性质" class="headerlink" title="最短路径具有的性质"></a>最短路径具有的性质</h2><p>1、<strong>最优子结构性质</strong>：最短路径的子路径也是最短路径</p>
+<p>2、<strong>无环路</strong>：首先要明确一点，环路是可以一直走的。对于某条路径，如果加入一条路径后成为环路：</p>
+<ul>
+<li>当<strong>环路的</strong>权重为负数时（环路所有边的权重之和），只要沿着这条环路不停地走，路径的权重值就能一直减小，趋于负无穷，<strong>不存在最短路径</strong></li>
+<li>当环路的权重非负时，<strong>有最短路径</strong>，最短路径一定不是环路。例如，对于下图的 cd 环路，环路的权重非负，c 到 d 的最短路径是 6，这是因为 c 到 d 之后，多次走 d-&gt;c-&gt;d 这条环路，权重会不断增大。</li>
+</ul>
+<p><img src="/2022/04/24/graph-alg/image-20220426164546025.png" alt></p>
+<blockquote>
+<p><strong>单源最短路径存在的充要条件</strong>：源结点 s 没有可以到达的权重为负数的环路</p>
+</blockquote>
+<p>3、最短路径可能有多条</p>
+<p><strong>以下几条性质与最短路径算法有关</strong>。</p>
+<p>4、<strong>三角不等式性质</strong>：假定源结点 s 到结点 v 的最短路径为 p，则 p 的权重一定比任何从 s 到 v 的其他路径的权重小。这是非常自然地，因为这就是最短路径的定义。</p>
+<script type="math/tex; mode=display">
+δ(s,v)≤δ(s,u)+w(u,v)</script><p>这条性质提出的目的是为了将最短路径进行抽象化简单描述。简单地作图时，可以把最短路径画成直接连接 s 和 v 的线段，结点 u 的位置只能在这线段上或者线段外，形如三角形，因此叫做三角不等式性质。</p>
+<p>5、<strong>收敛性质</strong>：设 s -&gt; u -&gt; … -&gt; v 是图 G 中源 s 到 节点 v 的一条最短路径。假定图 G 由 INITIALIZE—SINGLE—SOURCE(G, s) 算法进行初始化，并在之后进行了一系列的松弛操作。如果在对边 (u, v) 进行松弛之前的任意时刻有 u.d=δ(s, u)，即已经找到源结点 s 到结点 u 的最短路径，则在对边 (u, v) 进行松弛操作后，有 v.d=δ(s, v)，也就是说，找到了源结点 s 到结点 v 的最短路径</p>
+<p><img src="/2022/04/24/graph-alg/image-20220426165344733.png" alt></p>
+<h2 id="单源最短路径的变体问题"><a href="#单源最短路径的变体问题" class="headerlink" title="单源最短路径的变体问题"></a>单源最短路径的变体问题</h2><p><strong>单源最短路径问题</strong>：给定一个图 G=(V, E)，我们希望找到从给定源结点 s 到每个节点的最短路径。</p>
+<p><strong>单目的地最短路径问题</strong>：<strong>将源结点设为目的结点，将图的每条边的方向翻转</strong>，该问题即成为了单源最短路径问题。</p>
+<p>所有结点对最短路径问题：要求得到所有结点对的最短路径。虽然可以对所有节点对运行一遍单源最短路径算法，但存在更快的解决方法。</p>
+<h2 id="单源最短路径算法"><a href="#单源最短路径算法" class="headerlink" title="单源最短路径算法"></a>单源最短路径算法</h2><p>Bellman-Ford 算法解决的是一般情况下的单源最短路径问题。在这里，边的权值可以为负数。Bellman-Ford 算法返回一个布尔值，用来表明是否存在一个从源结点可以到达的权重为负值的环路。</p>
+<p>有向无环图的单源最短路径算法 Dag-Shortest-Paths 算法。在有向无环图中，即使存在权重为负值的边，但因为没有权重为负值的环路，满足最短路径的存在性充要条件。</p>
+<p>Dijkstra 算法可以解决单源最短路径问题，它要求所有边的权重不为负数，因此一定不存在权重为负值的环路。</p>
+<p>广度优先搜索：只能用于求解<strong>无权重</strong>的图的单源最短路径问题。路径的长度为访问过的节点个数。结点同样具有属性 d 和属性 p，但是结点的属性 d 不再是用权值衡量</p>
+<p>深度优先搜索：本质上应该是 Dag-Shortest-Paths 算法？dfs 的参数即为结点的两个属性。</p>
+<h3 id="BELLMAN-FORD-算法"><a href="#BELLMAN-FORD-算法" class="headerlink" title="BELLMAN-FORD 算法"></a>BELLMAN-FORD 算法</h3><p>Bellman-Ford 算法实现如下：</p>
+<p><img src="/2022/04/24/graph-alg/image-20220426171511348.png" alt></p>
+<p>首先对所有节点的 d 值和 p 值进行初始化，然后对图的每条边进行 |V|-1 次松弛操作。执行完松弛操作后，算法第 5~8 行检查图中是否存在权重为负值的环路。</p>
+<p>Bellman-Ford 算法基于路径松弛性质运行。正确性的证明见算法导论。</p>
+<h3 id="Dag-Shortest-Paths-算法"><a href="#Dag-Shortest-Paths-算法" class="headerlink" title="Dag-Shortest-Paths 算法"></a>Dag-Shortest-Paths 算法</h3><p>Dag-Shortest-Paths 算法实现如下：</p>
+<p><img src="/2022/04/24/graph-alg/image-20220426192722448.png" alt></p>
+<p>首先对有向无环图进行拓扑排序，根据节点的拓扑排序次序访问每个节点，对于任意一个节点，对从该节点出发的所有边进行松弛操作</p>
+<h3 id="Dijkstra-算法"><a href="#Dijkstra-算法" class="headerlink" title="Dijkstra 算法"></a>Dijkstra 算法</h3><p>Dijkstra 算法实现如下：</p>
+<p><img src="/2022/04/24/graph-alg/image-20220426195639361.png" alt></p>
+<p>Dijkstra 算法的关键在于维持循环不变量：节点集合 S，从源结点 s 到该集合中每个节点的最短路径已被找到。算法不断从节点集合 Q=V-S 中选择最短路径估计最小的结点 u，将 u 加入到集合 s，然后对所有从 u 出发的边进行松弛。</p>
+<p>在一开始，Q 中只有源结点 s 的 s.d = 0，它将被选出。使用最小优先队列保存 Q，Q 的每个元素是一个结点，包含 d 和 p 属性，按照结点的 d 属性进行排序。具体实现方法可以参考 Prim 算法。</p>
+<blockquote>
+<p>Dijkstra 算法是一种贪心算法，在《算法导论》中证明了它的正确性。</p>
+</blockquote>
+<h3 id="广度优先搜索-1"><a href="#广度优先搜索-1" class="headerlink" title="广度优先搜索"></a>广度优先搜索</h3><h4 id="相关题目-1"><a href="#相关题目-1" class="headerlink" title="相关题目"></a>相关题目</h4><p><a href="https://leetcode-cn.com/problems/snakes-and-ladders/">909. 蛇梯棋</a></p>
+<p><a href="https://mp.weixin.qq.com/s?__biz=MzU4NDE3MTEyMA==&amp;mid=2247487179&amp;idx=1&amp;sn=e30a662c03fba3861254dbcf3fb9d6f2&amp;chksm=fd9ca5d4caeb2cc205804fd17a2ce86b25d0408adc3417e73154f59d37e7cb17e02374f5122c&amp;scene=178&amp;cur_album_id=1917113998693449732#rd">1162. 地图分析</a> </p>
+<p>对于本题，如果用「单源最短路径」的方法，我们需要对每个「海洋」位置做一次 BFS：求得每个「海洋」的最近陆地距离，然后在所有的距离中取最大值作为答案。</p>
+<p>以本题为例，题面要我们求每个「海洋」区域到最近的「陆地」区域的最大值。</p>
+<ul>
+<li>首先，我们可以想象存在一个「虚拟源点」，其与所有「真实源点」（陆地）存在等权的边，那么任意「海洋」区域与「最近的陆地」区域的最短路等价于与「虚拟源点」的最短路径，</li>
+<li>于是，问题转化为：所有「海洋」位置到「虚拟源点」的最短路径权值的最大值，这是一个<strong>单目的地最短路径问题</strong></li>
+<li>于是，可以根据单目的地最短路径问题的思路进行解决，把「虚拟源点」当作源节点，所有海洋位置当作目的节点。</li>
+</ul>
+<p>值得注意的是，实现上，我们并不需要真的将这个「虚拟源点」建立出来，因为，从该节点出发能够等距地到达所有陆地节点，因为我们可以略去「源结点入队列」这步初始操作，而直接到下一步操作「源结点能到达的子节点入队列」，也就是，在一开始让所有的「陆地」节点入队列。</p>
+<h3 id="深度优先搜索-1"><a href="#深度优先搜索-1" class="headerlink" title="深度优先搜索"></a>深度优先搜索</h3>]]></content>
       <categories>
         <category>算法</category>
       </categories>
@@ -3578,9 +3852,9 @@ dp[i][j] = dp[i-1][(j-1+length)\%length] + dp[i-1][(j+1)\%length]</script><figur
     <url>/2022/04/20/sort/</url>
     <content><![CDATA[<p>排序算法的评价标准主要有：时间复杂度、空间复杂度和稳定性（待排序的序列中有两元素相等，排序之后它们的先后顺序不变）</p>
 <span id="more"></span>
-<p><img src="/2022/04/20/sort/sort.png" alt="img"></p>
+<p><img src="/2022/04/20/sort/sort.png" alt></p>
 <h1 id="选择排序"><a href="#选择排序" class="headerlink" title="选择排序"></a>选择排序</h1><p>维护循环不变量，即将数组划分为 （有序区，无序区），每次在无序区中选出最小的数（通过记录当前遇到的最小值的方法），放到有序区的后面（与无序区第一个元素进行交换）。</p>
-<p><img src="/2022/04/20/sort/selectionSort.gif" alt="img"></p>
+<p><img src="/2022/04/20/sort/selectionSort.gif" alt></p>
 <p>性能分析：</p>
 <ul>
 <li><p>稳定性：交换操作可能导致两相等元素的相对位置改变，因此是<strong>不稳定</strong>的</p>
@@ -3596,7 +3870,7 @@ dp[i][j] = dp[i-1][(j-1+length)\%length] + dp[i-1][(j+1)\%length]</script><figur
 <li>比较相邻的元素。如果第一个比第二个大，就交换他们两个。</li>
 <li>对每一对相邻元素作同样的工作，从开始第一对到结尾的最后一对。这步做完后，最后的元素会是最大的数。</li>
 </ul>
-<p><img src="/2022/04/20/sort/bubbleSort.gif" alt="img"></p>
+<p><img src="/2022/04/20/sort/bubbleSort.gif" alt></p>
 <p>性能分析：</p>
 <ul>
 <li><p>稳定性：<strong>虽然有交换操作</strong>，但是这种交换操作不会导致两相等元素的相对位置改变，因此是稳定的</p>
@@ -3607,7 +3881,7 @@ dp[i][j] = dp[i-1][(j-1+length)\%length] + dp[i-1][(j+1)\%length]</script><figur
 <h1 id="插入排序"><a href="#插入排序" class="headerlink" title="插入排序"></a>插入排序</h1><p>维护循环不变量，即将数组划分为 （有序区，无序区），每次把无序区的第一个元素插入到有序区的合适位置中。</p>
 <p>插入操作：对于数组来说，需要执行多次的赋值操作，对于链表才是真正意义上的插入操作。</p>
 <figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">insertion_sort</span><span class="params">(<span class="type">int</span> arr[], <span class="type">int</span> len)</span>&#123;</span><br><span class="line">    <span class="type">int</span> i,j,key;</span><br><span class="line">    <span class="keyword">for</span> (i=<span class="number">1</span>;i&lt;len;i++)&#123;</span><br><span class="line">        key = arr[i];</span><br><span class="line">        j=i<span class="number">-1</span>;</span><br><span class="line">        <span class="keyword">while</span>((j&gt;=<span class="number">0</span>) &amp;&amp; (arr[j]&gt;key)) &#123;</span><br><span class="line">            arr[j+<span class="number">1</span>] = arr[j];</span><br><span class="line">            j--;</span><br><span class="line">        &#125;</span><br><span class="line">        arr[j+<span class="number">1</span>] = key;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><img src="/2022/04/20/sort/insertionSort.gif" alt="img"></p>
+<p><img src="/2022/04/20/sort/insertionSort.gif" alt></p>
 <p>性能分析：</p>
 <ul>
 <li><p>稳定性：由于是从后往前顺序地找插入点，因此不会导致两相等元素的相对位置改变，因此是<strong>稳定</strong>的。从前往后找插入点可能会不稳定，除非在相等时继续往后走。</p>
@@ -3707,12 +3981,106 @@ right(i)=2i+2</script><p>通过对二叉堆结点关系进行限制，我们可�
 <li>MAX-HEAP-INSERT、HEAP-EXTRACT-MAX、HEAP-INCREASE-KEY 和 HEAP-MAXIMUM：时间复杂度都是 O(logn)，功能是用堆维护优先队列</li>
 </ul>
 <h2 id="最大堆"><a href="#最大堆" class="headerlink" title="最大堆"></a>最大堆</h2><h3 id="MAX-HEAPIFY"><a href="#MAX-HEAPIFY" class="headerlink" title="MAX-HEAPIFY"></a>MAX-HEAPIFY</h3><p>对于一个根节点为 i 的二叉堆，<strong>假设它的左右两颗子树都已经是最大堆</strong>，通过 MAX—HEAPIFY 操作，可将这个二叉堆转化为最大堆。</p>
-<p><img src="/2022/04/20/sort/image-20220425215723705.png" alt="image-20220425215723705"></p>
-<p>第 3 行的作用是，从 A[i]、A[left[i] 和A[right[i]] 中选出最大值，最大值的索引存储为largest。基于前提条件：i 的左右两颗子树都已经是最大堆，如果 A[i] 是最大的，那么以 i 为结点的子树已经是最大堆，结束。如果最大值 i 的某个孩子结点，则将其与根节点交换。交换后，A[i]、A[left[i] 和A[right[i]] 满足最大堆性质，未被交换的子树仍然是最大堆，而被交换了的子树满足MAX-HEAPIFY函数的条件，对其递归调用该函数即可。</p>
-<p>证：交换后 A[i] 是 i 为根节点的子树最大值：<br>根据：i 的左右两颗子树都已经是最大堆，易知 A[left[i] 和 A[right[i]] 是这两个最大堆中的最大值，因此交换后满足：A[i] 是 i 为根节点的子树最大值。</p>
-<p>max(A[i], A[l], A[r]) 的实现：比较两次，每次更新更大值的索引<br>largest = i;<br>if(l &lt;= A.heapsize &amp;&amp; A[l] &gt; A[largest])<br>    largest = l;<br>if(r &lt;= A.heapsize &amp;&amp; A[r] &gt; A[largest])<br>    largest = r;</p>
-<p>注意保证l和r&lt;=A.heapsize，即在二叉堆中</p>
-<h3 id="BUILD-MAX-HEAP"><a href="#BUILD-MAX-HEAP" class="headerlink" title="BUILD-MAX-HEAP"></a>BUILD-MAX-HEAP</h3>]]></content>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">MAX-HEAPIFY(A, i, A.heapsize)&#123;</span><br><span class="line">	l = left(i)</span><br><span class="line">	r = right(i);</span><br><span class="line">	</span><br><span class="line">	// 从 A[i]、A[l] 和 A[r] 中选出最大值，最大值的索引存储为 largest。</span><br><span class="line">	// 注意 A.heapsize 作为参数传入，保证 l 和 r&lt;=A.heapsize，即在二叉堆中</span><br><span class="line">	largest = max(A, i, l, r, A.heapsize);</span><br><span class="line">	if largest != i</span><br><span class="line">		swap(A, largest, i)</span><br><span class="line">		MAX-HEAPIFY(A, largest, A.heapize)</span><br><span class="line">&#125;</span><br><span class="line">max(A, i, l, r, A.heapsize)&#123;</span><br><span class="line">    largest = i;</span><br><span class="line">    if(l &lt;= A.heapsize &amp;&amp; A[l] &gt; A[largest])</span><br><span class="line">        largest = l;</span><br><span class="line">    if(r &lt;= A.heapsize &amp;&amp; A[r] &gt; A[largest])</span><br><span class="line">        largest = r;</span><br><span class="line">    </span><br><span class="line">    return largest;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>基于前提条件：i 的左右两颗子树都已经是最大堆。</p>
+<ul>
+<li>如果 A[i] 是最大的，那么以 i 为结点的子树已经是最大堆，结束。</li>
+<li>如果最大值是 i 的某个孩子结点，则将其与根节点交换。交换后，A[i]、A[l] 和 A[r] 满足最大堆性质，未被交换的子树仍然是最大堆，而被交换了的子树满足 MAX-HEAPIFY 函数的条件，对其递归调用该函数即可。</li>
+</ul>
+<blockquote>
+<p>证：交换后 A[i] 是 i 为根节点的子树最大值：</p>
+<p>根据：i 的左右两颗子树都已经是最大堆，易知 A[l] 和 A[r] 是这两个最大堆中的最大值，因此交换后满足：A[i] 是 i 为根节点的子树最大值。</p>
+</blockquote>
+<h3 id="BUILD-MAX-HEAP"><a href="#BUILD-MAX-HEAP" class="headerlink" title="BUILD-MAX-HEAP"></a>BUILD-MAX-HEAP</h3><p>对于数组 A ，我们可以用 <strong>建堆</strong> 的操作把它转化为最大堆。建堆的方法是：我们从树的<strong>叶子结点的父结点</strong>开始调用 MAX-HEAPIFY，直至根节点，从而使得整颗树成为最大堆。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">BUILD-MAX-HEAP(A)&#123;</span><br><span class="line">	A.heapsize = A.length; // 将下标 [1, A.length] 范围的元素建为最大堆</span><br><span class="line">	for(int i = A.length/2;i&gt;=1;--i)</span><br><span class="line">		MAX-HEAPIFY(A, i, A.heapize) // A.heapsize 保持不变</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>对于数组 A，叶子结点的父结点索引满足 &lt;= ⌊A.length/2⌋，如图索引为 5、4、3 的节点是叶子节点的父结点。</p>
+<p>循环不变式：每经过一次循环保证 [i:A.heapsize] 已经成为最大堆。</p>
+<p><img src="/2022/04/20/sort/image-20220426093603970.png" alt></p>
+<p>叶子节点只有一个节点，满足二叉堆的性质，因此可以从它的父结点开始调用 MAX-HEAPIFY。实际上，可以直接从 A.heapsize 开始调用 MAX-HEAPIFY，即对叶子节点也调用 MAX-HEAPIFY，从叶子节点的父结点开始建堆是为了节省时空。</p>
+<blockquote>
+<p>算法导论证明了：建堆操作的时间复杂度是 O(N) 而非粗略估计的 O(lgN)</p>
+</blockquote>
+<p>假如用树结构来存储最大堆，建堆操作也可写为：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">BUILD-MAX-HEAP(root)&#123;</span><br><span class="line">    BUILD-MAX-HEAP(root.left);</span><br><span class="line">    BUILD-MAX-HEAP(root.right);</span><br><span class="line">    MAX-HEAPIFY(A, root);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>用 A.heapsize 维护数组中已经成为二叉堆的区域右边界，左边界是i，</p>
+<h3 id="HEAPSORT"><a href="#HEAPSORT" class="headerlink" title="HEAPSORT"></a>HEAPSORT</h3><p>升序排序，使用最大堆</p>
+<ul>
+<li><p>初始：调用 BUILD-MAX-HEAP(A) 将输入数组 A 建成最大堆。</p>
+</li>
+<li><p>更新：因为数组中的最大元素总在根节点 A[1]处，将它与 A[end] 互换，把最大值放到数组末尾，然后去掉结点 end，并更新 end 为 end-1，然后对数组 A[1…end] 调用 MAX-HEAPIFY(A,1)，即维护其仍为最大堆，并继续执行交换结点、删除数组尾结点的操作。</p>
+</li>
+<li><p>终止：当 end=3，只剩最后一颗二叉树，执行 MAX-HEAPIFY(A,1) 后，能够一步得到三个结点的大小关系，于是令 end=2，结束。 </p>
+</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">HEAPSORT(A):</span><br><span class="line">    BUILD-MAX-HEAP(A)</span><br><span class="line">    </span><br><span class="line">    for i = A.length downto 2</span><br><span class="line">        swap(A, i, 1) // 与A[1] 即第一个元素 交换</span><br><span class="line">        --A.heapsize</span><br><span class="line">        MAX-HEAPIFY(A, 1, A.heapsize)</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>快排的性能通常优于堆排序。堆的独特优势在于它可以实现优先队列。——《算法导论》</p>
+</blockquote>
+<h4 id="性能分析-1"><a href="#性能分析-1" class="headerlink" title="性能分析"></a>性能分析</h4><p>最坏时间复杂度和最坏时间复杂度都是 O(NlogN)：无论数组是否有序，每次的执行过程是一样的，只不过，如果数组本身已经升序，每次 MAX-HEAPIFY 的消耗比数组本身是降序时候更大。</p>
+<p>空间复杂度：O(1)，如果 MAX-HEAPIFY 用递归实现，同样会有栈深度的空间复杂度，但是通常认为 HEAPSORT 使用 O(1) 空间</p>
+<p>稳定性：不稳定</p>
+<h2 id="实现优先队列"><a href="#实现优先队列" class="headerlink" title="实现优先队列"></a>实现优先队列</h2><p>堆的独特优势在于它可以实现优先队列。</p>
+<p>基于最大堆实现最大优先队列，最大优先队列支持以下几种操作：</p>
+<ul>
+<li>返回（并从优先队列中删除）值最大的元素，HEAP-EXTRACT-MAX(A)</li>
+<li>将元素 x 的值增加 到 k（对于最大优先队列，讨论增加值，对于最小优先队列，讨论减小值）；</li>
+<li>插入元素；</li>
+</ul>
+<p>这几个操作的时间复杂度都是 O(logn)</p>
+<h3 id="HEAP-EXTRACT-MAX-A"><a href="#HEAP-EXTRACT-MAX-A" class="headerlink" title="HEAP-EXTRACT-MAX(A)"></a>HEAP-EXTRACT-MAX(A)</h3><p>将 A[1] 作为返回值，然后将 A[1] 从堆中删除，用 A[A.heapsize]，即堆的最后一个元素填充 A[1]，并令A.heapsize-1 为新的堆大小，然后用 MAX-HEAPIFY 操作维护新堆仍为最大堆。</p>
+<h3 id="HEAP-INCREASE-KEY-A-i-k"><a href="#HEAP-INCREASE-KEY-A-i-k" class="headerlink" title="HEAP-INCREASE-KEY(A, i, k)"></a>HEAP-INCREASE-KEY(A, i, k)</h3><p>将元素 x=A[i] 的值增加到k。x 值增大后，有可能破坏最大堆性质。由于 x 的值是增大的，因此只有可能破坏从 parent[i] 到根节点路径上的最大堆性质。</p>
+<p>在 INCREASE(A, i, k) 操作中，当前元素会不断与其父结点比较键值大小，比父结点大则交换，直到当前元素的键值比父结点小，或者到了根节点，此时整颗树已经重新符合了最大堆的性质。（自底向上的 MAX-HEAPIFY）</p>
+<p><img src="/2022/04/20/sort/image-20220426100537994.png" alt></p>
+<h3 id="MAX-HEAP-INSERT"><a href="#MAX-HEAP-INSERT" class="headerlink" title="MAX-HEAP-INSERT"></a>MAX-HEAP-INSERT</h3><p><img src="/2022/04/20/sort/image-20220426100552407.png" alt></p>
+<h3 id="优先队列的应用"><a href="#优先队列的应用" class="headerlink" title="优先队列的应用"></a>优先队列的应用</h3><p>Java 已经写好了优先队列的类，不需要自己实现。默认是最小优先队列。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line">PriorityQueue&lt;Integer&gt; pq = <span class="keyword">new</span> <span class="title class_">PriorityQueue</span>&lt;&gt;();</span><br></pre></td></tr></table></figure>
+<p>求<strong>第 k 大的数</strong>，第 k 大表示从最大的数往小的数看第 k 个，使用<strong>最小优先队列</strong>，最小优先队列存储的是当前扫描到的前 k 大的数</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span>(<span class="type">int</span> x:arr)&#123;</span><br><span class="line">	<span class="keyword">if</span>(pq.size() &lt; k)</span><br><span class="line">		pq.offer(x);</span><br><span class="line">	<span class="keyword">else</span> <span class="keyword">if</span>(x &gt; pq.peek())&#123;</span><br><span class="line">		pq.poll();</span><br><span class="line">		pq.offer(x);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>会议室 II</p>
+<p>给你一个会议时间安排的数组 intervals ，每个会议时间都会包括开始和结束的时间 intervals[i] = [starti, endi] ，为避免会议冲突，同时要考虑充分利用会议室资源，请你计算至少需要多少间会议室，才能满足这些会议安排。</p>
+<p>输入：intervals = [[0,30],[5,10],[15,20]]</p>
+<p>输出：2</p>
+<p>按照开始时间从小到大扫描 intervals，假设扫描到 intervals[i]</p>
+<ul>
+<li>堆内有n个元素，这n个元素的开始时间一定在i前面；</li>
+<li>如果堆顶的结束时间比 intervals[i][0] 小，则在 intervals[i][0] 时刻，这个会议已经结束，弹出它。</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line">Arrays.sort(intervals, (v1, v2) -&gt; (v1[<span class="number">0</span>] - v2[<span class="number">0</span>]));</span><br><span class="line">PriorityQueue&lt;Integer&gt; heap = <span class="keyword">new</span> <span class="title class_">PriorityQueue</span>&lt;&gt;();</span><br><span class="line"></span><br><span class="line"><span class="comment">// 各个时刻中占用房间最大值</span></span><br><span class="line"><span class="type">int</span> <span class="variable">meetingCount</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (<span class="type">int</span>[] meeting : intervals)&#123;</span><br><span class="line">    <span class="comment">//当前会议的开始时间大于等于最小的结束时间</span></span><br><span class="line">    <span class="comment">//把所有已经结束的会议淘汰出去</span></span><br><span class="line">    <span class="keyword">while</span> (!heap.isEmpty() &amp;&amp; meeting[<span class="number">0</span>] &gt;= heap.peek())&#123;</span><br><span class="line">        heap.poll();</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 再把当前会议的结束时间加进去</span></span><br><span class="line">    heap.add(meeting[<span class="number">1</span>]); <span class="comment">// 堆里有的就是进行的会议的数量</span></span><br><span class="line">    <span class="comment">// 更新meetingCount</span></span><br><span class="line">    meetingCount = Math.max(meetingCount, heap.size());</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">return</span> meetingCount;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>中位数</p>
+<p>转化为求第k大/小数字问题</p>
+<p>设共N个数字</p>
+<p>若N为奇数，中位数为第 N/2（向下取整） 大/小的数字</p>
+<p>若N为偶数，中位数为第 N/2 - 1 大的数字和第 N/2 大的数字平均数，为了对称美，改为第 N/2 小的数字和第 N/2 大的数字平均数。例：1 2 3 4，第2小：2，第2大：3</p>
+<p>求第 N/2 大/小的数字：</p>
+<p>1 无序数组，使用优先队列</p>
+<p>时间复杂度上界：O(NlgN)，即遍历N个数并更新优先队列。</p>
+<p>2 两个有序数组的中位数。</p>
+<p>二分查找，在两个数组中不断划分出中位数的存在区间</p>
+<p>假设两个有序数组分别是 A 和 B。要找到第 k 个元素，我们可以比较A[k/2−1] 和 B[k/2−1]…</p>
+<p><a href="https://leetcode-cn.com/problems/shu-ju-liu-zhong-de-zhong-wei-shu-lcof/">数据流中的中位数</a></p>
+<p>可以将数据流保存在一个列表中，并在添加元素时 保持数组有序 。此方法的时间复杂度为 O(N) ，其中包括： 查找元素插入位置 O(logN) （二分查找）、向数组某位置插入元素 O(N) （插入位置之后的元素都需要向后移动一位）。</p>
+<p>借助 堆 可进一步优化时间复杂度。</p>
+<p><img src="/2022/04/20/sort/image-20220426102638047.png" alt></p>
+<p>随后，中位数可仅根据 A, B 的堆顶元素计算得到。</p>
+<p><img src="/2022/04/20/sort/image-20220426102921529.png" alt></p>
+<p><img src="/2022/04/20/sort/image-20220426102946773.png" alt></p>
+<h1 id="归并排序"><a href="#归并排序" class="headerlink" title="归并排序"></a>归并排序</h1><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span>[] tmp = <span class="keyword">new</span> <span class="title class_">int</span>[nums.length]; </span><br><span class="line"><span class="keyword">void</span> <span class="title function_">mergeSort</span><span class="params">(<span class="type">int</span>[] nums, <span class="type">int</span> l, <span class="type">int</span> r)</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (l &gt;= r) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="type">int</span> <span class="variable">mid</span> <span class="operator">=</span> (l + r) &gt;&gt; <span class="number">1</span>;</span><br><span class="line">    </span><br><span class="line">    mergeSort(nums, l, mid);</span><br><span class="line">    mergeSort(nums, mid + <span class="number">1</span>, r);</span><br><span class="line">    merge(nums, l, r, mid); <span class="comment">// 左边[l,mid], 右边[mid+1,r]</span></span><br><span class="line">&#125;</span><br><span class="line">merge(<span class="type">int</span> nums, <span class="type">int</span> l, <span class="type">int</span> r, <span class="type">int</span> mid)&#123;</span><br><span class="line">    <span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> l, j = mid + <span class="number">1</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 归并到临时数组tmp上，tmp每次从0开始填充</span></span><br><span class="line">    <span class="type">int</span> <span class="variable">cnt</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">while</span> (i &lt;= mid || j &lt;= r) &#123;</span><br><span class="line">        <span class="keyword">if</span>(i == mid+<span class="number">1</span>)&#123;</span><br><span class="line">            tmp[cnt++] = nums[j++];</span><br><span class="line">        &#125;<span class="keyword">else</span> <span class="keyword">if</span>(j == r+<span class="number">1</span>)&#123;</span><br><span class="line">            tmp[cnt++] = nums[i++];</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> <span class="keyword">if</span> (nums[i] &lt;= nums[j]) &#123;</span><br><span class="line">            tmp[cnt++] = nums[i++];</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            tmp[cnt++] = nums[j++];</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 将归并结果（排好序）填回原数组</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> <span class="variable">k</span> <span class="operator">=</span> <span class="number">0</span>; k &lt; r - l + <span class="number">1</span>; ++k) &#123;</span><br><span class="line">        nums[k + l] = tmp[k];</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>与归并操作有关的题目：<a href="https://leetcode-cn.com/problems/merge-sorted-array/">88. 合并两个有序数组</a>，写法类似</p>
+</blockquote>
+<h2 id="性能分析-2"><a href="#性能分析-2" class="headerlink" title="性能分析"></a>性能分析</h2><p>最坏时间复杂度和最好时间复杂度：O(NlogN)，无论数组是否有序，执行过程一致，每次都会分解执行二分之一的子问题然后归并，并且比堆排序的时间复杂度更稳定，这是<strong>因为无论数组是否有序，merge 操作都会执行相同的次数</strong>。</p>
+<p>空间复杂度：O(N)</p>
+<p>稳定性：稳定，merge 操作是稳定的</p>
+<h2 id="对链表进行归并排序"><a href="#对链表进行归并排序" class="headerlink" title="对链表进行归并排序"></a>对链表进行归并排序</h2><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 排序 s 到 e-1</span></span><br><span class="line"><span class="comment">// 注意外部调用为 mergeSortList(head, null) // null 前面 是tail</span></span><br><span class="line"><span class="keyword">public</span> ListNode <span class="title function_">mergeSortList</span><span class="params">(ListNode s, ListNode e)</span>&#123;</span><br><span class="line">    <span class="comment">// 链表长度为 3 时，仍能正确得到 mid 节点。</span></span><br><span class="line">    <span class="comment">// 分解后计算  mergeSortList(node1, node2) 和 mergeSortList(node2, node3) 和 merge()</span></span><br><span class="line">    <span class="comment">// 按照长度为 2 边界的修改方法是ok的，虽然看上去 node2 重复了。</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (s == <span class="literal">null</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> s;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 以长度 2 作为边界。此时 令 s 与 e 断开。最终效果是 mergeSortList(s, e) 将s~e-1排序</span></span><br><span class="line">    <span class="keyword">if</span> (s.next == e) &#123;</span><br><span class="line">        s.next = <span class="literal">null</span>;</span><br><span class="line">        <span class="keyword">return</span> s;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 能够进行以下操作的链表，长度一定&gt;=3，写的时候注意</span></span><br><span class="line">    <span class="type">ListNode</span> <span class="variable">mid</span> <span class="operator">=</span> middleNode(s, e);</span><br><span class="line">    <span class="type">ListNode</span> <span class="variable">list1</span> <span class="operator">=</span> mergeSortList(s, mid);</span><br><span class="line">    <span class="type">ListNode</span> <span class="variable">list2</span> <span class="operator">=</span> mergeSortList(mid, e);</span><br><span class="line">    <span class="keyword">return</span> merge(list1, list2);</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h1 id="排序问题"><a href="#排序问题" class="headerlink" title="排序问题"></a>排序问题</h1><p>64匹马，8赛道，找出最快的4匹马最少要几次</p>
+<p>1 先分8组跑8次，可以把每组的后四名先排除</p>
+<p>2 根据每组第一名来排序（没有计时器，需要让每组第一名一起再跑一次），设各组第一名中最快的是A组.于是可以排除E-H组的前四名</p>
+<p><img src="/2022/04/20/sort/image-20220426101338135.png" alt></p>
+<p>3 可以发现：D2、D3和D4一定不是前四名，因为A1、B1、C1和D1都比它们快，于是排除D2、D3和D4；同理，排除C3、C4；B4</p>
+<p><img src="/2022/04/20/sort/image-20220426101348727.png" alt></p>
+<p>4 剩下10匹马。由于A1是所有马最快的，故实际只需要看剩下的9匹马</p>
+<p>5 除去A4，令其余8匹马跑一次。如果A3在第3名或者更后面，说明已经选出了前三名，A4不用再跑（A4一定在A3后面，不会影响名次）；否则，取前三名和A4跑一次，得到结果。</p>
+]]></content>
       <categories>
         <category>算法</category>
       </categories>
@@ -3990,10 +4358,5 @@ right(i)=2i+2</script><p>通过对二叉堆结点关系进行限制，我们可�
       <categories>
         <category>计算机网络</category>
       </categories>
-  </entry>
-  <entry>
-    <title>binarySearch</title>
-    <url>/2022/04/25/binarySearch/</url>
-    <content><![CDATA[]]></content>
   </entry>
 </search>

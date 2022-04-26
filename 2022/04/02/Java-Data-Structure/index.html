@@ -38,10 +38,9 @@
 <meta property="og:image" content="http://example.com/2022/04/02/Java-Data-Structure/640.png">
 <meta property="og:image" content="http://example.com/2022/04/02/Java-Data-Structure/640-16499026936018.png">
 <meta property="og:image" content="http://example.com/2022/04/02/Java-Data-Structure/20220318143436146.png">
-<meta property="og:image" content="http://example.com/2022/04/02/Java-Data-Structure/SouthEast.png">
 <meta property="og:image" content="http://example.com/2022/04/02/Java-Data-Structure/image-20220424160831946.png">
 <meta property="article:published_time" content="2022-04-02T03:27:01.000Z">
-<meta property="article:modified_time" content="2022-04-25T14:12:15.891Z">
+<meta property="article:modified_time" content="2022-04-26T08:27:31.310Z">
 <meta property="article:author" content="Cyl">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://example.com/2022/04/02/Java-Data-Structure/image-20220402130636222.png">
@@ -139,7 +138,7 @@
   </li>
         <li class="menu-item menu-item-archives">
 
-    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">26</span></a>
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">25</span></a>
 
   </li>
       <li class="menu-item menu-item-search">
@@ -227,7 +226,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-04-25 22:12:15" itemprop="dateModified" datetime="2022-04-25T22:12:15+08:00">2022-04-25</time>
+                <time title="修改时间：2022-04-26 16:27:31" itemprop="dateModified" datetime="2022-04-26T16:27:31+08:00">2022-04-26</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -454,9 +453,9 @@
 <p>虚拟节点在哈希环上均匀分布：注意到是按照 A、B、C 方式分布的，如果把任意两个虚拟节点放在了一起，那么实际上它们会等效为一个虚拟节点，导致不均匀分布。</p>
 <p>例如，上图中，替换 B-01 和 A-02 的位置，虚拟节点等效过后，实际上只留下了 A：2个虚拟节点、B：2个虚拟节点、C：3个虚拟节点。</p>
 <p>当某个节点被移除时，对应该节点的多个虚拟节点均会移除，而这些虚拟节点按顺时针方向的下一个虚拟节点，会对应不同的真实节点，即这些不同的真实节点共同分担了节点变化导致的压力。</p>
-<h1 id="bloom-过滤器"><a href="#bloom-过滤器" class="headerlink" title="bloom 过滤器"></a>bloom 过滤器</h1><p>特点是高效地插入和查询，可以用来告诉你 “某样东西一定不存在或者可能存在”</p>
+<h1 id="bloom-过滤器"><a href="#bloom-过滤器" class="headerlink" title="bloom 过滤器"></a>bloom 过滤器</h1><p>布隆过滤器的优点：时间复杂度是常数（插入操作和查询操作），空间复杂度也是常数，占用内存小，不需要存储元素本身，具有保密性。缺点：有一定的误识别率和删除困难的问题。</p>
+<p>作用：告诉你某个元素<strong>一定不在集合内</strong>或<strong>可能在集合内</strong>。</p>
 <p>布隆过滤器的实现原理是用多个哈希函数，将一个数据映射到位图中，通过位图来判断元素是否存在。</p>
-<p>它具有运行速度快（时间效率），占用内存小的优点（空间效率）的优点，但是有一定的误识别率和删除困难的问题。它能够告诉你某个元素一定不在集合内或可能在集合内。</p>
 <h2 id="插入操作"><a href="#插入操作" class="headerlink" title="插入操作"></a>插入操作</h2><ol>
 <li>使用多个哈希函数对元素值进行计算，得到多个哈希值</li>
 <li>根据得到的哈希值，在位数组中把对应下标的值置为 1。</li>
@@ -464,42 +463,49 @@
 <p>可能出现哈希冲突的情况：</p>
 <p><img src="/2022/04/02/Java-Data-Structure/20220318143436146.png" alt="image-20220311154805364"></p>
 <p>当存在哈希冲突的情况下，假设 x 的哈希值为 h1, h2, h3，且发现 bitmap[h1] = bitmap[h2] = bitmap[h3] = 1，x不一定存在于数据库中。</p>
-<p>可以适当增加位数组大小或者调整我们的哈希函数来降低概率</p>
+<p>可以适当增加位数组大小或者调整我们的哈希函数来降低冲突概率。</p>
 <h2 id="删除操作"><a href="#删除操作" class="headerlink" title="删除操作"></a>删除操作</h2><p>对于有哈希冲突的情况，如果直接将待删除元素的各个 bitmap[hi] 置 0，会导致其他元素的信息丢失。</p>
 <p>如果让每个位存储被置 1 的次数，可能存在其他问题，例如溢出导致计数值是错的。</p>
-<h2 id="查找操作"><a href="#查找操作" class="headerlink" title="查找操作"></a>查找操作</h2><p>主要用来判断 非条件，即不存在的条件。假设哈希冲突比较少，判断存在也不错。</p>
-<p>布隆过滤器的查找操作是 <strong>可能</strong>在集合中：</p>
-<p>将要查询的元素给k个哈希函数</p>
-<p>得到对应于位数组上的k个位置</p>
-<p>如果k个位置有一个为0，则一定不在集合中</p>
-<p>如果k个位置全部为1，则可能在集合中</p>
-<h2 id="对比"><a href="#对比" class="headerlink" title="对比"></a>对比</h2><p>与哈希表相比，它并不能解决哈希冲突的问题，不能保证查找操作为 true positive。</p>
-<p>在数据量极大的情况下，使用 HashMap 会遇到哈希冲突过多的问题，这会导致 HashMap 的查找时间复杂度恶化，不再是常数</p>
-<p>常用的数据结构，如hashmap，set，bit array都能用来测试一个元素是否存在于一个集合中，相对于这些数据结构，BloomFilter有什么方面的优势呢？</p>
-<p>相比于其它的数据结构，布隆过滤器在空间和时间方面都有巨大的优势。布隆过滤器存储空间和插入/查询时间都是常数。布隆过滤器不需要存储元素本身，在某些对保密要求非常严格的场合有优势。</p>
-<p>位图：N个元素，范围 min,max 需要 max-min+1 个位，存在性是绝对的</p>
-<p>32位机器上，对于一个整型数，比如<code>int a = 1</code> 在内存中占<code>32 bit</code>位，这是为了方便计算机的运算。但是对于某些应用场景而言，这属于一种巨大的浪费，因为我们可以用对应的<code>32 bit</code>位对应存储十进制的<code>0 - 31</code>个数，而这就是<code>Bit-map</code>的基本思想</p>
+<h2 id="对比"><a href="#对比" class="headerlink" title="对比"></a>对比</h2><p>哈希表和位图都能用来判断一个元素是否存在于一个集合中。</p>
+<p>布隆过滤器与哈希表的对比：</p>
 <ul>
-<li>相对于hashmap和set，BloomFilter在返回元素可能存在的情况中，有一定的误判率，这时候，调用者在误判的时候，会做一些不必要的工作，而对于hashmap和set，不会存在误判情况</li>
+<li>时间复杂度，都是常数复杂度，都会受哈希冲突影响。可以分别对插入操作和查询操作详细分析</li>
+<li>空间复杂度，哈希表会存储所有数据，需要 O(N) 的空间，而<strong>布隆过滤器不需要存储元素本身，只需要常数空间</strong></li>
+<li>查询操作：哈希表可以保证查找操作为 true positive，不会误判</li>
 </ul>
-<h2 id="应用场景"><a href="#应用场景" class="headerlink" title="应用场景"></a>应用场景</h2><p>给两个文件，分别有100亿个query，我们只有1G内存，如何找到两个文件交集？分别给出精确算法和近似算法？<br>思路：精确算法利用位图来实现。100个query，通常是线性递增一个请求索引<br>近似算法利用布隆过滤器实现，将一个文件的中100亿个query放在一个布隆过滤器中，另个一个文件中的数据到布隆过滤器中去查找，若查找到则说明是这两个文件的交集。</p>
-<p>大数据场景下判断数据是否存在</p>
+<p>位图：</p>
+<p>基本原理：设 N 个元素，取值范围 [min,max]，则用 max-min+1 大小的数组来存储，bitmap[i] = 1 表示存在值为 i 的元素</p>
+<p>拓展：</p>
+<ul>
+<li><p>位图<strong>本质上是一个计数器</strong>，我们可以改变它的元素类型，让他可以存多种状态，而不仅限于存在和不存在两种状态</p>
+</li>
+<li><p>当存在负数，需要加一个偏置放到正数索引。</p>
+</li>
+<li>位图需要额外的位数，这是因为将集合中的数据唯一且不冲突映射到某个索引位置，这基本是不可能实现的</li>
+<li>建立位图的难点：如果元素类型是对象而非整数值，如何建立元素到位图的唯一映射？</li>
+</ul>
+<p>布隆过滤器与位图的对比：</p>
+<ul>
+<li>时间复杂度，都是常数复杂度，位图不存在哈希冲突</li>
+<li>空间复杂度，都是常数复杂度，但是位图需要的空间比布隆过滤器更大，通过下标可以得到原始数据，布隆过滤器不需要存储元素本身</li>
+<li>查询操作：<strong>位图可以保证查找操作为 true positive</strong>，不会误判</li>
+</ul>
+<p>总的来说，使用布隆过滤器主要是因为它需要的空间比位图小、比哈希表小很多。</p>
+<h2 id="应用场景"><a href="#应用场景" class="headerlink" title="应用场景"></a>应用场景</h2><p>大数据场景下判断数据是否存在</p>
 <ol>
-<li>网页爬虫对URL的去重，避免爬取相同的URL地址</li>
+<li>网页爬虫对 URL 的去重，避免爬取相同的URL地址</li>
 <li>反垃圾邮件，从数十亿个垃圾邮件列表中判断某邮箱是否垃圾邮箱（同理，垃圾短信）</li>
-<li>缓存穿透，将所有可能存在的数据缓存放到布隆过滤器中，当黑客访问不存在的缓存时迅速返回避免缓存及DB挂掉。</li>
+<li>缓存穿透，将所有可能存在的数据缓存放到布隆过滤器中，当黑客访问不存在的缓存时迅速返回避免缓存及DB 挂掉。</li>
 </ol>
-<h3 id="布隆过滤器误判率表"><a href="#布隆过滤器误判率表" class="headerlink" title="布隆过滤器误判率表"></a><strong>布隆过滤器误判率表</strong></h3><p><img src="/2022/04/02/Java-Data-Structure/SouthEast.png" alt></p>
-<p>需要判重的网页有 10 亿，那我们可以用一个 10 倍大小的位图来存储，也就是 100 亿个二进制位，换算成字节，那就是大约 1.2GB。之前我们用散列表判重，设每个 URL 平均长度为 64 字节，需要至少 100GB 的空间。相比来讲，布隆过滤器在存储空间的消耗上，降低了非常多。</p>
-<p>假设一个 URL 的平均长度是 64 字节，那单纯存储这 10 亿个 URL，需要大约 60GB 的内存空间。因为散列表必须维持较小的装载因子，才能保证不会出现过多的散列冲突，导致操作的性能下降。而且，用链表法解决冲突的散列表，还会存储链表指针。所以，如果将这 10 亿个 URL 构建成散列表，那需要的内存空间会远大于 60GB，有可能会超过 100GB。</p>
-<p>如何选择哈希函数个数和布隆过滤器长度：<br>如果一个数据要映射多个位置，如果布隆过滤器较小，则会导致数据马上全部映射满，此时无论进行什么操作，都会存在大量的误报率。也就是说，布隆过滤器的长度与误报率成反比，与空间利用率成反比<br>哈希函数的个数也值得思考，哈希函数越多，映射的位置也就越多，此时准确性也就越高，但随之带来的问题就是效率的降低。也就是说，哈希函数的个数与效率成反比，准确率成正比</p>
-<p>k = hash函数个数</p>
-<p>n = 数据量大小。如：现有一个100万文件的文件夹，我手中有一个文件不知道这个文件夹中是否有这个文件，如果没有就放进去，有的话我再另外处理。此时n则是100万</p>
-<p>m = 位数组长度。如上上面经过hash计算的值是小于一个最大值的，这个最大值则是这个位数组的长度。</p>
-<p>r=m/n</p>
-<p>p = 布隆过滤器正确率</p>
-<p><img src="/2022/04/02/Java-Data-Structure/image-20220424160831946.png" alt="image-20220424160831946"></p>
-<p>也就是说，如果数据量为100万，那么位数组长度需要700万才能保证使用5个hash函数时误判率小于5%。700万位，约等于875kb。如果一个文件只有1k大小，总大小也将近1G了。通过布隆过滤器，只需要875k的内存大小便能快速判断某个文件是否在这个文件夹中，且准确率高达96.8%。</p>
+<h3 id="布隆过滤器误判率表"><a href="#布隆过滤器误判率表" class="headerlink" title="布隆过滤器误判率表"></a><strong>布隆过滤器误判率表</strong></h3><p>如何选择哈希函数个数和布隆过滤器长度：</p>
+<ul>
+<li>哈希函数越多，准确性越高（独立分布），但是多次计算哈希会导致效率的降低。</li>
+<li>位数组越长，可供映射的位置越多，哈希冲突越少，准确率越高，但是空间利用率会降低</li>
+</ul>
+<p>k = hash函数个数，n = 数据量大小，m = 位数组长度，r=m/n，p = 布隆过滤器误判率</p>
+<p><img src="/2022/04/02/Java-Data-Structure/image-20220424160831946.png" alt></p>
+<p>根据上图，如果数据量为 100万，使用 5 个 hash 函数，那么位数组长度需要 700万 才能保证时误判率小于 5%。</p>
+<p>700 万位，约等于 875kb。如果一个文件只有 1k 大小，文件夹总大小约为 1G。通过布隆过滤器，只需要 875kb 的内存大小便能快速判断某个文件是否在这个文件夹中，且准确率高达 96.8%。</p>
 <h1 id="ConcurrentHashMap"><a href="#ConcurrentHashMap" class="headerlink" title="ConcurrentHashMap"></a>ConcurrentHashMap</h1><h2 id="ConcurrentHashMap-数据结构"><a href="#ConcurrentHashMap-数据结构" class="headerlink" title="ConcurrentHashMap 数据结构"></a>ConcurrentHashMap 数据结构</h2><h3 id="jdk1-7"><a href="#jdk1-7" class="headerlink" title="jdk1.7"></a>jdk1.7</h3><p>由  Segment  数组组成，Segment 数组每个元素是一个  HashEntry  数组（与 jdk1.7 HashMap 结构相同，数组+链表）。</p>
 <p>Segment 继承了 ReentrantLock</p>
 <p>每一个 HashEntry  数组可以进行扩容。但是 Segment 的个数一旦初始化就不能改变，默认 Segment 的个数是 16 个，也就是说 ConcurrentHashMap 默认支持最多 16 个线程并发</p>
@@ -604,7 +610,7 @@ cap\geq  \lceil \frac{initialCapacity}{ssize} \rceil</script><h4 id="数组索�
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#ArrayList"><span class="nav-number">1.</span> <span class="nav-text">ArrayList</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#HashMap"><span class="nav-number">2.</span> <span class="nav-text">HashMap</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A7%A3%E5%86%B3-hash-%E5%86%B2%E7%AA%81%E7%9A%84%E6%96%B9%E6%B3%95"><span class="nav-number">2.1.</span> <span class="nav-text">解决 hash 冲突的方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#HashMap-%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84"><span class="nav-number">2.2.</span> <span class="nav-text">HashMap 数据结构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#JDK1-8-HashEntry-%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84"><span class="nav-number">2.2.1.</span> <span class="nav-text">JDK1.8 HashEntry 数据结构</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%93%BE%E8%A1%A8%E8%BD%AC%E5%8C%96%E4%B8%BA%E7%BA%A2%E9%BB%91%E6%A0%91%E7%9A%84%E6%97%B6%E6%9C%BA"><span class="nav-number">2.2.1.1.</span> <span class="nav-text">链表转化为红黑树的时机</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%8D%E7%9B%B4%E6%8E%A5%E4%BD%BF%E7%94%A8%E7%BA%A2%E9%BB%91%E6%A0%91-%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BB%A5-8-%E4%B8%BA%E9%98%88%E5%80%BC"><span class="nav-number">2.2.1.2.</span> <span class="nav-text">为什么不直接使用红黑树&#x2F;为什么以 8 为阈值</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%B4%9F%E8%BD%BD%E5%9B%A0%E5%AD%90%E4%B8%BA%E4%BB%80%E4%B9%88%E6%98%AF-0-75"><span class="nav-number">2.2.1.3.</span> <span class="nav-text">负载因子为什么是 0.75</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#HashMap-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90"><span class="nav-number">2.2.2.</span> <span class="nav-text">HashMap 源码分析</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%95%B0%E7%BB%84%E7%B4%A2%E5%BC%95%E5%80%BC%E8%AE%A1%E7%AE%97"><span class="nav-number">2.2.2.1.</span> <span class="nav-text">数组索引值计算</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#HashMap-%E7%9A%84-put-%E6%96%B9%E6%B3%95"><span class="nav-number">2.2.2.2.</span> <span class="nav-text">HashMap 的 put 方法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#HashMap-%E7%9A%84-resize-%E6%96%B9%E6%B3%95%EF%BC%88%E6%89%A9%E5%AE%B9%EF%BC%89"><span class="nav-number">2.2.2.3.</span> <span class="nav-text">HashMap 的 resize 方法（扩容）</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#HashMap-%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8%E9%97%AE%E9%A2%98"><span class="nav-number">2.3.</span> <span class="nav-text">HashMap 线程安全问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#HashMap-%E9%94%AE%E7%9A%84%E9%80%89%E6%8B%A9"><span class="nav-number">2.4.</span> <span class="nav-text">HashMap 键的选择</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%80%E8%87%B4%E6%80%A7%E5%93%88%E5%B8%8C"><span class="nav-number">3.</span> <span class="nav-text">一致性哈希</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%93%88%E5%B8%8C%E7%8E%AF"><span class="nav-number">3.1.</span> <span class="nav-text">哈希环</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A2%9E%E5%8A%A0%E6%88%96%E5%87%8F%E5%B0%91%E4%B8%80%E4%B8%AA%E6%9C%8D%E5%8A%A1%E5%99%A8%E8%8A%82%E7%82%B9"><span class="nav-number">3.2.</span> <span class="nav-text">增加或减少一个服务器节点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1"><span class="nav-number">3.3.</span> <span class="nav-text">负载均衡</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%99%9A%E6%8B%9F%E8%8A%82%E7%82%B9%E5%AE%9E%E7%8E%B0%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1"><span class="nav-number">3.3.1.</span> <span class="nav-text">虚拟节点实现负载均衡</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#bloom-%E8%BF%87%E6%BB%A4%E5%99%A8"><span class="nav-number">4.</span> <span class="nav-text">bloom 过滤器</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8F%92%E5%85%A5%E6%93%8D%E4%BD%9C"><span class="nav-number">4.1.</span> <span class="nav-text">插入操作</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%A0%E9%99%A4%E6%93%8D%E4%BD%9C"><span class="nav-number">4.2.</span> <span class="nav-text">删除操作</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9F%A5%E6%89%BE%E6%93%8D%E4%BD%9C"><span class="nav-number">4.3.</span> <span class="nav-text">查找操作</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AF%B9%E6%AF%94"><span class="nav-number">4.4.</span> <span class="nav-text">对比</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="nav-number">4.5.</span> <span class="nav-text">应用场景</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B8%83%E9%9A%86%E8%BF%87%E6%BB%A4%E5%99%A8%E8%AF%AF%E5%88%A4%E7%8E%87%E8%A1%A8"><span class="nav-number">4.5.1.</span> <span class="nav-text">布隆过滤器误判率表</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#ConcurrentHashMap"><span class="nav-number">5.</span> <span class="nav-text">ConcurrentHashMap</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#ConcurrentHashMap-%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84"><span class="nav-number">5.1.</span> <span class="nav-text">ConcurrentHashMap 数据结构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#jdk1-7"><span class="nav-number">5.1.1.</span> <span class="nav-text">jdk1.7</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#jdk1-8"><span class="nav-number">5.1.2.</span> <span class="nav-text">jdk1.8</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ConcurrentHashMap-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90"><span class="nav-number">5.2.</span> <span class="nav-text">ConcurrentHashMap 源码分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#jdk1-7-1"><span class="nav-number">5.2.1.</span> <span class="nav-text">jdk1.7</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8F%82%E6%95%B0%E5%88%86%E6%9E%90"><span class="nav-number">5.2.1.1.</span> <span class="nav-text">参数分析</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%95%B0%E7%BB%84%E7%B4%A2%E5%BC%95%E5%80%BC%E8%AE%A1%E7%AE%97-1"><span class="nav-number">5.2.1.2.</span> <span class="nav-text">数组索引值计算</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#put-%E6%96%B9%E6%B3%95"><span class="nav-number">5.2.1.3.</span> <span class="nav-text">put 方法</span></a></li></ol></li></ol></li></ol></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#ArrayList"><span class="nav-number">1.</span> <span class="nav-text">ArrayList</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#HashMap"><span class="nav-number">2.</span> <span class="nav-text">HashMap</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A7%A3%E5%86%B3-hash-%E5%86%B2%E7%AA%81%E7%9A%84%E6%96%B9%E6%B3%95"><span class="nav-number">2.1.</span> <span class="nav-text">解决 hash 冲突的方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#HashMap-%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84"><span class="nav-number">2.2.</span> <span class="nav-text">HashMap 数据结构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#JDK1-8-HashEntry-%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84"><span class="nav-number">2.2.1.</span> <span class="nav-text">JDK1.8 HashEntry 数据结构</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%93%BE%E8%A1%A8%E8%BD%AC%E5%8C%96%E4%B8%BA%E7%BA%A2%E9%BB%91%E6%A0%91%E7%9A%84%E6%97%B6%E6%9C%BA"><span class="nav-number">2.2.1.1.</span> <span class="nav-text">链表转化为红黑树的时机</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%8D%E7%9B%B4%E6%8E%A5%E4%BD%BF%E7%94%A8%E7%BA%A2%E9%BB%91%E6%A0%91-%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BB%A5-8-%E4%B8%BA%E9%98%88%E5%80%BC"><span class="nav-number">2.2.1.2.</span> <span class="nav-text">为什么不直接使用红黑树&#x2F;为什么以 8 为阈值</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%B4%9F%E8%BD%BD%E5%9B%A0%E5%AD%90%E4%B8%BA%E4%BB%80%E4%B9%88%E6%98%AF-0-75"><span class="nav-number">2.2.1.3.</span> <span class="nav-text">负载因子为什么是 0.75</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#HashMap-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90"><span class="nav-number">2.2.2.</span> <span class="nav-text">HashMap 源码分析</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%95%B0%E7%BB%84%E7%B4%A2%E5%BC%95%E5%80%BC%E8%AE%A1%E7%AE%97"><span class="nav-number">2.2.2.1.</span> <span class="nav-text">数组索引值计算</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#HashMap-%E7%9A%84-put-%E6%96%B9%E6%B3%95"><span class="nav-number">2.2.2.2.</span> <span class="nav-text">HashMap 的 put 方法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#HashMap-%E7%9A%84-resize-%E6%96%B9%E6%B3%95%EF%BC%88%E6%89%A9%E5%AE%B9%EF%BC%89"><span class="nav-number">2.2.2.3.</span> <span class="nav-text">HashMap 的 resize 方法（扩容）</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#HashMap-%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8%E9%97%AE%E9%A2%98"><span class="nav-number">2.3.</span> <span class="nav-text">HashMap 线程安全问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#HashMap-%E9%94%AE%E7%9A%84%E9%80%89%E6%8B%A9"><span class="nav-number">2.4.</span> <span class="nav-text">HashMap 键的选择</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%80%E8%87%B4%E6%80%A7%E5%93%88%E5%B8%8C"><span class="nav-number">3.</span> <span class="nav-text">一致性哈希</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%93%88%E5%B8%8C%E7%8E%AF"><span class="nav-number">3.1.</span> <span class="nav-text">哈希环</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A2%9E%E5%8A%A0%E6%88%96%E5%87%8F%E5%B0%91%E4%B8%80%E4%B8%AA%E6%9C%8D%E5%8A%A1%E5%99%A8%E8%8A%82%E7%82%B9"><span class="nav-number">3.2.</span> <span class="nav-text">增加或减少一个服务器节点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1"><span class="nav-number">3.3.</span> <span class="nav-text">负载均衡</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%99%9A%E6%8B%9F%E8%8A%82%E7%82%B9%E5%AE%9E%E7%8E%B0%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1"><span class="nav-number">3.3.1.</span> <span class="nav-text">虚拟节点实现负载均衡</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#bloom-%E8%BF%87%E6%BB%A4%E5%99%A8"><span class="nav-number">4.</span> <span class="nav-text">bloom 过滤器</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8F%92%E5%85%A5%E6%93%8D%E4%BD%9C"><span class="nav-number">4.1.</span> <span class="nav-text">插入操作</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%A0%E9%99%A4%E6%93%8D%E4%BD%9C"><span class="nav-number">4.2.</span> <span class="nav-text">删除操作</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AF%B9%E6%AF%94"><span class="nav-number">4.3.</span> <span class="nav-text">对比</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="nav-number">4.4.</span> <span class="nav-text">应用场景</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B8%83%E9%9A%86%E8%BF%87%E6%BB%A4%E5%99%A8%E8%AF%AF%E5%88%A4%E7%8E%87%E8%A1%A8"><span class="nav-number">4.4.1.</span> <span class="nav-text">布隆过滤器误判率表</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#ConcurrentHashMap"><span class="nav-number">5.</span> <span class="nav-text">ConcurrentHashMap</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#ConcurrentHashMap-%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84"><span class="nav-number">5.1.</span> <span class="nav-text">ConcurrentHashMap 数据结构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#jdk1-7"><span class="nav-number">5.1.1.</span> <span class="nav-text">jdk1.7</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#jdk1-8"><span class="nav-number">5.1.2.</span> <span class="nav-text">jdk1.8</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ConcurrentHashMap-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90"><span class="nav-number">5.2.</span> <span class="nav-text">ConcurrentHashMap 源码分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#jdk1-7-1"><span class="nav-number">5.2.1.</span> <span class="nav-text">jdk1.7</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8F%82%E6%95%B0%E5%88%86%E6%9E%90"><span class="nav-number">5.2.1.1.</span> <span class="nav-text">参数分析</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%95%B0%E7%BB%84%E7%B4%A2%E5%BC%95%E5%80%BC%E8%AE%A1%E7%AE%97-1"><span class="nav-number">5.2.1.2.</span> <span class="nav-text">数组索引值计算</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#put-%E6%96%B9%E6%B3%95"><span class="nav-number">5.2.1.3.</span> <span class="nav-text">put 方法</span></a></li></ol></li></ol></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -620,7 +626,7 @@ cap\geq  \lceil \frac{initialCapacity}{ssize} \rceil</script><h4 id="数组索�
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">26</span>
+          <span class="site-state-item-count">25</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>

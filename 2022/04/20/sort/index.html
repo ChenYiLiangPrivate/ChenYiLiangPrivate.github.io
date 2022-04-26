@@ -33,9 +33,16 @@
 <meta property="og:image" content="http://example.com/2022/04/20/sort/bubbleSort.gif">
 <meta property="og:image" content="http://example.com/2022/04/20/sort/insertionSort.gif">
 <meta property="og:image" content="http://example.com/2022/04/20/sort/image-20220425213733262.png">
-<meta property="og:image" content="http://example.com/2022/04/20/sort/image-20220425215723705.png">
+<meta property="og:image" content="http://example.com/2022/04/20/sort/image-20220426093603970.png">
+<meta property="og:image" content="http://example.com/2022/04/20/sort/image-20220426100537994.png">
+<meta property="og:image" content="http://example.com/2022/04/20/sort/image-20220426100552407.png">
+<meta property="og:image" content="http://example.com/2022/04/20/sort/image-20220426102638047.png">
+<meta property="og:image" content="http://example.com/2022/04/20/sort/image-20220426102921529.png">
+<meta property="og:image" content="http://example.com/2022/04/20/sort/image-20220426102946773.png">
+<meta property="og:image" content="http://example.com/2022/04/20/sort/image-20220426101338135.png">
+<meta property="og:image" content="http://example.com/2022/04/20/sort/image-20220426101348727.png">
 <meta property="article:published_time" content="2022-04-20T06:58:37.000Z">
-<meta property="article:modified_time" content="2022-04-25T14:12:12.025Z">
+<meta property="article:modified_time" content="2022-04-26T02:29:52.262Z">
 <meta property="article:author" content="Cyl">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://example.com/2022/04/20/sort/sort.png">
@@ -133,7 +140,7 @@
   </li>
         <li class="menu-item menu-item-archives">
 
-    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">26</span></a>
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">25</span></a>
 
   </li>
       <li class="menu-item menu-item-search">
@@ -221,7 +228,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-04-25 22:12:12" itemprop="dateModified" datetime="2022-04-25T22:12:12+08:00">2022-04-25</time>
+                <time title="修改时间：2022-04-26 10:29:52" itemprop="dateModified" datetime="2022-04-26T10:29:52+08:00">2022-04-26</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -260,9 +267,9 @@
       
         <p>排序算法的评价标准主要有：时间复杂度、空间复杂度和稳定性（待排序的序列中有两元素相等，排序之后它们的先后顺序不变）</p>
 <span id="more"></span>
-<p><img src="/2022/04/20/sort/sort.png" alt="img"></p>
+<p><img src="/2022/04/20/sort/sort.png" alt></p>
 <h1 id="选择排序"><a href="#选择排序" class="headerlink" title="选择排序"></a>选择排序</h1><p>维护循环不变量，即将数组划分为 （有序区，无序区），每次在无序区中选出最小的数（通过记录当前遇到的最小值的方法），放到有序区的后面（与无序区第一个元素进行交换）。</p>
-<p><img src="/2022/04/20/sort/selectionSort.gif" alt="img"></p>
+<p><img src="/2022/04/20/sort/selectionSort.gif" alt></p>
 <p>性能分析：</p>
 <ul>
 <li><p>稳定性：交换操作可能导致两相等元素的相对位置改变，因此是<strong>不稳定</strong>的</p>
@@ -278,7 +285,7 @@
 <li>比较相邻的元素。如果第一个比第二个大，就交换他们两个。</li>
 <li>对每一对相邻元素作同样的工作，从开始第一对到结尾的最后一对。这步做完后，最后的元素会是最大的数。</li>
 </ul>
-<p><img src="/2022/04/20/sort/bubbleSort.gif" alt="img"></p>
+<p><img src="/2022/04/20/sort/bubbleSort.gif" alt></p>
 <p>性能分析：</p>
 <ul>
 <li><p>稳定性：<strong>虽然有交换操作</strong>，但是这种交换操作不会导致两相等元素的相对位置改变，因此是稳定的</p>
@@ -289,7 +296,7 @@
 <h1 id="插入排序"><a href="#插入排序" class="headerlink" title="插入排序"></a>插入排序</h1><p>维护循环不变量，即将数组划分为 （有序区，无序区），每次把无序区的第一个元素插入到有序区的合适位置中。</p>
 <p>插入操作：对于数组来说，需要执行多次的赋值操作，对于链表才是真正意义上的插入操作。</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">insertion_sort</span><span class="params">(<span class="type">int</span> arr[], <span class="type">int</span> len)</span>&#123;</span><br><span class="line">    <span class="type">int</span> i,j,key;</span><br><span class="line">    <span class="keyword">for</span> (i=<span class="number">1</span>;i&lt;len;i++)&#123;</span><br><span class="line">        key = arr[i];</span><br><span class="line">        j=i<span class="number">-1</span>;</span><br><span class="line">        <span class="keyword">while</span>((j&gt;=<span class="number">0</span>) &amp;&amp; (arr[j]&gt;key)) &#123;</span><br><span class="line">            arr[j+<span class="number">1</span>] = arr[j];</span><br><span class="line">            j--;</span><br><span class="line">        &#125;</span><br><span class="line">        arr[j+<span class="number">1</span>] = key;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><img src="/2022/04/20/sort/insertionSort.gif" alt="img"></p>
+<p><img src="/2022/04/20/sort/insertionSort.gif" alt></p>
 <p>性能分析：</p>
 <ul>
 <li><p>稳定性：由于是从后往前顺序地找插入点，因此不会导致两相等元素的相对位置改变，因此是<strong>稳定</strong>的。从前往后找插入点可能会不稳定，除非在相等时继续往后走。</p>
@@ -389,12 +396,106 @@ right(i)=2i+2</script><p>通过对二叉堆结点关系进行限制，我们可�
 <li>MAX-HEAP-INSERT、HEAP-EXTRACT-MAX、HEAP-INCREASE-KEY 和 HEAP-MAXIMUM：时间复杂度都是 O(logn)，功能是用堆维护优先队列</li>
 </ul>
 <h2 id="最大堆"><a href="#最大堆" class="headerlink" title="最大堆"></a>最大堆</h2><h3 id="MAX-HEAPIFY"><a href="#MAX-HEAPIFY" class="headerlink" title="MAX-HEAPIFY"></a>MAX-HEAPIFY</h3><p>对于一个根节点为 i 的二叉堆，<strong>假设它的左右两颗子树都已经是最大堆</strong>，通过 MAX—HEAPIFY 操作，可将这个二叉堆转化为最大堆。</p>
-<p><img src="/2022/04/20/sort/image-20220425215723705.png" alt="image-20220425215723705"></p>
-<p>第 3 行的作用是，从 A[i]、A[left[i] 和A[right[i]] 中选出最大值，最大值的索引存储为largest。基于前提条件：i 的左右两颗子树都已经是最大堆，如果 A[i] 是最大的，那么以 i 为结点的子树已经是最大堆，结束。如果最大值 i 的某个孩子结点，则将其与根节点交换。交换后，A[i]、A[left[i] 和A[right[i]] 满足最大堆性质，未被交换的子树仍然是最大堆，而被交换了的子树满足MAX-HEAPIFY函数的条件，对其递归调用该函数即可。</p>
-<p>证：交换后 A[i] 是 i 为根节点的子树最大值：<br>根据：i 的左右两颗子树都已经是最大堆，易知 A[left[i] 和 A[right[i]] 是这两个最大堆中的最大值，因此交换后满足：A[i] 是 i 为根节点的子树最大值。</p>
-<p>max(A[i], A[l], A[r]) 的实现：比较两次，每次更新更大值的索引<br>largest = i;<br>if(l &lt;= A.heapsize &amp;&amp; A[l] &gt; A[largest])<br>    largest = l;<br>if(r &lt;= A.heapsize &amp;&amp; A[r] &gt; A[largest])<br>    largest = r;</p>
-<p>注意保证l和r&lt;=A.heapsize，即在二叉堆中</p>
-<h3 id="BUILD-MAX-HEAP"><a href="#BUILD-MAX-HEAP" class="headerlink" title="BUILD-MAX-HEAP"></a>BUILD-MAX-HEAP</h3>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">MAX-HEAPIFY(A, i, A.heapsize)&#123;</span><br><span class="line">	l = left(i)</span><br><span class="line">	r = right(i);</span><br><span class="line">	</span><br><span class="line">	// 从 A[i]、A[l] 和 A[r] 中选出最大值，最大值的索引存储为 largest。</span><br><span class="line">	// 注意 A.heapsize 作为参数传入，保证 l 和 r&lt;=A.heapsize，即在二叉堆中</span><br><span class="line">	largest = max(A, i, l, r, A.heapsize);</span><br><span class="line">	if largest != i</span><br><span class="line">		swap(A, largest, i)</span><br><span class="line">		MAX-HEAPIFY(A, largest, A.heapize)</span><br><span class="line">&#125;</span><br><span class="line">max(A, i, l, r, A.heapsize)&#123;</span><br><span class="line">    largest = i;</span><br><span class="line">    if(l &lt;= A.heapsize &amp;&amp; A[l] &gt; A[largest])</span><br><span class="line">        largest = l;</span><br><span class="line">    if(r &lt;= A.heapsize &amp;&amp; A[r] &gt; A[largest])</span><br><span class="line">        largest = r;</span><br><span class="line">    </span><br><span class="line">    return largest;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>基于前提条件：i 的左右两颗子树都已经是最大堆。</p>
+<ul>
+<li>如果 A[i] 是最大的，那么以 i 为结点的子树已经是最大堆，结束。</li>
+<li>如果最大值是 i 的某个孩子结点，则将其与根节点交换。交换后，A[i]、A[l] 和 A[r] 满足最大堆性质，未被交换的子树仍然是最大堆，而被交换了的子树满足 MAX-HEAPIFY 函数的条件，对其递归调用该函数即可。</li>
+</ul>
+<blockquote>
+<p>证：交换后 A[i] 是 i 为根节点的子树最大值：</p>
+<p>根据：i 的左右两颗子树都已经是最大堆，易知 A[l] 和 A[r] 是这两个最大堆中的最大值，因此交换后满足：A[i] 是 i 为根节点的子树最大值。</p>
+</blockquote>
+<h3 id="BUILD-MAX-HEAP"><a href="#BUILD-MAX-HEAP" class="headerlink" title="BUILD-MAX-HEAP"></a>BUILD-MAX-HEAP</h3><p>对于数组 A ，我们可以用 <strong>建堆</strong> 的操作把它转化为最大堆。建堆的方法是：我们从树的<strong>叶子结点的父结点</strong>开始调用 MAX-HEAPIFY，直至根节点，从而使得整颗树成为最大堆。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">BUILD-MAX-HEAP(A)&#123;</span><br><span class="line">	A.heapsize = A.length; // 将下标 [1, A.length] 范围的元素建为最大堆</span><br><span class="line">	for(int i = A.length/2;i&gt;=1;--i)</span><br><span class="line">		MAX-HEAPIFY(A, i, A.heapize) // A.heapsize 保持不变</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>对于数组 A，叶子结点的父结点索引满足 &lt;= ⌊A.length/2⌋，如图索引为 5、4、3 的节点是叶子节点的父结点。</p>
+<p>循环不变式：每经过一次循环保证 [i:A.heapsize] 已经成为最大堆。</p>
+<p><img src="/2022/04/20/sort/image-20220426093603970.png" alt></p>
+<p>叶子节点只有一个节点，满足二叉堆的性质，因此可以从它的父结点开始调用 MAX-HEAPIFY。实际上，可以直接从 A.heapsize 开始调用 MAX-HEAPIFY，即对叶子节点也调用 MAX-HEAPIFY，从叶子节点的父结点开始建堆是为了节省时空。</p>
+<blockquote>
+<p>算法导论证明了：建堆操作的时间复杂度是 O(N) 而非粗略估计的 O(lgN)</p>
+</blockquote>
+<p>假如用树结构来存储最大堆，建堆操作也可写为：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">BUILD-MAX-HEAP(root)&#123;</span><br><span class="line">    BUILD-MAX-HEAP(root.left);</span><br><span class="line">    BUILD-MAX-HEAP(root.right);</span><br><span class="line">    MAX-HEAPIFY(A, root);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>用 A.heapsize 维护数组中已经成为二叉堆的区域右边界，左边界是i，</p>
+<h3 id="HEAPSORT"><a href="#HEAPSORT" class="headerlink" title="HEAPSORT"></a>HEAPSORT</h3><p>升序排序，使用最大堆</p>
+<ul>
+<li><p>初始：调用 BUILD-MAX-HEAP(A) 将输入数组 A 建成最大堆。</p>
+</li>
+<li><p>更新：因为数组中的最大元素总在根节点 A[1]处，将它与 A[end] 互换，把最大值放到数组末尾，然后去掉结点 end，并更新 end 为 end-1，然后对数组 A[1…end] 调用 MAX-HEAPIFY(A,1)，即维护其仍为最大堆，并继续执行交换结点、删除数组尾结点的操作。</p>
+</li>
+<li><p>终止：当 end=3，只剩最后一颗二叉树，执行 MAX-HEAPIFY(A,1) 后，能够一步得到三个结点的大小关系，于是令 end=2，结束。 </p>
+</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">HEAPSORT(A):</span><br><span class="line">    BUILD-MAX-HEAP(A)</span><br><span class="line">    </span><br><span class="line">    for i = A.length downto 2</span><br><span class="line">        swap(A, i, 1) // 与A[1] 即第一个元素 交换</span><br><span class="line">        --A.heapsize</span><br><span class="line">        MAX-HEAPIFY(A, 1, A.heapsize)</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>快排的性能通常优于堆排序。堆的独特优势在于它可以实现优先队列。——《算法导论》</p>
+</blockquote>
+<h4 id="性能分析-1"><a href="#性能分析-1" class="headerlink" title="性能分析"></a>性能分析</h4><p>最坏时间复杂度和最坏时间复杂度都是 O(NlogN)：无论数组是否有序，每次的执行过程是一样的，只不过，如果数组本身已经升序，每次 MAX-HEAPIFY 的消耗比数组本身是降序时候更大。</p>
+<p>空间复杂度：O(1)，如果 MAX-HEAPIFY 用递归实现，同样会有栈深度的空间复杂度，但是通常认为 HEAPSORT 使用 O(1) 空间</p>
+<p>稳定性：不稳定</p>
+<h2 id="实现优先队列"><a href="#实现优先队列" class="headerlink" title="实现优先队列"></a>实现优先队列</h2><p>堆的独特优势在于它可以实现优先队列。</p>
+<p>基于最大堆实现最大优先队列，最大优先队列支持以下几种操作：</p>
+<ul>
+<li>返回（并从优先队列中删除）值最大的元素，HEAP-EXTRACT-MAX(A)</li>
+<li>将元素 x 的值增加 到 k（对于最大优先队列，讨论增加值，对于最小优先队列，讨论减小值）；</li>
+<li>插入元素；</li>
+</ul>
+<p>这几个操作的时间复杂度都是 O(logn)</p>
+<h3 id="HEAP-EXTRACT-MAX-A"><a href="#HEAP-EXTRACT-MAX-A" class="headerlink" title="HEAP-EXTRACT-MAX(A)"></a>HEAP-EXTRACT-MAX(A)</h3><p>将 A[1] 作为返回值，然后将 A[1] 从堆中删除，用 A[A.heapsize]，即堆的最后一个元素填充 A[1]，并令A.heapsize-1 为新的堆大小，然后用 MAX-HEAPIFY 操作维护新堆仍为最大堆。</p>
+<h3 id="HEAP-INCREASE-KEY-A-i-k"><a href="#HEAP-INCREASE-KEY-A-i-k" class="headerlink" title="HEAP-INCREASE-KEY(A, i, k)"></a>HEAP-INCREASE-KEY(A, i, k)</h3><p>将元素 x=A[i] 的值增加到k。x 值增大后，有可能破坏最大堆性质。由于 x 的值是增大的，因此只有可能破坏从 parent[i] 到根节点路径上的最大堆性质。</p>
+<p>在 INCREASE(A, i, k) 操作中，当前元素会不断与其父结点比较键值大小，比父结点大则交换，直到当前元素的键值比父结点小，或者到了根节点，此时整颗树已经重新符合了最大堆的性质。（自底向上的 MAX-HEAPIFY）</p>
+<p><img src="/2022/04/20/sort/image-20220426100537994.png" alt></p>
+<h3 id="MAX-HEAP-INSERT"><a href="#MAX-HEAP-INSERT" class="headerlink" title="MAX-HEAP-INSERT"></a>MAX-HEAP-INSERT</h3><p><img src="/2022/04/20/sort/image-20220426100552407.png" alt></p>
+<h3 id="优先队列的应用"><a href="#优先队列的应用" class="headerlink" title="优先队列的应用"></a>优先队列的应用</h3><p>Java 已经写好了优先队列的类，不需要自己实现。默认是最小优先队列。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">PriorityQueue&lt;Integer&gt; pq = <span class="keyword">new</span> <span class="title class_">PriorityQueue</span>&lt;&gt;();</span><br></pre></td></tr></table></figure>
+<p>求<strong>第 k 大的数</strong>，第 k 大表示从最大的数往小的数看第 k 个，使用<strong>最小优先队列</strong>，最小优先队列存储的是当前扫描到的前 k 大的数</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span>(<span class="type">int</span> x:arr)&#123;</span><br><span class="line">	<span class="keyword">if</span>(pq.size() &lt; k)</span><br><span class="line">		pq.offer(x);</span><br><span class="line">	<span class="keyword">else</span> <span class="keyword">if</span>(x &gt; pq.peek())&#123;</span><br><span class="line">		pq.poll();</span><br><span class="line">		pq.offer(x);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>会议室 II</p>
+<p>给你一个会议时间安排的数组 intervals ，每个会议时间都会包括开始和结束的时间 intervals[i] = [starti, endi] ，为避免会议冲突，同时要考虑充分利用会议室资源，请你计算至少需要多少间会议室，才能满足这些会议安排。</p>
+<p>输入：intervals = [[0,30],[5,10],[15,20]]</p>
+<p>输出：2</p>
+<p>按照开始时间从小到大扫描 intervals，假设扫描到 intervals[i]</p>
+<ul>
+<li>堆内有n个元素，这n个元素的开始时间一定在i前面；</li>
+<li>如果堆顶的结束时间比 intervals[i][0] 小，则在 intervals[i][0] 时刻，这个会议已经结束，弹出它。</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">Arrays.sort(intervals, (v1, v2) -&gt; (v1[<span class="number">0</span>] - v2[<span class="number">0</span>]));</span><br><span class="line">PriorityQueue&lt;Integer&gt; heap = <span class="keyword">new</span> <span class="title class_">PriorityQueue</span>&lt;&gt;();</span><br><span class="line"></span><br><span class="line"><span class="comment">// 各个时刻中占用房间最大值</span></span><br><span class="line"><span class="type">int</span> <span class="variable">meetingCount</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (<span class="type">int</span>[] meeting : intervals)&#123;</span><br><span class="line">    <span class="comment">//当前会议的开始时间大于等于最小的结束时间</span></span><br><span class="line">    <span class="comment">//把所有已经结束的会议淘汰出去</span></span><br><span class="line">    <span class="keyword">while</span> (!heap.isEmpty() &amp;&amp; meeting[<span class="number">0</span>] &gt;= heap.peek())&#123;</span><br><span class="line">        heap.poll();</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 再把当前会议的结束时间加进去</span></span><br><span class="line">    heap.add(meeting[<span class="number">1</span>]); <span class="comment">// 堆里有的就是进行的会议的数量</span></span><br><span class="line">    <span class="comment">// 更新meetingCount</span></span><br><span class="line">    meetingCount = Math.max(meetingCount, heap.size());</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">return</span> meetingCount;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>中位数</p>
+<p>转化为求第k大/小数字问题</p>
+<p>设共N个数字</p>
+<p>若N为奇数，中位数为第 N/2（向下取整） 大/小的数字</p>
+<p>若N为偶数，中位数为第 N/2 - 1 大的数字和第 N/2 大的数字平均数，为了对称美，改为第 N/2 小的数字和第 N/2 大的数字平均数。例：1 2 3 4，第2小：2，第2大：3</p>
+<p>求第 N/2 大/小的数字：</p>
+<p>1 无序数组，使用优先队列</p>
+<p>时间复杂度上界：O(NlgN)，即遍历N个数并更新优先队列。</p>
+<p>2 两个有序数组的中位数。</p>
+<p>二分查找，在两个数组中不断划分出中位数的存在区间</p>
+<p>假设两个有序数组分别是 A 和 B。要找到第 k 个元素，我们可以比较A[k/2−1] 和 B[k/2−1]…</p>
+<p><a target="_blank" rel="noopener" href="https://leetcode-cn.com/problems/shu-ju-liu-zhong-de-zhong-wei-shu-lcof/">数据流中的中位数</a></p>
+<p>可以将数据流保存在一个列表中，并在添加元素时 保持数组有序 。此方法的时间复杂度为 O(N) ，其中包括： 查找元素插入位置 O(logN) （二分查找）、向数组某位置插入元素 O(N) （插入位置之后的元素都需要向后移动一位）。</p>
+<p>借助 堆 可进一步优化时间复杂度。</p>
+<p><img src="/2022/04/20/sort/image-20220426102638047.png" alt></p>
+<p>随后，中位数可仅根据 A, B 的堆顶元素计算得到。</p>
+<p><img src="/2022/04/20/sort/image-20220426102921529.png" alt></p>
+<p><img src="/2022/04/20/sort/image-20220426102946773.png" alt></p>
+<h1 id="归并排序"><a href="#归并排序" class="headerlink" title="归并排序"></a>归并排序</h1><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span>[] tmp = <span class="keyword">new</span> <span class="title class_">int</span>[nums.length]; </span><br><span class="line"><span class="keyword">void</span> <span class="title function_">mergeSort</span><span class="params">(<span class="type">int</span>[] nums, <span class="type">int</span> l, <span class="type">int</span> r)</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (l &gt;= r) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="type">int</span> <span class="variable">mid</span> <span class="operator">=</span> (l + r) &gt;&gt; <span class="number">1</span>;</span><br><span class="line">    </span><br><span class="line">    mergeSort(nums, l, mid);</span><br><span class="line">    mergeSort(nums, mid + <span class="number">1</span>, r);</span><br><span class="line">    merge(nums, l, r, mid); <span class="comment">// 左边[l,mid], 右边[mid+1,r]</span></span><br><span class="line">&#125;</span><br><span class="line">merge(<span class="type">int</span> nums, <span class="type">int</span> l, <span class="type">int</span> r, <span class="type">int</span> mid)&#123;</span><br><span class="line">    <span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> l, j = mid + <span class="number">1</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 归并到临时数组tmp上，tmp每次从0开始填充</span></span><br><span class="line">    <span class="type">int</span> <span class="variable">cnt</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">while</span> (i &lt;= mid || j &lt;= r) &#123;</span><br><span class="line">        <span class="keyword">if</span>(i == mid+<span class="number">1</span>)&#123;</span><br><span class="line">            tmp[cnt++] = nums[j++];</span><br><span class="line">        &#125;<span class="keyword">else</span> <span class="keyword">if</span>(j == r+<span class="number">1</span>)&#123;</span><br><span class="line">            tmp[cnt++] = nums[i++];</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> <span class="keyword">if</span> (nums[i] &lt;= nums[j]) &#123;</span><br><span class="line">            tmp[cnt++] = nums[i++];</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            tmp[cnt++] = nums[j++];</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 将归并结果（排好序）填回原数组</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> <span class="variable">k</span> <span class="operator">=</span> <span class="number">0</span>; k &lt; r - l + <span class="number">1</span>; ++k) &#123;</span><br><span class="line">        nums[k + l] = tmp[k];</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>与归并操作有关的题目：<a target="_blank" rel="noopener" href="https://leetcode-cn.com/problems/merge-sorted-array/">88. 合并两个有序数组</a>，写法类似</p>
+</blockquote>
+<h2 id="性能分析-2"><a href="#性能分析-2" class="headerlink" title="性能分析"></a>性能分析</h2><p>最坏时间复杂度和最好时间复杂度：O(NlogN)，无论数组是否有序，执行过程一致，每次都会分解执行二分之一的子问题然后归并，并且比堆排序的时间复杂度更稳定，这是<strong>因为无论数组是否有序，merge 操作都会执行相同的次数</strong>。</p>
+<p>空间复杂度：O(N)</p>
+<p>稳定性：稳定，merge 操作是稳定的</p>
+<h2 id="对链表进行归并排序"><a href="#对链表进行归并排序" class="headerlink" title="对链表进行归并排序"></a>对链表进行归并排序</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 排序 s 到 e-1</span></span><br><span class="line"><span class="comment">// 注意外部调用为 mergeSortList(head, null) // null 前面 是tail</span></span><br><span class="line"><span class="keyword">public</span> ListNode <span class="title function_">mergeSortList</span><span class="params">(ListNode s, ListNode e)</span>&#123;</span><br><span class="line">    <span class="comment">// 链表长度为 3 时，仍能正确得到 mid 节点。</span></span><br><span class="line">    <span class="comment">// 分解后计算  mergeSortList(node1, node2) 和 mergeSortList(node2, node3) 和 merge()</span></span><br><span class="line">    <span class="comment">// 按照长度为 2 边界的修改方法是ok的，虽然看上去 node2 重复了。</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (s == <span class="literal">null</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> s;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 以长度 2 作为边界。此时 令 s 与 e 断开。最终效果是 mergeSortList(s, e) 将s~e-1排序</span></span><br><span class="line">    <span class="keyword">if</span> (s.next == e) &#123;</span><br><span class="line">        s.next = <span class="literal">null</span>;</span><br><span class="line">        <span class="keyword">return</span> s;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 能够进行以下操作的链表，长度一定&gt;=3，写的时候注意</span></span><br><span class="line">    <span class="type">ListNode</span> <span class="variable">mid</span> <span class="operator">=</span> middleNode(s, e);</span><br><span class="line">    <span class="type">ListNode</span> <span class="variable">list1</span> <span class="operator">=</span> mergeSortList(s, mid);</span><br><span class="line">    <span class="type">ListNode</span> <span class="variable">list2</span> <span class="operator">=</span> mergeSortList(mid, e);</span><br><span class="line">    <span class="keyword">return</span> merge(list1, list2);</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h1 id="排序问题"><a href="#排序问题" class="headerlink" title="排序问题"></a>排序问题</h1><p>64匹马，8赛道，找出最快的4匹马最少要几次</p>
+<p>1 先分8组跑8次，可以把每组的后四名先排除</p>
+<p>2 根据每组第一名来排序（没有计时器，需要让每组第一名一起再跑一次），设各组第一名中最快的是A组.于是可以排除E-H组的前四名</p>
+<p><img src="/2022/04/20/sort/image-20220426101338135.png" alt></p>
+<p>3 可以发现：D2、D3和D4一定不是前四名，因为A1、B1、C1和D1都比它们快，于是排除D2、D3和D4；同理，排除C3、C4；B4</p>
+<p><img src="/2022/04/20/sort/image-20220426101348727.png" alt></p>
+<p>4 剩下10匹马。由于A1是所有马最快的，故实际只需要看剩下的9匹马</p>
+<p>5 除去A4，令其余8匹马跑一次。如果A3在第3名或者更后面，说明已经选出了前三名，A4不用再跑（A4一定在A3后面，不会影响名次）；否则，取前三名和A4跑一次，得到结果。</p>
+
     </div>
 
     
@@ -475,7 +576,7 @@ right(i)=2i+2</script><p>通过对二叉堆结点关系进行限制，我们可�
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%80%89%E6%8B%A9%E6%8E%92%E5%BA%8F"><span class="nav-number">1.</span> <span class="nav-text">选择排序</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F"><span class="nav-number">2.</span> <span class="nav-text">冒泡排序</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%8F%92%E5%85%A5%E6%8E%92%E5%BA%8F"><span class="nav-number">3.</span> <span class="nav-text">插入排序</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%BF%AB%E9%80%9F%E6%8E%92%E5%BA%8F"><span class="nav-number">4.</span> <span class="nav-text">快速排序</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Partition%E7%AE%97%E6%B3%95"><span class="nav-number">4.1.</span> <span class="nav-text">Partition算法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0%E6%96%B9%E6%B3%95-1"><span class="nav-number">4.1.1.</span> <span class="nav-text">实现方法 1</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0%E6%96%B9%E6%B3%95-2"><span class="nav-number">4.1.2.</span> <span class="nav-text">实现方法 2</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%9A%8F%E6%9C%BA%E5%8C%96-Partition"><span class="nav-number">4.1.3.</span> <span class="nav-text">随机化 Partition</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90"><span class="nav-number">4.2.</span> <span class="nav-text">性能分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9B%B8%E5%85%B3%E9%A2%98%E7%9B%AE"><span class="nav-number">4.3.</span> <span class="nav-text">相关题目</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%A0%86%E6%8E%92%E5%BA%8F"><span class="nav-number">5.</span> <span class="nav-text">堆排序</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E5%8F%89%E5%A0%86"><span class="nav-number">5.1.</span> <span class="nav-text">二叉堆</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%80%E5%A4%A7%E5%A0%86"><span class="nav-number">5.2.</span> <span class="nav-text">最大堆</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#MAX-HEAPIFY"><span class="nav-number">5.2.1.</span> <span class="nav-text">MAX-HEAPIFY</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#BUILD-MAX-HEAP"><span class="nav-number">5.2.2.</span> <span class="nav-text">BUILD-MAX-HEAP</span></a></li></ol></li></ol></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%80%89%E6%8B%A9%E6%8E%92%E5%BA%8F"><span class="nav-number">1.</span> <span class="nav-text">选择排序</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F"><span class="nav-number">2.</span> <span class="nav-text">冒泡排序</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%8F%92%E5%85%A5%E6%8E%92%E5%BA%8F"><span class="nav-number">3.</span> <span class="nav-text">插入排序</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%BF%AB%E9%80%9F%E6%8E%92%E5%BA%8F"><span class="nav-number">4.</span> <span class="nav-text">快速排序</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Partition%E7%AE%97%E6%B3%95"><span class="nav-number">4.1.</span> <span class="nav-text">Partition算法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0%E6%96%B9%E6%B3%95-1"><span class="nav-number">4.1.1.</span> <span class="nav-text">实现方法 1</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0%E6%96%B9%E6%B3%95-2"><span class="nav-number">4.1.2.</span> <span class="nav-text">实现方法 2</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%9A%8F%E6%9C%BA%E5%8C%96-Partition"><span class="nav-number">4.1.3.</span> <span class="nav-text">随机化 Partition</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90"><span class="nav-number">4.2.</span> <span class="nav-text">性能分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9B%B8%E5%85%B3%E9%A2%98%E7%9B%AE"><span class="nav-number">4.3.</span> <span class="nav-text">相关题目</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%A0%86%E6%8E%92%E5%BA%8F"><span class="nav-number">5.</span> <span class="nav-text">堆排序</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E5%8F%89%E5%A0%86"><span class="nav-number">5.1.</span> <span class="nav-text">二叉堆</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%80%E5%A4%A7%E5%A0%86"><span class="nav-number">5.2.</span> <span class="nav-text">最大堆</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#MAX-HEAPIFY"><span class="nav-number">5.2.1.</span> <span class="nav-text">MAX-HEAPIFY</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#BUILD-MAX-HEAP"><span class="nav-number">5.2.2.</span> <span class="nav-text">BUILD-MAX-HEAP</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#HEAPSORT"><span class="nav-number">5.2.3.</span> <span class="nav-text">HEAPSORT</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90-1"><span class="nav-number">5.2.3.1.</span> <span class="nav-text">性能分析</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0%E4%BC%98%E5%85%88%E9%98%9F%E5%88%97"><span class="nav-number">5.3.</span> <span class="nav-text">实现优先队列</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#HEAP-EXTRACT-MAX-A"><span class="nav-number">5.3.1.</span> <span class="nav-text">HEAP-EXTRACT-MAX(A)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#HEAP-INCREASE-KEY-A-i-k"><span class="nav-number">5.3.2.</span> <span class="nav-text">HEAP-INCREASE-KEY(A, i, k)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#MAX-HEAP-INSERT"><span class="nav-number">5.3.3.</span> <span class="nav-text">MAX-HEAP-INSERT</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BC%98%E5%85%88%E9%98%9F%E5%88%97%E7%9A%84%E5%BA%94%E7%94%A8"><span class="nav-number">5.3.4.</span> <span class="nav-text">优先队列的应用</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%BD%92%E5%B9%B6%E6%8E%92%E5%BA%8F"><span class="nav-number">6.</span> <span class="nav-text">归并排序</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90-2"><span class="nav-number">6.1.</span> <span class="nav-text">性能分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AF%B9%E9%93%BE%E8%A1%A8%E8%BF%9B%E8%A1%8C%E5%BD%92%E5%B9%B6%E6%8E%92%E5%BA%8F"><span class="nav-number">6.2.</span> <span class="nav-text">对链表进行归并排序</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%8E%92%E5%BA%8F%E9%97%AE%E9%A2%98"><span class="nav-number">7.</span> <span class="nav-text">排序问题</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -491,7 +592,7 @@ right(i)=2i+2</script><p>通过对二叉堆结点关系进行限制，我们可�
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">26</span>
+          <span class="site-state-item-count">25</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
