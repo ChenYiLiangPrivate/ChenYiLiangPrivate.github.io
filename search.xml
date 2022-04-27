@@ -2038,8 +2038,9 @@ preSum_{j}\%k==preSum_{i}\%k</script><p>因此，令哈希表的键为 preSum % 
 
 \end{align*}</script><p>注意 Sum1 的第二项是不存在的。于是可以求解：</p>
 <script type="math/tex; mode=display">
-Sum_{1}+Sum_{3}+...+Sum_{x}</script><h2 id="树的前缀和"><a href="#树的前缀和" class="headerlink" title="树的前缀和"></a>树的前缀和</h2><h3 id="437-路径总和-III"><a href="#437-路径总和-III" class="headerlink" title="437. 路径总和 III"></a>437. 路径总和 III</h3><p>注意这里的路径是单向的，只能从父结点向一个子树延申，而不是任意的一个连通路径</p>
-<p>不需要到叶子节点。</p>
+Sum_{1}+Sum_{3}+...+Sum_{x}</script><h2 id="树的前缀和"><a href="#树的前缀和" class="headerlink" title="树的前缀和"></a>树的前缀和</h2><p>树的前缀和，起点是 root</p>
+<h3 id="437-路径总和-III"><a href="#437-路径总和-III" class="headerlink" title="437. 路径总和 III"></a>437. 路径总和 III</h3><p>注意这里的路径是单向的，只能从父结点向一个子树延申，而不是任意的一个连通路径</p>
+<p>不需要到叶子节点。需要回溯，防止存储了不是root到当前结点路径的前缀和。</p>
 ]]></content>
       <categories>
         <category>算法</category>
@@ -3341,7 +3342,7 @@ dp[i][j] = dp[i-1][(j-1+length)\%length] + dp[i-1][(j+1)\%length]</script><figur
   </entry>
   <entry>
     <title>图算法</title>
-    <url>/2022/04/24/graph-alg/</url>
+    <url>/2022/04/27/graph-alg/</url>
     <content><![CDATA[<p>图的存储方式、搜索遍历方式，图的各种算法</p>
 <span id="more"></span>
 <h1 id="图的存储"><a href="#图的存储" class="headerlink" title="图的存储"></a>图的存储</h1><p>图的存储方法主要有两种：邻接链表和邻接矩阵。两种方式都可以表示无向图和有向图。</p>
@@ -3350,7 +3351,7 @@ dp[i][j] = dp[i-1][(j-1+length)\%length] + dp[i-1][(j+1)\%length]</script><figur
 <li>邻接矩阵适合存储稠密图，以及需要快速判断两个节点是否存在边的场景。需要注意到，对于无向图，邻接矩阵是一个对称矩阵，因此，我们实际上只需要 |V^2^|/2 的空间来存储邻接矩阵</li>
 </ul>
 <p>在图的规模较小的情况下（节点数较少），邻接矩阵通常是不错的选择。</p>
-<p><img src="/2022/04/24/graph-alg/image-20220425093330113.png" alt="image-20220425093330113"></p>
+<p><img src="/2022/04/27/graph-alg/image-20220425093330113.png" alt="image-20220425093330113"></p>
 <p>对邻接链表/邻接矩阵稍加修改，即可存储权重图。</p>
 <ul>
 <li>邻接链表，令存储元素为边的权值</li>
@@ -3391,9 +3392,9 @@ dp[i][j] = dp[i-1][(j-1+length)\%length] + dp[i-1][(j+1)\%length]</script><figur
 <p>假设图是一颗二叉树，bfs 并且访问空节点</p>
 <figure class="highlight java"><table><tr><td class="code"><pre><span class="line">q.offer(root);</span><br><span class="line"><span class="keyword">while</span>(!q.isEmpty())&#123;</span><br><span class="line">    <span class="type">node</span> <span class="variable">n</span> <span class="operator">=</span> q.poll();</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 版本1，只遍历非空节点</span></span><br><span class="line">    <span class="keyword">if</span>(n.left != <span class="literal">null</span>) q.offer(n.left);</span><br><span class="line">    <span class="keyword">if</span>(n.right != <span class="literal">null</span>) q.offer(n.right);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 版本2，空节点也遍历</span></span><br><span class="line">    <span class="keyword">if</span>(n != <span class="literal">null</span>)&#123;</span><br><span class="line">        q.offer(n.left);</span><br><span class="line">        q.offer(n.right);</span><br><span class="line">    &#125; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>版本 1 搜索到的节点：     </p>
-<p><img src="/2022/04/24/graph-alg/image-20220425101943684.png" alt="image-20220425101943684"></p>
+<p><img src="/2022/04/27/graph-alg/image-20220425101943684.png" alt="image-20220425101943684"></p>
 <p> 版本 2 搜索到的节点：</p>
-<p><img src="/2022/04/24/graph-alg/image-20220425101954477.png" alt="image-20220425101954477"></p>
+<p><img src="/2022/04/27/graph-alg/image-20220425101954477.png" alt="image-20220425101954477"></p>
 <p>关于版本2，假设将层序遍历结果写成线性形式 arr=[1,2,null,3,4,null,null,null,null]，则可以根据元素的位置得到 它的左节点位置、右节点位置。对于元素 arr[i] != null，设 m 是 [0,i] 中 null 节点的个数，且设索引从 0 开始。则：</p>
 <ul>
 <li>左节点索引为：2(i-m)+1</li>
@@ -3433,39 +3434,44 @@ dp[i][j] = dp[i-1][(j-1+length)\%length] + dp[i-1][(j+1)\%length]</script><figur
 </li>
 </ul>
 <p>对边进行分类的意义将在后面提到。</p>
-<p><img src="/2022/04/24/graph-alg/image-20220425112400943.png" alt="深度优先搜索在有向图上的运行过程"></p>
+<p><img src="/2022/04/27/graph-alg/image-20220425112400943.png" alt="深度优先搜索在有向图上的运行过程"></p>
 <p>深度优先搜索的一个重要性质是：</p>
 <p>节点的发现时间和完成时间具有<strong>括号化结构</strong>。如果以左括号表示发现节点，右括号表示完成节点，根据搜索过程画出来的括号会是一个有效的括号字符串。</p>
-<p><img src="/2022/04/24/graph-alg/image-20220425141808805.png" alt="深度优先搜索的性质"></p>
+<p><img src="/2022/04/27/graph-alg/image-20220425141808805.png" alt="深度优先搜索的性质"></p>
 <p>(a) 表示有向图的深度优先搜索过程，(b) 表示深搜过程每个节点的发现时间和完成时间得到的括号化结构</p>
 <p>定理</p>
-<p><img src="/2022/04/24/graph-alg/image-20220425142531677.png" alt></p>
-<p><img src="/2022/04/24/graph-alg/image-20220425142833640.png" alt="image-20220425142833640"></p>
-<p><img src="/2022/04/24/graph-alg/image-20220425143022405.png" alt="image-20220425143022405"></p>
+<p><img src="/2022/04/27/graph-alg/image-20220425142531677.png" alt></p>
+<p><img src="/2022/04/27/graph-alg/image-20220425142833640.png" alt="image-20220425142833640"></p>
+<p><img src="/2022/04/27/graph-alg/image-20220425143022405.png" alt="image-20220425143022405"></p>
 <p>第一种情况，符合树边的定义。第二种情况，第一次探索边 (u, v) 说明 u 此时一定是灰色，而 v 也为灰色，说明它们此前已经处于一个深度优先树中，对于第三种情况</p>
-<p><img src="/2022/04/24/graph-alg/image-20220425143420328.png" alt="image-20220425143420328"></p>
-<p><img src="/2022/04/24/graph-alg/image-20220425143447559.png" alt="image-20220425143447559"></p>
-<h3 id="回溯相关的题目"><a href="#回溯相关的题目" class="headerlink" title="回溯相关的题目"></a>回溯相关的题目</h3><p>需要注意的是，这里的图，节点经常是可以多次访问的。我们需要修改dfs 的回溯版本，状态不应该有 black</p>
+<p><img src="/2022/04/27/graph-alg/image-20220425143420328.png" alt="image-20220425143420328"></p>
+<p><img src="/2022/04/27/graph-alg/image-20220425143447559.png" alt="image-20220425143447559"></p>
+<h3 id="回溯算法"><a href="#回溯算法" class="headerlink" title="回溯算法"></a>回溯算法</h3><p>需要注意的是，这里的图，节点经常是可以多次访问的。我们需要修改dfs ，状态不应该有 black。上面是搜索，每个结点访问一次即可，这里是回溯，节点经常是可以多次访问的。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">dfs(G, s)&#123;</span><br><span class="line">	visited[s] = gray;</span><br><span class="line">    </span><br><span class="line">    for v in G.Adj[s]&#123;</span><br><span class="line">        if(visited[v] == white)&#123;</span><br><span class="line">            v.p = s;</span><br><span class="line">            dfs(G, v);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    // 已经访问完本节点能到达的所有结点</span><br><span class="line">    visited[s] = white;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>从某个节点搜索完它能到达的所有结点之后，回溯到它的父结点，子路径visited被重置。唯一区别，每个节点的visited不同（即能访问的目标节点不同），搜索过程中，所有节点并不共享同一个visited。<br>注意添加元素和回溯元素的代码位置</p>
 <p><a href="https://leetcode-cn.com/problems/permutations/">46. 全排列</a></p>
-<p><img src="/2022/04/24/graph-alg/image-20220425111027552.png" alt="image-20220425111027552"></p>
-<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 上一个节点的排列、visited需要作为参数传入</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">dfs</span><span class="params">(List&lt;Integer&gt; preList, <span class="type">int</span>[] visited)</span>&#123; </span><br><span class="line">    <span class="comment">// 搜索终止条件</span></span><br><span class="line">    <span class="comment">// dfs不需要返回值，每次搜索到最后位置（即代表找到一条有效路径），更新结果即可。</span></span><br><span class="line">    <span class="keyword">if</span> (preList.size() == n) &#123;</span><br><span class="line">        res.add(<span class="keyword">new</span> <span class="title class_">ArrayList</span>&lt;&gt;(preList)); <span class="comment">// 如果在下边的分支处使用的是推入再弹出法，则这里加入的preList都是同样的，因为是引用，内容会在最终preList更新完之后确定。因此，需要res.add(preList的拷贝)</span></span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;n;++i)&#123;</span><br><span class="line">        <span class="keyword">if</span>(visited[i] == <span class="number">0</span>)&#123;</span><br><span class="line">            visited[i] = <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">            preList.add(nums[i]);</span><br><span class="line">            dfs(preList, visited);</span><br><span class="line">            preList.remove(preList.size()-<span class="number">1</span>);</span><br><span class="line"></span><br><span class="line">            visited[i] = <span class="number">0</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><img src="/2022/04/27/graph-alg/image-20220425111027552.png" alt="image-20220425111027552"></p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 多源的搜索图，用算法导论的写法更工整明白</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">Dfs</span><span class="params">(List&lt;Integer&gt; preList, <span class="type">int</span>[] visited)</span>&#123;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;n;++i)&#123;</span><br><span class="line">        dfs(preList, visited, i);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 上一个节点的 排列、visited 需要作为参数传入，实际上这也就是结点的属性！</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">dfs</span><span class="params">(List&lt;Integer&gt; preList, <span class="type">int</span>[] visited, <span class="type">int</span> cur)</span>&#123; </span><br><span class="line">    visited[cur] = <span class="number">1</span>;</span><br><span class="line">    preList.add(nums[cur]);</span><br><span class="line">    <span class="comment">// 找到一个结果，这种情况下，下一步没得走，for 内部不会调用 dfs 了</span></span><br><span class="line">    <span class="keyword">if</span> (preList.size() == n) </span><br><span class="line">        res.add(<span class="keyword">new</span> <span class="title class_">ArrayList</span>&lt;&gt;(preList));  <span class="comment">// 需要res.add(preList的拷贝)</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;n;++i)&#123;</span><br><span class="line">        <span class="keyword">if</span>(visited[i] == <span class="number">0</span>)</span><br><span class="line">            dfs(preList, visited, i);</span><br><span class="line">    &#125;</span><br><span class="line">	</span><br><span class="line">    visited[cur] = <span class="number">0</span>;</span><br><span class="line">    preList.remove(preList.size()-<span class="number">1</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>每个节点对应一个（前缀）排列，每个节点根据当前的visited数组情况产生分支。树深度为n=3</p>
 <p>因此，树角度，每个节点应该包含两个属性：当前排列、当前visited数组。当树深度为n，停止生长。</p>
 <p>从搜索角度，每个节点接收上一个节点的属性作为输入（自上而下的搜索思路，而非自下而上），根据visited数组产生分支进入下一个节点，当节点的属性：当前排列长度为n时，停止搜索并返回。</p>
-<p>注意区别于搜索。</p>
 <p><a href="https://leetcode-cn.com/problems/permutations-ii/">47. 全排列 II</a></p>
 <p>每次用 剩余元素 凑成全排列。对于剩余元素集合，如果第一个拿出来的数相同，那么剩余的数也相同，则这两套全排列也相同</p>
-<figure class="highlight java"><table><tr><td class="code"><pre><span class="line">Set&lt;Integer&gt; set = <span class="keyword">new</span> <span class="title class_">HashSet</span>&lt;&gt;();</span><br><span class="line"><span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;n;++i)&#123;</span><br><span class="line">    <span class="keyword">if</span>(visited[i] == <span class="number">0</span>)&#123;</span><br><span class="line">        <span class="comment">// 剪枝策略</span></span><br><span class="line">        <span class="keyword">if</span>(set.contains(nums[i])) <span class="keyword">continue</span>;</span><br><span class="line"></span><br><span class="line">        set.add(nums[i]);</span><br><span class="line">        visited[i] = <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">        preList.add(nums[i]);</span><br><span class="line">        dfs(preList, visited); <span class="comment">// 以 nums[i] 开头的不重复全排列</span></span><br><span class="line">        preList.remove(preList.size()-<span class="number">1</span>);</span><br><span class="line"></span><br><span class="line">        visited[i] = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 多源的搜索图，用算法导论的写法更工整明白</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">Dfs</span><span class="params">(List&lt;Integer&gt; preList, <span class="type">int</span>[] visited)</span>&#123;</span><br><span class="line">    <span class="comment">// 记录当前层（root）访问过的节点，用于剪枝（去掉重复排列）</span></span><br><span class="line">    <span class="comment">// 对于已访问过的结点，其满足题意的全排列一定已经搜索完了</span></span><br><span class="line">    Set&lt;Integer&gt; hs = <span class="keyword">new</span> <span class="title class_">HashSet</span>&lt;&gt;();</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;n;++i)&#123;</span><br><span class="line">        <span class="keyword">if</span>(visited[i] == <span class="number">0</span> &amp;&amp; !hs.contains(nums[i]))&#123;</span><br><span class="line">            hs.add(nums[i]);</span><br><span class="line">            dfs(preList, visited, i);</span><br><span class="line">        &#125;  </span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 上一个节点的 排列、visited 需要作为参数传入，实际上这也就是结点的属性！</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">dfs</span><span class="params">(List&lt;Integer&gt; preList, <span class="type">int</span>[] visited, <span class="type">int</span> cur)</span>&#123; </span><br><span class="line">    visited[cur] = <span class="number">1</span>;</span><br><span class="line">    preList.add(nums[cur]);</span><br><span class="line">    <span class="comment">// 找到一个结果，这种情况下，下一步没得走，for 内部不会调用 dfs 了</span></span><br><span class="line">    <span class="keyword">if</span> (preList.size() == n) </span><br><span class="line">        res.add(<span class="keyword">new</span> <span class="title class_">ArrayList</span>&lt;&gt;(preList));  <span class="comment">// 需要res.add(preList的拷贝)</span></span><br><span class="line">	</span><br><span class="line">    <span class="comment">// 记录当前结点已经访问过的子节点，用于剪枝（去掉重复排列）。注意，如果把整个 dfs 图画出来，hs 只会记录某个结点的分支子节点，而不是这个分支所属层的所有结点</span></span><br><span class="line">    <span class="comment">// 对于已访问过的子结点，其满足题意的全排列一定已经搜索完了</span></span><br><span class="line">    Set&lt;Integer&gt; hs = <span class="keyword">new</span> <span class="title class_">HashSet</span>&lt;&gt;();</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;n;++i)&#123;</span><br><span class="line">        <span class="keyword">if</span>(visited[i] == <span class="number">0</span> &amp;&amp; !hs.contains(nums[i]))&#123;</span><br><span class="line">            hs.add(nums[i]);</span><br><span class="line">            dfs(preList, visited, i);</span><br><span class="line">        &#125;    </span><br><span class="line">    &#125;</span><br><span class="line">	</span><br><span class="line">    visited[cur] = <span class="number">0</span>;</span><br><span class="line">    preList.remove(preList.size()-<span class="number">1</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p><a href="https://leetcode-cn.com/problems/combination-sum/">39. 组合总和</a></p>
 <p>背包问题求组合，会浪费大量空间。因此，搜索求。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">Dfs</span><span class="params">(<span class="type">int</span> target, List&lt;Integer&gt; pre)</span>&#123;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;candidates.length;++i)&#123;</span><br><span class="line">        <span class="keyword">if</span>(candidates[i] &gt; target)</span><br><span class="line">            <span class="keyword">continue</span>;</span><br><span class="line">        </span><br><span class="line">        dfs(i, target-candidates[i], pre);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">dfs</span><span class="params">(<span class="type">int</span> begin, <span class="type">int</span> target, List&lt;Integer&gt; pre)</span>&#123;</span><br><span class="line">    pre.add(candidates[begin]);</span><br><span class="line">    <span class="keyword">if</span>(target == <span class="number">0</span>)</span><br><span class="line">        ans.add(<span class="keyword">new</span> <span class="title class_">ArrayList</span>&lt;&gt;(pre)); <span class="comment">// 复制一份</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 遍历下一个可以走的结点</span></span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=begin;i&lt;candidates.length;++i)&#123;</span><br><span class="line">        <span class="keyword">if</span>(candidates[i] &gt; target) <span class="comment">// 若先将 candidates 排序，这里可以直接break</span></span><br><span class="line">            <span class="keyword">continue</span>;</span><br><span class="line"></span><br><span class="line">        dfs(i, target-candidates[i], pre);</span><br><span class="line">    &#125;</span><br><span class="line">    pre.remove(pre.size()-<span class="number">1</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p><a href="https://leetcode-cn.com/problems/combination-sum-ii/">40. 组合总和 II</a></p>
 <p>设 candidates = [2, 1, 2, 2, 5], target = 5。为了去重以及第一个break，先将它排序 </p>
-<p><img src="/2022/04/24/graph-alg/image-20220425112047920.png" alt="image-20220425112047920"></p>
-<h4 id><a href="#" class="headerlink" title=" "></a> </h4><p> <a href="https://leetcode-cn.com/problems/reordered-power-of-2/">869. 重新排序得到 2 的幂</a></p>
+<p><img src="/2022/04/27/graph-alg/image-20220425112047920.png" alt="image-20220425112047920"></p>
+<p> 实际上这是全排列 II，只不过条件变为和为 target</p>
+<blockquote>
+<p>相关题目</p>
+<p><a href="https://leetcode-cn.com/problems/reordered-power-of-2/">869. 重新排序得到 2 的幂</a></p>
 <p><a href="https://leetcode-cn.com/problems/letter-combinations-of-a-phone-number/">17. 电话号码的字母组合</a></p>
-<h4 id="-1"><a href="#-1" class="headerlink" title=" "></a> </h4><h1 id="拓扑排序"><a href="#拓扑排序" class="headerlink" title="拓扑排序"></a>拓扑排序</h1><p>许多实际应用都用有向无环图来指明事件的优先次序、顺序逻辑。例如穿衣服可以这么穿：</p>
-<p><img src="/2022/04/24/graph-alg/image-20220425143754658.png" alt></p>
+</blockquote>
+<h1 id="拓扑排序"><a href="#拓扑排序" class="headerlink" title="拓扑排序"></a>拓扑排序</h1><p>许多实际应用都用有向无环图来指明事件的优先次序、顺序逻辑。例如穿衣服可以这么穿：</p>
+<p><img src="/2022/04/27/graph-alg/image-20220425143754658.png" alt></p>
 <p>上图描述的是经过拓扑排序后的节点次序，这个<strong>次序与节点的完成时间正好相反</strong></p>
 <p>可以将图的拓扑排序看做是将图的 <strong>所有</strong> 结点在一条水平线上展开，图的所有边都由左指向右。如果存在多个入度为 0 的节点，能构成多个线性排序的子图，仍旧可以把它们放到一条水平线上，虽然存在断点。</p>
 <p>需要注意的是，有向边为：（前提节点，完成后可以到达的节点）。</p>
@@ -3478,22 +3484,22 @@ dp[i][j] = dp[i-1][(j-1+length)\%length] + dp[i-1][(j+1)\%length]</script><figur
 <h1 id="强连通分量"><a href="#强连通分量" class="headerlink" title="强连通分量"></a>强连通分量</h1><h1 id="最小生成树"><a href="#最小生成树" class="headerlink" title="最小生成树"></a>最小生成树</h1><p>在一给定的连通无向图 G = (V, E) 中，用 (u, v) 代表连接顶点 u 与顶点 v 的边，用 w(u, v) 代表此边的权重。V 表示结点的集合，E 表示边的集合。</p>
 <p>对于一个有着 n 个结点的连通无向图，我们希望找到一个无环子集 T⊆E，将所有结点连接起来，且 T 的边权重总和最小，即令：$w(T)=\sum_{(u,v)\epsilon T}^{}w(u,v)$最小。</p>
 <p>由于 T 是无环的，并且连通所有的结点，因此，T 是一颗树，称其为图 G 的生成树；又由于 T 的边权重总和是所有生成树中最小，所以称 T 为图 G 的最小生成树。</p>
-<p><img src="/2022/04/24/graph-alg/image-20220425150859709.png" alt></p>
+<p><img src="/2022/04/27/graph-alg/image-20220425150859709.png" alt></p>
 <p>解决最小生成树的两个算法：Kruskal 算法和 Prim 算法。两种算法都是贪心算法。</p>
-<h2 id="Kruskal-算法"><a href="#Kruskal-算法" class="headerlink" title="Kruskal 算法"></a>Kruskal 算法</h2><p>Kruskal 算法使用并查集，每个集合代表当前当前森林中的一棵树。MST 表示获得最小生成树，获得最小生成树的算法中，将维护一颗树 A（用边的集合表示），保证每次对 A 进行操作时，A 是最终获得的最小生成树的一部分。<img src="/2022/04/24/graph-alg/image-20220425150821799.png" alt="image-20220425150821799"></p>
+<h2 id="Kruskal-算法"><a href="#Kruskal-算法" class="headerlink" title="Kruskal 算法"></a>Kruskal 算法</h2><p>Kruskal 算法使用并查集，每个集合代表当前当前森林中的一棵树。MST 表示获得最小生成树，获得最小生成树的算法中，将维护一颗树 A（用边的集合表示），保证每次对 A 进行操作时，A 是最终获得的最小生成树的一部分。<img src="/2022/04/27/graph-alg/image-20220425150821799.png" alt="image-20220425150821799"></p>
 <ul>
 <li>算法的 1~3 行将集合 A 初始化为一个空集，并创建 |V| 颗树，每棵树仅包含一个节点。</li>
 <li>算法第 4 行将所有的边按照升序排序，排序的元素是节点对，排序的规则是按照边的权重。便于 for 循环进行检查</li>
 <li>算法的 5~8 行的 for 循环按照权重从低到高的次序对每条边逐一进行检查，对于边 (u, v) 来说，检查端点 u 和端点 v 是否属于同一棵集合，如果是，该条边不能加入到森林里（否则将形成环路），如果不是，则两个端点分别属于不同的树，把这条边加入到集合 A 中，然后把两棵树进行合并。</li>
 </ul>
 <p><strong>时间复杂度分析</strong>：O(ElogV)，依赖于并查集的维护算法、</p>
-<p><img src="/2022/04/24/graph-alg/image-20220425201219394.png" alt></p>
-<p><img src="/2022/04/24/graph-alg/image-20220425201253982.png" alt></p>
-<p><img src="/2022/04/24/graph-alg/image-20220425201330041.png" alt></p>
+<p><img src="/2022/04/27/graph-alg/image-20220425201219394.png" alt></p>
+<p><img src="/2022/04/27/graph-alg/image-20220425201253982.png" alt></p>
+<p><img src="/2022/04/27/graph-alg/image-20220425201330041.png" alt></p>
 <h2 id="Prim-算法"><a href="#Prim-算法" class="headerlink" title="Prim 算法"></a>Prim 算法</h2><p>在 Prim 算法的执行过程中，所有不在树 A 中的节点都存放在一个基于 key 属性的最小优先队列 Q 中。对于每个节点 v，属性 v.key 保存的是连接 v 和树 A 中节点的所有边中最小边的权重。</p>
 <p><strong>每次，检查从树 A 中的节点能到达的属于队列 Q 的节点，选择其中权重最小的边加入树 A</strong></p>
-<p><img src="/2022/04/24/graph-alg/image-20220425154846888.png" alt></p>
-<p><img src="/2022/04/24/graph-alg/image-20220425154926083.png" alt></p>
+<p><img src="/2022/04/27/graph-alg/image-20220425154846888.png" alt></p>
+<p><img src="/2022/04/27/graph-alg/image-20220425154926083.png" alt></p>
 <p>Prim 算法的关键在于维护最小优先队列，队列存放的是节点，维护的规则为：</p>
 <p>对于所有属于队列的节点，队头节点具有一条连接到树 A 的最小权值的边。实际上也就是<strong>根据节点的属性 key 来维护最小优先队列</strong>。</p>
 <p>在下面的伪代码中，由于我们保持了上述规则，因此在将队头节点 u 加入树 A 后，可以更新其子节点 v 到树 A 的 key 属性，每次从队列中选出一个节点加入到树 A，都会导致队列中部分元素的属性 key 变化，而<strong>这在上面的 Prim 算法示意图中并没有体现出来</strong>。</p>
@@ -3528,7 +3534,7 @@ dp[i][j] = dp[i-1][(j-1+length)\%length] + dp[i-1][(j+1)\%length]</script><figur
 <li>当<strong>环路的</strong>权重为负数时（环路所有边的权重之和），只要沿着这条环路不停地走，路径的权重值就能一直减小，趋于负无穷，<strong>不存在最短路径</strong></li>
 <li>当环路的权重非负时，<strong>有最短路径</strong>，最短路径一定不是环路。例如，对于下图的 cd 环路，环路的权重非负，c 到 d 的最短路径是 6，这是因为 c 到 d 之后，多次走 d-&gt;c-&gt;d 这条环路，权重会不断增大。</li>
 </ul>
-<p><img src="/2022/04/24/graph-alg/image-20220426164546025.png" alt></p>
+<p><img src="/2022/04/27/graph-alg/image-20220426164546025.png" alt></p>
 <blockquote>
 <p><strong>单源最短路径存在的充要条件</strong>：源结点 s 没有可以到达的权重为负数的环路</p>
 </blockquote>
@@ -3538,7 +3544,7 @@ dp[i][j] = dp[i-1][(j-1+length)\%length] + dp[i-1][(j+1)\%length]</script><figur
 <script type="math/tex; mode=display">
 δ(s,v)≤δ(s,u)+w(u,v)</script><p>这条性质提出的目的是为了将最短路径进行抽象化简单描述。简单地作图时，可以把最短路径画成直接连接 s 和 v 的线段，结点 u 的位置只能在这线段上或者线段外，形如三角形，因此叫做三角不等式性质。</p>
 <p>5、<strong>收敛性质</strong>：设 s -&gt; u -&gt; … -&gt; v 是图 G 中源 s 到 节点 v 的一条最短路径。假定图 G 由 INITIALIZE—SINGLE—SOURCE(G, s) 算法进行初始化，并在之后进行了一系列的松弛操作。如果在对边 (u, v) 进行松弛之前的任意时刻有 u.d=δ(s, u)，即已经找到源结点 s 到结点 u 的最短路径，则在对边 (u, v) 进行松弛操作后，有 v.d=δ(s, v)，也就是说，找到了源结点 s 到结点 v 的最短路径</p>
-<p><img src="/2022/04/24/graph-alg/image-20220426165344733.png" alt></p>
+<p><img src="/2022/04/27/graph-alg/image-20220426165344733.png" alt></p>
 <h2 id="单源最短路径的变体问题"><a href="#单源最短路径的变体问题" class="headerlink" title="单源最短路径的变体问题"></a>单源最短路径的变体问题</h2><p><strong>单源最短路径问题</strong>：给定一个图 G=(V, E)，我们希望找到从给定源结点 s 到每个节点的最短路径。</p>
 <p><strong>单目的地最短路径问题</strong>：<strong>将源结点设为目的结点，将图的每条边的方向翻转</strong>，该问题即成为了单源最短路径问题。</p>
 <p>所有结点对最短路径问题：要求得到所有结点对的最短路径。虽然可以对所有节点对运行一遍单源最短路径算法，但存在更快的解决方法。</p>
@@ -3548,14 +3554,14 @@ dp[i][j] = dp[i-1][(j-1+length)\%length] + dp[i-1][(j+1)\%length]</script><figur
 <p>广度优先搜索：只能用于求解<strong>无权重</strong>的图的单源最短路径问题。路径的长度为访问过的节点个数。结点同样具有属性 d 和属性 p，但是结点的属性 d 不再是用权值衡量</p>
 <p>深度优先搜索：本质上应该是 Dag-Shortest-Paths 算法？dfs 的参数即为结点的两个属性。</p>
 <h3 id="BELLMAN-FORD-算法"><a href="#BELLMAN-FORD-算法" class="headerlink" title="BELLMAN-FORD 算法"></a>BELLMAN-FORD 算法</h3><p>Bellman-Ford 算法实现如下：</p>
-<p><img src="/2022/04/24/graph-alg/image-20220426171511348.png" alt></p>
+<p><img src="/2022/04/27/graph-alg/image-20220426171511348.png" alt></p>
 <p>首先对所有节点的 d 值和 p 值进行初始化，然后对图的每条边进行 |V|-1 次松弛操作。执行完松弛操作后，算法第 5~8 行检查图中是否存在权重为负值的环路。</p>
 <p>Bellman-Ford 算法基于路径松弛性质运行。正确性的证明见算法导论。</p>
 <h3 id="Dag-Shortest-Paths-算法"><a href="#Dag-Shortest-Paths-算法" class="headerlink" title="Dag-Shortest-Paths 算法"></a>Dag-Shortest-Paths 算法</h3><p>Dag-Shortest-Paths 算法实现如下：</p>
-<p><img src="/2022/04/24/graph-alg/image-20220426192722448.png" alt></p>
+<p><img src="/2022/04/27/graph-alg/image-20220426192722448.png" alt></p>
 <p>首先对有向无环图进行拓扑排序，根据节点的拓扑排序次序访问每个节点，对于任意一个节点，对从该节点出发的所有边进行松弛操作</p>
 <h3 id="Dijkstra-算法"><a href="#Dijkstra-算法" class="headerlink" title="Dijkstra 算法"></a>Dijkstra 算法</h3><p>Dijkstra 算法实现如下：</p>
-<p><img src="/2022/04/24/graph-alg/image-20220426195639361.png" alt></p>
+<p><img src="/2022/04/27/graph-alg/image-20220426195639361.png" alt></p>
 <p>Dijkstra 算法的关键在于维持循环不变量：节点集合 S，从源结点 s 到该集合中每个节点的最短路径已被找到。算法不断从节点集合 Q=V-S 中选择最短路径估计最小的结点 u，将 u 加入到集合 s，然后对所有从 u 出发的边进行松弛。</p>
 <p>在一开始，Q 中只有源结点 s 的 s.d = 0，它将被选出。使用最小优先队列保存 Q，Q 的每个元素是一个结点，包含 d 和 p 属性，按照结点的 d 属性进行排序。具体实现方法可以参考 Prim 算法。</p>
 <blockquote>
@@ -4080,6 +4086,11 @@ right(i)=2i+2</script><p>通过对二叉堆结点关系进行限制，我们可�
 <p><img src="/2022/04/20/sort/image-20220426101348727.png" alt></p>
 <p>4 剩下10匹马。由于A1是所有马最快的，故实际只需要看剩下的9匹马</p>
 <p>5 除去A4，令其余8匹马跑一次。如果A3在第3名或者更后面，说明已经选出了前三名，A4不用再跑（A4一定在A3后面，不会影响名次）；否则，取前三名和A4跑一次，得到结果。</p>
+<p><a href="https://leetcode-cn.com/problems/largest-number/">最大数</a> </p>
+<p>当数组内没有相同数字开头的数字，例如 [45, 56, 81, 76, 123]，排序：比较输入数组的每个元素的最高位，最高位相同的时候比较次高位，然后把它们直接拼接起来 </p>
+<p>当数组内有相同数字开头的数字，例如[4,42]，仍旧进行排序，排序规则只需要对两个元素进行分析，再套用到排序函数即可。对于[4,42]，比较 442&gt;424，因此需要把 4 放在前面，于是易得排序规则。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line">Arrays.sort(numsArr, (x, y) -&gt; &#123;</span><br><span class="line">    <span class="type">long</span> <span class="variable">sx</span> <span class="operator">=</span> <span class="number">10</span>, sy = <span class="number">10</span>;</span><br><span class="line">    <span class="keyword">while</span> (sx &lt;= x) &#123;</span><br><span class="line">        sx *= <span class="number">10</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">while</span> (sy &lt;= y) &#123;</span><br><span class="line">        sy *= <span class="number">10</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> (<span class="type">int</span>) ((sx * y + x)-(sy * x + y)); </span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>即构造 (xy)~10~ 和 (yx)~10~ 进行比较。</p>
 ]]></content>
       <categories>
         <category>算法</category>
@@ -4357,6 +4368,112 @@ right(i)=2i+2</script><p>通过对二叉堆结点关系进行限制，我们可�
 ]]></content>
       <categories>
         <category>计算机网络</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>数学相关的算法题</title>
+    <url>/2022/04/24/math-related-problems/</url>
+    <content><![CDATA[<p>基于数学推导的算法题</p>
+<span id="more"></span>
+<p><a href="https://leetcode-cn.com/problems/maximum-swap/">670. 最大交换</a></p>
+<p>给定一个长度为 n 的数字序列「D0 D1 D2…Dn-1」，只做一次交换，问能得到的最大数字。</p>
+<p>左边的一个小的数与右边一个大的数交换，对这一次交换的要求：左边的数字尽可能靠前，</p>
+<p>与之交换的右边数字尽可能大。</p>
+<p>因此，设f(i)为i往后的最大数，从左往右扫描找第一个 f(i) &gt; Di 的对子，交换两个数即可。</p>
+<p>本题实际上是「下一个排列」的另一个版本，求的是下一个最大排列。</p>
+<p>下一个排列</p>
+<p>给定若干个数字的一个排列。如何将这些数字重新排列，以得到下一个更大的整数。如 123 下一个更大的数为 132。如果没有更大的整数，则输出最小的整数。</p>
+<ol>
+<li>我们希望下一个数比当前数大，这样才满足“下一个排列”的定义。将 后面的「大数」与 前面的 「小数」交换，就能得到一个更大的数。</li>
+<li>我们还希望下一个数<strong>增加的幅度尽可能的小</strong>，这样才满足“下一个排列与当前排列紧邻“的要求。为了满足这个要求，我们需要保证：<strong>交换的大数尽可能小，大数交换到的位置尽可能为高位</strong>（指数字字符串靠近右边）。</li>
+</ol>
+<p>比如 123465，</p>
+<p>1 大数交换到的位置尽可能为高位——交换5、4，而非5、3。该条规则需要优先满足</p>
+<p>2 交换的大数尽可能小——交换5、4，而非6、4</p>
+<p>将「大数」换到前面后，需要将「大数」后面的所有数重置为升序，升序排列就是最小的排列。</p>
+<p>以 123465 为例：首先按照上一步，交换 5 和 4，得到 123564；然后需要将 5 之后的数重置为升序，得到 123546。显然 123546 比 123564 更小，123546 就是 123465 的下一个排列</p>
+<p>求解满足要求的 「大数」与「小数」的方法：</p>
+<p>(1)  从后向前（数字字符串右往左）查找第一个相邻升序的元素对 (i,j)，满足 A[i] &lt; A[j]。优先满足了规则1，易知此时 [j,end) 必然是降序。——存在性：是否存在下一个排列</p>
+<p><img src="/2022/04/24/math-related-problems/image-20220427093727458.png" alt></p>
+<p>如果没有升序部分，就不可能存在后面的数小于前面的数的情况。当前排列是最大排列，没有下一个更大排列。依照题意，最大排列的下一个排列应该输出最小排列，即只有升序。</p>
+<p>(2)  在 [j,end) 从后向前查找第一个满足 A[i] &lt; A[k] 的 k。A[i]、A[k] 分别就是上文所说的「小数」、「大数</p>
+<p>(3)  将 A[i] 与 A[k] 交换</p>
+<p>(4)  可以断定这时 [j,end) 必然是降序（对调过去后下半部分一定比A[i]小，上半部分一定比A[i]大，即整段仍旧是递减的。容易证明），因此只需要反转 [j,end)，即可使其升序，不需要调用排序方法。注意 j 是最高点位置。</p>
+<blockquote>
+<p>可以从后往前遍历，维护一个单调栈，栈底到栈顶递增。第一次弹出时可以找到firstIndex和secondIndex</p>
+<p>但是实际上没有必要，因为只要一组firstIndex和secondIndex</p>
+</blockquote>
+<p><a href="https://leetcode-cn.com/problems/remove-k-digits/">402. 移掉 K 位数字</a></p>
+<p>给你一个以字符串表示的非负整数 num 和一个整数 k ，移除这个数中的 k 位数字，使得剩下的数字最小。请你以字符串形式返回这个最小的数字。</p>
+<p>区别于 下一个排列，这里是 移除 而非 移动</p>
+<p>对于两个相同长度的数字序列，最左边不同的数字决定了这两个数字的大小，例如，对于 A = 1axxx，B = 1bxxx，如果 a &gt; b 则 A&gt;B。</p>
+<p>「删除一个数字」</p>
+<p>让我们从一个简单的例子开始。给定一个数字序列，例如 425，如果要求我们只删除一个数字，那么从左到右，我们有 4、2 和 5 三个选择。我们将每一个数字和它的左邻居进行比较。从 2 开始，2 小于它的左邻居 4。假设我们保留数字 4，那么所有可能的组合都是以数字 4（即 42，45）开头的。相反，如果移掉 4，留下 2，我们得到的是以 2 开头的组合（即 25），这明显小于任何留下数字 4 的组合。因此我们应该移掉数字 4。如果不移掉数字 4，则之后无论移掉什么数字，都不会得到最小数。</p>
+<p>「删除一个数字」的贪心策略：</p>
+<p>给定一个长度为 n 的数字序列「D0 D1 D2…Dn-1」，，从左往右找到第一个位置 i（i&gt;0）使得 Di &gt; Di+1，并删去Di ；如果不存在，说明整个数字序列单调不降，删去最后一个数字即可。从而，我们能得到 删除一个数字后 的最小数字。</p>
+<p>「删除k个数字」</p>
+<p>自然的想法，k次删除一个数字，每次都要扫描一遍，复杂度最大可能O(N)</p>
+<p>优化：前面之前看过了，后面其实不用看。对于上述过程，其实等价于维护一个单调递增栈，只不过限制了 pop 的次数。</p>
+<p>例如，对于[1,2,3,4,5,2,6,4,3]，k=4的情况，维护一个单调递增栈。则元素2入栈时，弹出5、4、3，即顺序删除了5、4、3，k变成1，然后6入栈，4入栈，弹出6，k变成0.当单调栈建立完毕而k还没有到0，说明后面没有找到 下坡 ，因此把栈顶最后几个元素删除/弹出。</p>
+<p>最终，从栈底到栈顶的答案序列即为最小数。</p>
+<p>考虑到栈的特点是后进先出，如果通过栈实现，则需要将栈内元素依次弹出然后进行翻转才能得到最小数。为了避免翻转操作，可以使用双端队列代替栈的实现。</p>
+<p>更好的方法是使用 StringBuffer 作为栈。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Solution</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> String <span class="title function_">removeKdigits</span><span class="params">(String num, <span class="type">int</span> k)</span> &#123;</span><br><span class="line">        <span class="comment">// 区别于 下一个排列，这里是 移除 而非  移动</span></span><br><span class="line"></span><br><span class="line">        <span class="type">StringBuilder</span> <span class="variable">ret</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">StringBuilder</span>();</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;num.length();++i)&#123;</span><br><span class="line">            <span class="type">char</span> <span class="variable">digit</span> <span class="operator">=</span> num.charAt(i);</span><br><span class="line"></span><br><span class="line">            <span class="keyword">while</span>(ret.length() &gt; <span class="number">0</span> &amp;&amp; k &gt; <span class="number">0</span> &amp;&amp; ret.charAt(ret.length()-<span class="number">1</span>) &gt; digit)&#123;</span><br><span class="line">                ret.deleteCharAt(ret.length()-<span class="number">1</span>);</span><br><span class="line">                --k;</span><br><span class="line">            &#125;</span><br><span class="line">            ret.append(digit);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> <span class="number">0</span>; i &lt; k; ++i) &#123;</span><br><span class="line">            ret.deleteCharAt(ret.length()-<span class="number">1</span>);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 删除前导0</span></span><br><span class="line">        <span class="keyword">while</span>(ret.length() &gt; <span class="number">0</span> &amp;&amp; ret.charAt(<span class="number">0</span>) == <span class="string">&#x27;0&#x27;</span>)&#123;</span><br><span class="line">            ret.deleteCharAt(<span class="number">0</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> ret.length() == <span class="number">0</span>? <span class="string">&quot;0&quot;</span>:ret.toString();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>两数之和</p>
+<p>给定一个整数数组 nums 和一个整数目标值 target，请你在该数组中找出 和为目标值 target 的那 两个 整数，并返回它们的数组下标。</p>
+<p>法1：遍历每个数，对于每个数，再遍历一次数组看是否满足要求 O(N^2)</p>
+<p>法1的初步优化：无重复地遍历所有二元组，每次只需要看 i 后面或前面的数就能 无重复地 遍历所有整数对。</p>
+<p>法1的进一步优化：把数存到哈希表里，保证每次只会看有效的二元组。</p>
+<p>法2：先将数组递增排序，假设对于nums[i]，如果找到nums[j]，j&gt;i，使得它们之和等于target。那么对于nums[q]，k&gt;i，符合条件的nums[n]一定满足n&lt;j。例如如下排序后的数组 [1 2 3 4 5]，target=5，对于1，找到对应的4，对于2，因为它比1更大，那么满足条件的另一个数必定比4小，由于数组递增，容易确定索引比nums[3]=4小</p>
+<p>于是，可以优化为 排序+双指针 复杂度O(nlogn)+O(n) = O(nlogn) 注意这里是加。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 具体实现在三数之和那里</span></span><br><span class="line"><span class="comment">// 双指针法：对于left和right指针，每次找nums[left]的对应数字，因此要移动right，</span></span><br><span class="line"><span class="keyword">while</span>(left &lt; right &amp;&amp; nums[left]+nums[right] &gt; target) –right;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 如果指针重合，随着 b 后续的增加，就不会有满足 a+b+c=0 并且 b&lt;c 的 c 了，可以退出循环</span></span><br><span class="line"><span class="keyword">if</span> (second == third) 结束;</span><br><span class="line"><span class="keyword">if</span> (nums[second] + nums[third] == target) <span class="comment">//记录结果，这里nums[left]+nums[right] &lt;=target，若不相等，再右移right也不可能</span></span><br></pre></td></tr></table></figure>
+<p><a href="https://leetcode-cn.com/problems/boats-to-save-people/">881. 救生艇</a></p>
+<p>三数之和</p>
+<p>法1：三重遍历 O(N^3)</p>
+<p>法2：基于 两数之和 法2，先排序，第一个数a遍历，第二个数b和第三个数c相当于两数之和问题，且索引关系：a.index &lt; b.index &lt; c.index，复杂度O(NlogN)+O(N*N)=O(N^2)</p>
+<p>在遍历三个数时，跳过重复的a、b、c</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span>(<span class="type">int</span> first=<span class="number">0</span>;first&lt;nums.length;++first)&#123;</span><br><span class="line">    <span class="keyword">if</span>(first &gt; <span class="number">0</span> &amp;&amp; nums[first] == nums[first-<span class="number">1</span>]) <span class="comment">// first &gt; 0</span></span><br><span class="line">        <span class="keyword">continue</span>; </span><br><span class="line"></span><br><span class="line">    <span class="type">int</span> <span class="variable">third</span> <span class="operator">=</span> nums.length-<span class="number">1</span>; <span class="comment">// 不同的start对应不同两数之和的target，third要重置</span></span><br><span class="line">    <span class="comment">// 遍历 second，找到second对应的third</span></span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> <span class="variable">second</span> <span class="operator">=</span> first+<span class="number">1</span>;second&lt;nums.length;++second)&#123;</span><br><span class="line">        <span class="keyword">if</span>(second &gt; first+<span class="number">1</span> &amp;&amp; nums[second] == nums[second-<span class="number">1</span>]) <span class="comment">// second &gt; first+1</span></span><br><span class="line">            <span class="keyword">continue</span>;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">while</span>(second &lt; third &amp;&amp; nums[first]+nums[second]+nums[third] &gt; <span class="number">0</span>)</span><br><span class="line">            --third;</span><br><span class="line">        <span class="keyword">if</span>(second == third) <span class="comment">// 不可能找到两数之和为 target</span></span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">if</span>(nums[first]+nums[second]+nums[third] == <span class="number">0</span>)&#123;</span><br><span class="line">            <span class="comment">// 添加结果</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>跳过升序数组相同元素的方法</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">//只使用 for</span></span><br><span class="line"><span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;nums.length;++i)</span><br><span class="line">    <span class="keyword">if</span>(i &gt; <span class="number">0</span> &amp;&amp; nums[i] == nums[i-<span class="number">1</span>]) <span class="comment">// first &gt; 0</span></span><br><span class="line">        <span class="keyword">continue</span>; </span><br><span class="line"></span><br><span class="line"><span class="comment">//while 和 ++i 会比较麻烦</span></span><br><span class="line"><span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;nums.length;++i)</span><br><span class="line">    <span class="keyword">while</span>(i&gt;<span class="number">0</span> &amp;&amp; i &lt;nums.length &amp;&amp; nums[i]==nums[i-<span class="number">1</span>])</span><br><span class="line">        ++i;</span><br><span class="line">	--i; <span class="comment">// 让for的++i能正确地到下一个不同元素的位置</span></span><br></pre></td></tr></table></figure>
+<p><a href="https://leetcode-cn.com/problems/3sum-closest/">16. 最接近的三数之和</a></p>
+<p>枚举第一个元素 <em>a</em>，对于剩下的两个元素 <em>b</em> 和 <em>c</em>，令它们的和最接近 <em>target</em>−<em>a</em>。</p>
+<p>于是问题转化为：最接近target的两数之和</p>
+<p>先将数组升序排序，双指针找 [<em>i</em>+1,<em>n</em>) 区间中最接近target的两数之和</p>
+<p>双指针。用 pb和 pc分别表示指向 b 和 c 的指针，初始时， pb指向位置 i+1，即左边界；pc指向位置 n−1，即右边界。在每一步枚举的过程中，用 a+b+c 来更新答案，并且：</p>
+<p>保证 pb &lt; pc，对每次的b和c，记录a+b+c，并与ans比较</p>
+<ul>
+<li>如果 a+b+c ≥ target，将 pc向左移动一个位置；</li>
+<li>如果 a+b+c &lt; target，将 pb向右移动一个位置。</li>
+</ul>
+<p>pb只能向右移动，pc只能向左移动，不能跃出区间。</p>
+<p>比特位计数</p>
+<p>数字可分为：</p>
+<p>奇数：设<em>x</em>为奇数，<em>x</em>&gt;=1，则<em>x</em>-1为偶数。二进制表示中，<em>x</em>（奇数）比<em>x</em>-1（偶数）多最低位的 1，并且，大于等于1的奇数的第0位都是1（这是因为奇数相当于用1一直加2得到）</p>
+<p>​     举例： </p>
+<p>​     0 = 00    1 = 01</p>
+<p>​     2 = 10   3 = 11</p>
+<p>偶数：设<em>x</em>为偶数，且<em>x</em>&gt;=2，则<em>x</em>/2仍为偶数，<em>x</em>/2&gt;=1。二进制表示中，<em>x</em>中 1 的个数一定和<em>x</em>/2的二进制1 的个数一样多。这是因为除以 2 相当于右移一位。</p>
+<p>​      举例：</p>
+<p>​     1 = 01  2 = 10   4 = 100    </p>
+<p>​     3 = 11  6 = 110   12 = 1100</p>
+<p>0:易知二进制数。</p>
+<p>因此，为了获得数字<em>num</em>的比特位1的个数，可以根据奇偶性不断进行-1 / 除以2的操作，最终递归 / 递推 出数字<em>num</em>的比特位1的个数。递推过程需要数字0~num所有的结果。</p>
+<p>若只要求一个数字的结果，而不需要比它小的数字的比特位1个数：<br>不断令 n= <em>n</em> &amp; (<em>n</em>−1)，其运算结果恰为把 <em>n</em> 的二进制位中的 最低位的 1  变为 0 之后的结果。每做一次<em>n</em> &amp; (<em>n</em>-1)，就把最低位1去掉，若<em>k</em>次运算后<em>n</em>变为0，<em>n</em>中二进制1的个数就是<em>k</em></p>
+<p>证明：</p>
+<p>当<em>n</em>为奇数，如上所说，<em>n</em>（奇数）比<em>n</em>-1（偶数）多最低位的 1，<em>n</em> &amp; (<em>n</em>−1)容易知道=<em>n</em>-1，即将第0位置零（翻转），第0位刚好是<em>n</em>的最低位的 1 </p>
+<p>当<em>n</em>为偶数，其第0位必为0，因为大于等于2的偶数相当于0+高比特1得到，不可能加0位比特1。偶数最低两位有两种可能10 00</p>
+<p>当最低两位为 10，减1操作只影响最低两位，如10-01=01, 110-001=101，<em>n</em> &amp; (<em>n</em>-1) ，最高位不变，最低两位=10&amp; 01=00；</p>
+<p>当最低两位为 00，减1操作需要往高位借位，如100-001=011, 1000 – 0001 = 0111，<em>n</em> &amp; (<em>n</em>-1)=0。</p>
+<p>综上，都满足<em>n</em> &amp; (<em>n</em>-1)=把 <em>n</em> 的二进制位中的最低位的 1 变为 0</p>
+<p><a href="https://leetcode-cn.com/problems/power-of-two/">231. 2 的幂</a></p>
+<p>判断x是否为2的幂次方，即x二进制是否有且只有一个1。那么把x最低位的 1 变为 0</p>
+<p>判断它是否为0即可</p>
+<p><a href="https://leetcode-cn.com/problems/total-hamming-distance/">汉明距离总和</a></p>
+<p>按照每个位累加结果。每个二进制位的结果计算如下：</p>
+<p>若长度为 n 的数组 nums 的所有元素二进制的第 i 位共有 c 个 1，n−c 个 0，这些元素在二进制的第 i 位上的汉明距离之和为 c*(n-c)，即(n-c)个0不重复地与c个1配对</p>
+]]></content>
+      <categories>
+        <category>算法</category>
       </categories>
   </entry>
 </search>
