@@ -30,8 +30,11 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="http://example.com/2022/04/07/dp/image-20220410162156883.png">
 <meta property="og:image" content="http://example.com/2022/04/07/dp/image-20220410214301011.png">
+<meta property="og:image" content="http://example.com/2022/04/07/dp/image-20220429154112649.png">
+<meta property="og:image" content="http://example.com/2022/04/07/dp/image-20220429155206415.png">
+<meta property="og:image" content="http://example.com/2022/04/07/dp/image-20220429160655404.png">
 <meta property="article:published_time" content="2022-04-07T08:17:15.000Z">
-<meta property="article:modified_time" content="2022-04-18T02:20:53.270Z">
+<meta property="article:modified_time" content="2022-04-29T08:35:02.805Z">
 <meta property="article:author" content="Cyl">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://example.com/2022/04/07/dp/image-20220410162156883.png">
@@ -129,7 +132,7 @@
   </li>
         <li class="menu-item menu-item-archives">
 
-    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">26</span></a>
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">27</span></a>
 
   </li>
       <li class="menu-item menu-item-search">
@@ -217,7 +220,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-04-18 10:20:53" itemprop="dateModified" datetime="2022-04-18T10:20:53+08:00">2022-04-18</time>
+                <time title="修改时间：2022-04-29 16:35:02" itemprop="dateModified" datetime="2022-04-29T16:35:02+08:00">2022-04-29</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -257,7 +260,7 @@
         <p>各种问题的递推思路和递推表达式</p>
 <span id="more"></span>
 <h1 id="背包问题"><a href="#背包问题" class="headerlink" title="背包问题"></a>背包问题</h1><p>后续的扩展需阅读<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/139368825">背包九讲</a></p>
-<h2 id="1-01-背包问题"><a href="#1-01-背包问题" class="headerlink" title="1 01 背包问题"></a>1 01 背包问题</h2><p>有 n 个可待选择的物品，每个物品只有一件，它们都有各自的重量和价值。</p>
+<h2 id="01-背包问题"><a href="#01-背包问题" class="headerlink" title="01 背包问题"></a>01 背包问题</h2><p>有 n 个可待选择的物品，每个物品只有一件，它们都有各自的重量和价值。</p>
 <p>设 weights = [1,2,3]，values = [4,5,6]</p>
 <p><strong>基本问题1：用这 n 个物品，能组成的所有重量</strong></p>
 <p>设 f(w, i) 表示用前 i 个物品能得到重量 w，递推图如下：</p>
@@ -289,7 +292,7 @@ max(dp[i-1][j][k],dp[i-1][j-zeros][k-ones]+1) & j\geq zeros \ and\ k\geqslant on
 <p>第 i 种工作会产生 profit[i] 的利润，它要求 group[i] 名成员共同参与。如果成员参与了其中一项工作，就不能参与另一项工作。（每种工作只能完成一次，不能重复完成）</p>
 <p>工作的任何至少产生 minProfit 利润的子集称为 盈利计划 。并且工作的成员总数最多为 n 。</p>
 <p>有多少种计划可以选择？</p>
-<h2 id="2-完全背包问题"><a href="#2-完全背包问题" class="headerlink" title="2 完全背包问题"></a>2 完全背包问题</h2><p>有 n 个可待选择的物品，每个物品有无限件可用，它们都有各自的重量和价值。求用这 n 个物品，能组成的所有重量和对应的最大价值。</p>
+<h2 id="完全背包问题"><a href="#完全背包问题" class="headerlink" title="完全背包问题"></a>完全背包问题</h2><p>有 n 个可待选择的物品，每个物品有无限件可用，它们都有各自的重量和价值。求用这 n 个物品，能组成的所有重量和对应的最大价值。</p>
 <p>定义 f(i, j) 表示用前 i 个物品得到重量 j 时的最大价值，对于完全背包问题，递推式为：</p>
 <script type="math/tex; mode=display">
 f[i][j]=max\left \{ f[i-1][j-k*weights[i]]+k*values[i],\ \ \ k*weights[i]\leq j \right \}</script><p>该递推式的复杂度是线性倍的 O(NW)</p>
@@ -325,6 +328,8 @@ f[i][j]=f[i-1][j]+f[i][j-coins[i]]</script><h1 id="最长上升子序列"><a hre
 <li>俄罗斯套娃信封问题</li>
 </ul>
 <p>三维排序：面试题 08.13. 堆箱子</p>
+<h1 id="最长等差数列"><a href="#最长等差数列" class="headerlink" title="最长等差数列"></a>最长等差数列</h1><p>实际上是「最长上升子序列」的另一种版本，进一步限制了递推条件。在递推时，要保存以当前元素为结尾的所有最长等差序列，保存形式为：(公差 d，对应的最长等差序列长度)</p>
+<p>需要注意的是，子序列中元素的相对位置必须和原来保持一致。</p>
 <h1 id="最长公共子序列"><a href="#最长公共子序列" class="headerlink" title="最长公共子序列"></a>最长公共子序列</h1><p>设 f(i, j) 表示 text1 第 i 个元素开始，text2 第 j 个元素开始的结果</p>
 <p>则递推式为：</p>
 <script type="math/tex; mode=display">
@@ -335,8 +340,6 @@ max\left \{ f[i+1][j],\ f[i][j+1] \right \}  & else
 <p><img src="/2022/04/07/dp/image-20220410214301011.png" alt></p>
 <p>那么在边界处，即 i=M-1 和 j=N-1 时，递推式会有越界问题。</p>
 <p>为了便于处理，可以多分配一行一列，它们的初值是 0，然后边界位置就可以正常用递推式了。</p>
-<h1 id="1027-最长等差数列"><a href="#1027-最长等差数列" class="headerlink" title="1027. 最长等差数列"></a>1027. 最长等差数列</h1><p>需要注意的是，子序列中元素的相对位置必须和原来保持一致。</p>
-<p>递推，dp[i] 需要记录以 nums[i] 为结尾的 (公差 d, 对应的最长等差序列长度)，因此，dp 数组每个元素应该用哈希表存储</p>
 <h1 id="子数组问题"><a href="#子数组问题" class="headerlink" title="子数组问题"></a>子数组问题</h1><h2 id="最大子数组和"><a href="#最大子数组和" class="headerlink" title="最大子数组和"></a>最大子数组和</h2><p>给你一个整数数组 nums ，请你找出一个具有最大和的连续子数组（子数组最少包含一个元素），返回其最大和。<br>用 f(i) 表示以第 i 个数结尾的「连续子数组的最大和」便于递推。不递推所有连续子数组和（即使用 f(i, j) 表示 i~j的连续子数组和）</p>
 <h1 id="环形数组问题"><a href="#环形数组问题" class="headerlink" title="环形数组问题"></a>环形数组问题</h1><p>环形数组的连续子数组的最大和</p>
 <p>先不考虑环：求以i为结尾的连续子数组最大和，得到其中的最大值</p>
@@ -344,7 +347,84 @@ max\left \{ f[i+1][j],\ f[i][j+1] \right \}  & else
 <p>圆环回原点问题（字节跳动高频面试题之圆环回原点问题）</p>
 <script type="math/tex; mode=display">
 dp[i][j] = dp[i-1][(j-1+length)\%length] + dp[i-1][(j+1)\%length]</script><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Solution</span>:</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">backToOrigin</span>(<span class="params">self,n</span>):</span><br><span class="line">        <span class="comment">#点的个数为10</span></span><br><span class="line">        length = <span class="number">10</span></span><br><span class="line">        dp = [[<span class="number">0</span> <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(length)] <span class="keyword">for</span> j <span class="keyword">in</span> <span class="built_in">range</span>(n+<span class="number">1</span>)]</span><br><span class="line">        dp[<span class="number">0</span>][<span class="number">0</span>] = <span class="number">1</span> 第一行只有dp[<span class="number">0</span>][<span class="number">0</span>]=<span class="number">1</span>，其他都为<span class="number">0</span></span><br><span class="line">第一行初始化之后，后面的行根据递推式易知可以递推出来</span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">1</span>,n+<span class="number">1</span>):</span><br><span class="line">            <span class="keyword">for</span> j <span class="keyword">in</span> <span class="built_in">range</span>(length):</span><br><span class="line">                <span class="comment">#dp[i][j]表示从0出发，走i步到j的方案数</span></span><br><span class="line">                dp[i][j] = dp[i-<span class="number">1</span>][(j-<span class="number">1</span>+length)%length] + dp[i-<span class="number">1</span>][(j+<span class="number">1</span>)%length]</span><br><span class="line">        <span class="keyword">return</span> dp[n][<span class="number">0</span>]</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<h1 id="状态机"><a href="#状态机" class="headerlink" title="状态机"></a>状态机</h1>
+<h1 id="状态机"><a href="#状态机" class="headerlink" title="状态机"></a>状态机</h1><h2 id="买卖股票的最佳时机-II"><a href="#买卖股票的最佳时机-II" class="headerlink" title="买卖股票的最佳时机 II"></a>买卖股票的最佳时机 II</h2><p>给你一个整数数组 prices ，其中 prices[i] 表示某支股票第 i 天的价格。</p>
+<p>在每一天，你可以决定是否购买和/或出售股票。你在任何时候 最多 只能持有 一股 股票。你也可以先购买，然后在 同一天 出售。</p>
+<p>返回 你能获得的 最大 利润 。</p>
+<h3 id="状态分析"><a href="#状态分析" class="headerlink" title="状态分析"></a>状态分析</h3><p>每一天有 3 种可能的操作：买股票、卖股票、什么都不做</p>
+<p>初始状态为：不持有股票</p>
+<p>状态转移图为：</p>
+<p><img src="/2022/04/07/dp/image-20220429154112649.png" alt></p>
+<h3 id="递推式"><a href="#递推式" class="headerlink" title="递推式"></a>递推式</h3><p>定义状态 dp[i][0] 表示第 i 天交易完后手里没有股票的最大利润， dp[i][1] 表示第 i 天交易完后手里持有一支股票的最大利润。根据状态转移图可以得到递推式：</p>
+<script type="math/tex; mode=display">
+dp[i][0] = max\left \{dp[i−1][0], dp[i−1][1] + prices[i]  \right \}\\
+dp[i][1] = max\left \{dp[i−1][1], dp[i−1][0] − prices[i] \right \}</script><p>初始状态注意 dp[0][1] 是负利润，等于 - prices[0]</p>
+<p>空间优化：据递推过程易知，O(N) 空间可优化为 O(1)，以下的题目类似优化。</p>
+<p>最终结果：由于全部交易结束后，持有股票的收益一定低于不持有股票的收益，因此这时候 dp[n−1][0] 的收益必然是大于 dp[n−1][1] 的，最后的答案即为 dp[n−1][1]。</p>
+<h3 id="贪心算法-1"><a href="#贪心算法-1" class="headerlink" title="贪心算法"></a>贪心算法</h3><p>只要今天的股价比昨天更高，就出售股票。</p>
+<h2 id="最佳买卖股票时机含冷冻期"><a href="#最佳买卖股票时机含冷冻期" class="headerlink" title="最佳买卖股票时机含冷冻期"></a>最佳买卖股票时机含冷冻期</h2><p>给定一个整数数组 prices，其中第 prices[i] 表示第 i 天的股票价格 。</p>
+<p>设计一个算法计算出最大利润。在满足以下约束条件下，你可以尽可能地完成更多的交易（多次买卖一支股票）:</p>
+<ul>
+<li>卖出股票后，你无法在第二天买入股票 （即冷冻期为 1 天）。</li>
+</ul>
+<p>注意：你不能同时参与多笔交易（你必须在再次购买前出售掉之前的股票）。</p>
+<h3 id="状态分析-1"><a href="#状态分析-1" class="headerlink" title="状态分析"></a>状态分析</h3><p>每一天有 3 种可能的操作：买股票、卖股票、什么都不做。</p>
+<p>初始状态为：不持有股票</p>
+<p>状态转移图为：</p>
+<p><img src="/2022/04/07/dp/image-20220429155206415.png" alt></p>
+<p>一开始，处于不持有股票的状态，可以买、不操作，进行买操作，变为持有股票的状态；</p>
+<p>由于至多持有一支股票，因此只能卖或者不操作；进行卖操作，将变为「处于冷冻期」的状态</p>
+<p>由于不持有任何股票，因此不能卖，由于处于冷冻期，因此不能买，该状态不能进行操作，在等待一天（无操作）后，将变为不持有股票的状态，即解除了冷冻，可以正常购买股票。</p>
+<h3 id="递推式-1"><a href="#递推式-1" class="headerlink" title="递推式"></a>递推式</h3><p>dp[i][0]：第 i 天之后，不持有股票，并且不在冷冻期中（状态 s0），对应的累计最大收益<br>dp[i][1]：第 i 天之后，持有股票（状态 s1），对应的累计最大收益；<br>dp[i][2]：第 i 天之后，不持有股票，并且处于冷冻期中（状态 s2），对应的累计最大收益；</p>
+<p>递推式如下：</p>
+<script type="math/tex; mode=display">
+\begin{align*}
+dp[i][0] &= max(dp[i - 1][2],\ dp[i - 1][0])\\
+dp[i][1] &= max(dp[i - 1][1],\ dp[i - 1][0] - prices[i])\\
+dp[i][2] &= dp[i - 1][1] + prices[i]
+\end{align*}</script><h2 id="买卖股票的最佳时机-III"><a href="#买卖股票的最佳时机-III" class="headerlink" title="买卖股票的最佳时机 III"></a>买卖股票的最佳时机 III</h2><p>给定一个数组，它的第 i 个元素是一支给定的股票在第 i 天的价格。</p>
+<p>设计一个算法来计算你所能获取的最大利润。你最多可以完成 两笔 交易。</p>
+<p>注意：你不能同时参与多笔交易（你必须在再次购买前出售掉之前的股票）。</p>
+<h3 id="状态分析-2"><a href="#状态分析-2" class="headerlink" title="状态分析"></a>状态分析</h3><p>每一天有 3 种可能的操作：买股票、卖股票、什么都不做。</p>
+<p>初始状态为：不持有股票</p>
+<p>状态转移图为：</p>
+<p><img src="/2022/04/07/dp/image-20220429160655404.png" alt></p>
+<p>一开始，处于不持有股票的状态，可以买、不操作，进行买操作，变为持有股票的状态；</p>
+<p>由于不能同时参与多笔交易，因此只能卖、不操作，选择卖，将处于不持有股票的状态（第一次卖股票），需要将该状态与初始状态区分，因为该状态下至多再进行一笔交易；</p>
+<p>在不持有股票的状态（第一次卖股票），只能买、不操作，进行买操作，变为持有股票的状态（第二次持有），同理需要与状态 s1 区分；</p>
+<p>只能卖、不操作，选择卖，将处于不持有股票的状态（第二次卖股票），同理需要将该状态与初始状态区分，因为该状态之后无法进行任何交易；</p>
+<p>当状态为 s4，即处于不持有股票的状态（第二次卖股票），无法再进行任何操作。</p>
+<h3 id="递推式-2"><a href="#递推式-2" class="headerlink" title="递推式"></a>递推式</h3><p>在任意一天结束之后，我们会处于以上五个状态中的一种。由于不持有股票（不曾买过）利润始终为 0，不需要考虑，因此实际上只需要考虑剩余四个状态</p>
+<p>dp[i][0]：第 i 天之后，第一次持有这支股票，对应的累计最大收益；<br>dp[i][1]：第 i 天之后，不持有股票（第一次卖这支股票），对应的累计最大收益；<br>dp[i][2]：第 i 天之后，第二次持有这支股票，对应的累计最大收益；<br>dp[i][3]：第 i 天之后，不持有股票（第二次卖这支股票），对应的累计最大收益；</p>
+<p>递推式如下：</p>
+<script type="math/tex; mode=display">
+\begin{align*}
+dp[i][0] &= max(dp[i-1][0],\ -prices[i]) \\
+dp[i][1] &= max(dp[i-1][0] + prices[i],\ dp[i-1][1])\\
+dp[i][2] &= max(dp[i-1][1] -prices[i],\ dp[i-1][2])\\
+dp[i][3] &= max(dp[i-1][2] + prices[i],\ dp[i-1][3])\\
+
+\end{align*}</script><p>初始状态：dp[0][0] = dp[0][2] = -prices[0]， dp[0][2] 也初始化为 -prices[0] 。</p>
+<h2 id="买卖股票的最佳时机-IV"><a href="#买卖股票的最佳时机-IV" class="headerlink" title="买卖股票的最佳时机 IV"></a>买卖股票的最佳时机 IV</h2><p>将题目：买卖股票的最佳时机 III 中的交易数限制推广为 k 次，观察递推式规律易知：</p>
+<p>递推式如下：</p>
+<script type="math/tex; mode=display">
+\begin{align*}
+\left\{\begin{matrix}
+dp[i][j] &= max(dp[i-1][ j-1] + prices[i],\ dp[i-1][ j]),\ \ \ j\%2==1\\ 
+dp[i][j] &= max(dp[i-1][ j-1] -prices[i],\ dp[i-1][ j]),\ \ \ j\%2==0
+\end{matrix}\right.
+
+\end{align*}</script><p>注意初始状态： dp[0][偶数]  = -prices[0] 。 </p>
+<h1 id="递归转化为递推"><a href="#递归转化为递推" class="headerlink" title="递归转化为递推"></a>递归转化为递推</h1><p>扰乱字符串</p>
+<p>题目说明的是生成扰乱字符串的方法，在生成过程中，每次都会选择一个随机下标进行变换。</p>
+<p>我们要做的是判断s2是否为s1的扰乱字符串，由于我们不知道在生成过程中选择的下标是哪个，因此我们要穷举它。</p>
+<p>每次穷举下标，对拆分出的四个子串，递归判断。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="type">boolean</span> <span class="title function_">isScramble</span><span class="params">(String s1, String s2)</span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 分裂的最小长度为 1，返回</span></span><br><span class="line">    <span class="keyword">if</span> (s1.equals(s2)) <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    <span class="keyword">if</span> (!check(s1, s2)) <span class="keyword">return</span> <span class="literal">false</span>; <span class="comment">// 检查 s1 和 s2 词频是否相同</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 穷举分裂的位置</span></span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">1</span>;i&lt;s1.length();++i)&#123; <span class="comment">// s1 和 s2 长度相等</span></span><br><span class="line">        <span class="comment">// s1 的 [0,i) 和 [i,n)</span></span><br><span class="line">        <span class="type">String</span> <span class="variable">a</span> <span class="operator">=</span> s1.substring(<span class="number">0</span>, i), b = s1.substring(i);</span><br><span class="line">        <span class="comment">// s2 的 [0,i) 和 [i,n)</span></span><br><span class="line">        <span class="type">String</span> <span class="variable">c</span> <span class="operator">=</span> s2.substring(<span class="number">0</span>, i), d = s2.substring(i);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (isScramble(a, c) &amp;&amp; isScramble(b, d)) <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// s2 的 [0,n-i) 和 [n-i,n)</span></span><br><span class="line">        c = s2.substring(<span class="number">0</span>, n - i), d = s2.substring(n - i);</span><br><span class="line">        <span class="keyword">if</span> (isScramble(a, c) &amp;&amp; isScramble(b, d)) <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>优化：递归过程有重复计算，记忆化搜索。首先，把递归过程抽象为搜索图。每个结点的属性是：两个字符串，布尔结果。由于用字符串不好作为结点的索引，因此用它的等效，即 s1 的 [起始索引, 终止索引) 和 s2 的 [起始索引, 终止索引)，由于两个字符串长度必须一致，又可以简化为 s1 的 起始索引和 s2 的 起始索引，子串长度 len。因此，结点属性为：s1 的 起始索引和 s2 的 起始索引，子串长度 len，布尔结果。</p>
+<p>设状态为：f(i, j, len) ，即以s1 的 起始索引和s2 的 起始索引，子串长度len为结点的索引，布尔结果为结点的值。</p>
+<p>递推式为：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 对于 f[i][j][len]</span></span><br><span class="line"><span class="keyword">for</span> (<span class="type">int</span> <span class="variable">k</span> <span class="operator">=</span> <span class="number">1</span>; k &lt; len; k++)&#123;</span><br><span class="line">    <span class="type">boolean</span> <span class="variable">a</span> <span class="operator">=</span> f[i][j][k] &amp;&amp; f[i + k][j + k][len - k];</span><br><span class="line">    <span class="type">boolean</span> <span class="variable">b</span> <span class="operator">=</span> f[i][j + len - k][k] &amp;&amp; f[i + k][j][len - k];</span><br><span class="line">    f[i][j][len] = a || b;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>边界：当 len=1 时，s1.charAt(i)==s2.charAt(j)</p>
+
     </div>
 
     
@@ -425,7 +505,7 @@ dp[i][j] = dp[i-1][(j-1+length)\%length] + dp[i-1][(j+1)\%length]</script><figur
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%83%8C%E5%8C%85%E9%97%AE%E9%A2%98"><span class="nav-number">1.</span> <span class="nav-text">背包问题</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-01-%E8%83%8C%E5%8C%85%E9%97%AE%E9%A2%98"><span class="nav-number">1.1.</span> <span class="nav-text">1 01 背包问题</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%9B%B8%E5%85%B3%E9%A2%98%E7%9B%AE"><span class="nav-number">1.1.1.</span> <span class="nav-text">相关题目</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E5%AE%8C%E5%85%A8%E8%83%8C%E5%8C%85%E9%97%AE%E9%A2%98"><span class="nav-number">1.2.</span> <span class="nav-text">2 完全背包问题</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%9B%B8%E5%85%B3%E9%A2%98%E7%9B%AE-1"><span class="nav-number">1.2.1.</span> <span class="nav-text">相关题目</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%9C%80%E9%95%BF%E4%B8%8A%E5%8D%87%E5%AD%90%E5%BA%8F%E5%88%97"><span class="nav-number">2.</span> <span class="nav-text">最长上升子序列</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%80%92%E6%8E%A8"><span class="nav-number">2.1.</span> <span class="nav-text">递推</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%B4%AA%E5%BF%83%E7%AE%97%E6%B3%95"><span class="nav-number">2.2.</span> <span class="nav-text">贪心算法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9B%B8%E5%85%B3%E9%A2%98%E7%9B%AE-2"><span class="nav-number">2.3.</span> <span class="nav-text">相关题目</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%9C%80%E9%95%BF%E5%85%AC%E5%85%B1%E5%AD%90%E5%BA%8F%E5%88%97"><span class="nav-number">3.</span> <span class="nav-text">最长公共子序列</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#1027-%E6%9C%80%E9%95%BF%E7%AD%89%E5%B7%AE%E6%95%B0%E5%88%97"><span class="nav-number">4.</span> <span class="nav-text">1027. 最长等差数列</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AD%90%E6%95%B0%E7%BB%84%E9%97%AE%E9%A2%98"><span class="nav-number">5.</span> <span class="nav-text">子数组问题</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%80%E5%A4%A7%E5%AD%90%E6%95%B0%E7%BB%84%E5%92%8C"><span class="nav-number">5.1.</span> <span class="nav-text">最大子数组和</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%8E%AF%E5%BD%A2%E6%95%B0%E7%BB%84%E9%97%AE%E9%A2%98"><span class="nav-number">6.</span> <span class="nav-text">环形数组问题</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%8A%B6%E6%80%81%E6%9C%BA"><span class="nav-number">7.</span> <span class="nav-text">状态机</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%83%8C%E5%8C%85%E9%97%AE%E9%A2%98"><span class="nav-number">1.</span> <span class="nav-text">背包问题</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#01-%E8%83%8C%E5%8C%85%E9%97%AE%E9%A2%98"><span class="nav-number">1.1.</span> <span class="nav-text">01 背包问题</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%9B%B8%E5%85%B3%E9%A2%98%E7%9B%AE"><span class="nav-number">1.1.1.</span> <span class="nav-text">相关题目</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%8C%E5%85%A8%E8%83%8C%E5%8C%85%E9%97%AE%E9%A2%98"><span class="nav-number">1.2.</span> <span class="nav-text">完全背包问题</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%9B%B8%E5%85%B3%E9%A2%98%E7%9B%AE-1"><span class="nav-number">1.2.1.</span> <span class="nav-text">相关题目</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%9C%80%E9%95%BF%E4%B8%8A%E5%8D%87%E5%AD%90%E5%BA%8F%E5%88%97"><span class="nav-number">2.</span> <span class="nav-text">最长上升子序列</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%80%92%E6%8E%A8"><span class="nav-number">2.1.</span> <span class="nav-text">递推</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%B4%AA%E5%BF%83%E7%AE%97%E6%B3%95"><span class="nav-number">2.2.</span> <span class="nav-text">贪心算法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9B%B8%E5%85%B3%E9%A2%98%E7%9B%AE-2"><span class="nav-number">2.3.</span> <span class="nav-text">相关题目</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%9C%80%E9%95%BF%E7%AD%89%E5%B7%AE%E6%95%B0%E5%88%97"><span class="nav-number">3.</span> <span class="nav-text">最长等差数列</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%9C%80%E9%95%BF%E5%85%AC%E5%85%B1%E5%AD%90%E5%BA%8F%E5%88%97"><span class="nav-number">4.</span> <span class="nav-text">最长公共子序列</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AD%90%E6%95%B0%E7%BB%84%E9%97%AE%E9%A2%98"><span class="nav-number">5.</span> <span class="nav-text">子数组问题</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%80%E5%A4%A7%E5%AD%90%E6%95%B0%E7%BB%84%E5%92%8C"><span class="nav-number">5.1.</span> <span class="nav-text">最大子数组和</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%8E%AF%E5%BD%A2%E6%95%B0%E7%BB%84%E9%97%AE%E9%A2%98"><span class="nav-number">6.</span> <span class="nav-text">环形数组问题</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%8A%B6%E6%80%81%E6%9C%BA"><span class="nav-number">7.</span> <span class="nav-text">状态机</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B9%B0%E5%8D%96%E8%82%A1%E7%A5%A8%E7%9A%84%E6%9C%80%E4%BD%B3%E6%97%B6%E6%9C%BA-II"><span class="nav-number">7.1.</span> <span class="nav-text">买卖股票的最佳时机 II</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%8A%B6%E6%80%81%E5%88%86%E6%9E%90"><span class="nav-number">7.1.1.</span> <span class="nav-text">状态分析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%80%92%E6%8E%A8%E5%BC%8F"><span class="nav-number">7.1.2.</span> <span class="nav-text">递推式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B4%AA%E5%BF%83%E7%AE%97%E6%B3%95-1"><span class="nav-number">7.1.3.</span> <span class="nav-text">贪心算法</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%80%E4%BD%B3%E4%B9%B0%E5%8D%96%E8%82%A1%E7%A5%A8%E6%97%B6%E6%9C%BA%E5%90%AB%E5%86%B7%E5%86%BB%E6%9C%9F"><span class="nav-number">7.2.</span> <span class="nav-text">最佳买卖股票时机含冷冻期</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%8A%B6%E6%80%81%E5%88%86%E6%9E%90-1"><span class="nav-number">7.2.1.</span> <span class="nav-text">状态分析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%80%92%E6%8E%A8%E5%BC%8F-1"><span class="nav-number">7.2.2.</span> <span class="nav-text">递推式</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B9%B0%E5%8D%96%E8%82%A1%E7%A5%A8%E7%9A%84%E6%9C%80%E4%BD%B3%E6%97%B6%E6%9C%BA-III"><span class="nav-number">7.3.</span> <span class="nav-text">买卖股票的最佳时机 III</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%8A%B6%E6%80%81%E5%88%86%E6%9E%90-2"><span class="nav-number">7.3.1.</span> <span class="nav-text">状态分析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%80%92%E6%8E%A8%E5%BC%8F-2"><span class="nav-number">7.3.2.</span> <span class="nav-text">递推式</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B9%B0%E5%8D%96%E8%82%A1%E7%A5%A8%E7%9A%84%E6%9C%80%E4%BD%B3%E6%97%B6%E6%9C%BA-IV"><span class="nav-number">7.4.</span> <span class="nav-text">买卖股票的最佳时机 IV</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%80%92%E5%BD%92%E8%BD%AC%E5%8C%96%E4%B8%BA%E9%80%92%E6%8E%A8"><span class="nav-number">8.</span> <span class="nav-text">递归转化为递推</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -441,7 +521,7 @@ dp[i][j] = dp[i-1][(j-1+length)\%length] + dp[i-1][(j+1)\%length]</script><figur
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">26</span>
+          <span class="site-state-item-count">27</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>

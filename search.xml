@@ -3248,7 +3248,7 @@ b_{i}^{'}=\bar{a_{i}}\bar{b_{i}}x_{i}+\bar{a_{i}}b_{i}\bar{x_{i}}=\bar{a_{i}}(b_
     <content><![CDATA[<p>各种问题的递推思路和递推表达式</p>
 <span id="more"></span>
 <h1 id="背包问题"><a href="#背包问题" class="headerlink" title="背包问题"></a>背包问题</h1><p>后续的扩展需阅读<a href="https://zhuanlan.zhihu.com/p/139368825">背包九讲</a></p>
-<h2 id="1-01-背包问题"><a href="#1-01-背包问题" class="headerlink" title="1 01 背包问题"></a>1 01 背包问题</h2><p>有 n 个可待选择的物品，每个物品只有一件，它们都有各自的重量和价值。</p>
+<h2 id="01-背包问题"><a href="#01-背包问题" class="headerlink" title="01 背包问题"></a>01 背包问题</h2><p>有 n 个可待选择的物品，每个物品只有一件，它们都有各自的重量和价值。</p>
 <p>设 weights = [1,2,3]，values = [4,5,6]</p>
 <p><strong>基本问题1：用这 n 个物品，能组成的所有重量</strong></p>
 <p>设 f(w, i) 表示用前 i 个物品能得到重量 w，递推图如下：</p>
@@ -3280,7 +3280,7 @@ max(dp[i-1][j][k],dp[i-1][j-zeros][k-ones]+1) & j\geq zeros \ and\ k\geqslant on
 <p>第 i 种工作会产生 profit[i] 的利润，它要求 group[i] 名成员共同参与。如果成员参与了其中一项工作，就不能参与另一项工作。（每种工作只能完成一次，不能重复完成）</p>
 <p>工作的任何至少产生 minProfit 利润的子集称为 盈利计划 。并且工作的成员总数最多为 n 。</p>
 <p>有多少种计划可以选择？</p>
-<h2 id="2-完全背包问题"><a href="#2-完全背包问题" class="headerlink" title="2 完全背包问题"></a>2 完全背包问题</h2><p>有 n 个可待选择的物品，每个物品有无限件可用，它们都有各自的重量和价值。求用这 n 个物品，能组成的所有重量和对应的最大价值。</p>
+<h2 id="完全背包问题"><a href="#完全背包问题" class="headerlink" title="完全背包问题"></a>完全背包问题</h2><p>有 n 个可待选择的物品，每个物品有无限件可用，它们都有各自的重量和价值。求用这 n 个物品，能组成的所有重量和对应的最大价值。</p>
 <p>定义 f(i, j) 表示用前 i 个物品得到重量 j 时的最大价值，对于完全背包问题，递推式为：</p>
 <script type="math/tex; mode=display">
 f[i][j]=max\left \{ f[i-1][j-k*weights[i]]+k*values[i],\ \ \ k*weights[i]\leq j \right \}</script><p>该递推式的复杂度是线性倍的 O(NW)</p>
@@ -3316,6 +3316,8 @@ f[i][j]=f[i-1][j]+f[i][j-coins[i]]</script><h1 id="最长上升子序列"><a hre
 <li>俄罗斯套娃信封问题</li>
 </ul>
 <p>三维排序：面试题 08.13. 堆箱子</p>
+<h1 id="最长等差数列"><a href="#最长等差数列" class="headerlink" title="最长等差数列"></a>最长等差数列</h1><p>实际上是「最长上升子序列」的另一种版本，进一步限制了递推条件。在递推时，要保存以当前元素为结尾的所有最长等差序列，保存形式为：(公差 d，对应的最长等差序列长度)</p>
+<p>需要注意的是，子序列中元素的相对位置必须和原来保持一致。</p>
 <h1 id="最长公共子序列"><a href="#最长公共子序列" class="headerlink" title="最长公共子序列"></a>最长公共子序列</h1><p>设 f(i, j) 表示 text1 第 i 个元素开始，text2 第 j 个元素开始的结果</p>
 <p>则递推式为：</p>
 <script type="math/tex; mode=display">
@@ -3326,8 +3328,6 @@ max\left \{ f[i+1][j],\ f[i][j+1] \right \}  & else
 <p><img src="/2022/04/07/dp/image-20220410214301011.png" alt></p>
 <p>那么在边界处，即 i=M-1 和 j=N-1 时，递推式会有越界问题。</p>
 <p>为了便于处理，可以多分配一行一列，它们的初值是 0，然后边界位置就可以正常用递推式了。</p>
-<h1 id="1027-最长等差数列"><a href="#1027-最长等差数列" class="headerlink" title="1027. 最长等差数列"></a>1027. 最长等差数列</h1><p>需要注意的是，子序列中元素的相对位置必须和原来保持一致。</p>
-<p>递推，dp[i] 需要记录以 nums[i] 为结尾的 (公差 d, 对应的最长等差序列长度)，因此，dp 数组每个元素应该用哈希表存储</p>
 <h1 id="子数组问题"><a href="#子数组问题" class="headerlink" title="子数组问题"></a>子数组问题</h1><h2 id="最大子数组和"><a href="#最大子数组和" class="headerlink" title="最大子数组和"></a>最大子数组和</h2><p>给你一个整数数组 nums ，请你找出一个具有最大和的连续子数组（子数组最少包含一个元素），返回其最大和。<br>用 f(i) 表示以第 i 个数结尾的「连续子数组的最大和」便于递推。不递推所有连续子数组和（即使用 f(i, j) 表示 i~j的连续子数组和）</p>
 <h1 id="环形数组问题"><a href="#环形数组问题" class="headerlink" title="环形数组问题"></a>环形数组问题</h1><p>环形数组的连续子数组的最大和</p>
 <p>先不考虑环：求以i为结尾的连续子数组最大和，得到其中的最大值</p>
@@ -3335,7 +3335,84 @@ max\left \{ f[i+1][j],\ f[i][j+1] \right \}  & else
 <p>圆环回原点问题（字节跳动高频面试题之圆环回原点问题）</p>
 <script type="math/tex; mode=display">
 dp[i][j] = dp[i-1][(j-1+length)\%length] + dp[i-1][(j+1)\%length]</script><figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Solution</span>:</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">backToOrigin</span>(<span class="params">self,n</span>):</span><br><span class="line">        <span class="comment">#点的个数为10</span></span><br><span class="line">        length = <span class="number">10</span></span><br><span class="line">        dp = [[<span class="number">0</span> <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(length)] <span class="keyword">for</span> j <span class="keyword">in</span> <span class="built_in">range</span>(n+<span class="number">1</span>)]</span><br><span class="line">        dp[<span class="number">0</span>][<span class="number">0</span>] = <span class="number">1</span> 第一行只有dp[<span class="number">0</span>][<span class="number">0</span>]=<span class="number">1</span>，其他都为<span class="number">0</span></span><br><span class="line">第一行初始化之后，后面的行根据递推式易知可以递推出来</span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">1</span>,n+<span class="number">1</span>):</span><br><span class="line">            <span class="keyword">for</span> j <span class="keyword">in</span> <span class="built_in">range</span>(length):</span><br><span class="line">                <span class="comment">#dp[i][j]表示从0出发，走i步到j的方案数</span></span><br><span class="line">                dp[i][j] = dp[i-<span class="number">1</span>][(j-<span class="number">1</span>+length)%length] + dp[i-<span class="number">1</span>][(j+<span class="number">1</span>)%length]</span><br><span class="line">        <span class="keyword">return</span> dp[n][<span class="number">0</span>]</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<h1 id="状态机"><a href="#状态机" class="headerlink" title="状态机"></a>状态机</h1>]]></content>
+<h1 id="状态机"><a href="#状态机" class="headerlink" title="状态机"></a>状态机</h1><h2 id="买卖股票的最佳时机-II"><a href="#买卖股票的最佳时机-II" class="headerlink" title="买卖股票的最佳时机 II"></a>买卖股票的最佳时机 II</h2><p>给你一个整数数组 prices ，其中 prices[i] 表示某支股票第 i 天的价格。</p>
+<p>在每一天，你可以决定是否购买和/或出售股票。你在任何时候 最多 只能持有 一股 股票。你也可以先购买，然后在 同一天 出售。</p>
+<p>返回 你能获得的 最大 利润 。</p>
+<h3 id="状态分析"><a href="#状态分析" class="headerlink" title="状态分析"></a>状态分析</h3><p>每一天有 3 种可能的操作：买股票、卖股票、什么都不做</p>
+<p>初始状态为：不持有股票</p>
+<p>状态转移图为：</p>
+<p><img src="/2022/04/07/dp/image-20220429154112649.png" alt></p>
+<h3 id="递推式"><a href="#递推式" class="headerlink" title="递推式"></a>递推式</h3><p>定义状态 dp[i][0] 表示第 i 天交易完后手里没有股票的最大利润， dp[i][1] 表示第 i 天交易完后手里持有一支股票的最大利润。根据状态转移图可以得到递推式：</p>
+<script type="math/tex; mode=display">
+dp[i][0] = max\left \{dp[i−1][0], dp[i−1][1] + prices[i]  \right \}\\
+dp[i][1] = max\left \{dp[i−1][1], dp[i−1][0] − prices[i] \right \}</script><p>初始状态注意 dp[0][1] 是负利润，等于 - prices[0]</p>
+<p>空间优化：据递推过程易知，O(N) 空间可优化为 O(1)，以下的题目类似优化。</p>
+<p>最终结果：由于全部交易结束后，持有股票的收益一定低于不持有股票的收益，因此这时候 dp[n−1][0] 的收益必然是大于 dp[n−1][1] 的，最后的答案即为 dp[n−1][1]。</p>
+<h3 id="贪心算法-1"><a href="#贪心算法-1" class="headerlink" title="贪心算法"></a>贪心算法</h3><p>只要今天的股价比昨天更高，就出售股票。</p>
+<h2 id="最佳买卖股票时机含冷冻期"><a href="#最佳买卖股票时机含冷冻期" class="headerlink" title="最佳买卖股票时机含冷冻期"></a>最佳买卖股票时机含冷冻期</h2><p>给定一个整数数组 prices，其中第 prices[i] 表示第 i 天的股票价格 。</p>
+<p>设计一个算法计算出最大利润。在满足以下约束条件下，你可以尽可能地完成更多的交易（多次买卖一支股票）:</p>
+<ul>
+<li>卖出股票后，你无法在第二天买入股票 （即冷冻期为 1 天）。</li>
+</ul>
+<p>注意：你不能同时参与多笔交易（你必须在再次购买前出售掉之前的股票）。</p>
+<h3 id="状态分析-1"><a href="#状态分析-1" class="headerlink" title="状态分析"></a>状态分析</h3><p>每一天有 3 种可能的操作：买股票、卖股票、什么都不做。</p>
+<p>初始状态为：不持有股票</p>
+<p>状态转移图为：</p>
+<p><img src="/2022/04/07/dp/image-20220429155206415.png" alt></p>
+<p>一开始，处于不持有股票的状态，可以买、不操作，进行买操作，变为持有股票的状态；</p>
+<p>由于至多持有一支股票，因此只能卖或者不操作；进行卖操作，将变为「处于冷冻期」的状态</p>
+<p>由于不持有任何股票，因此不能卖，由于处于冷冻期，因此不能买，该状态不能进行操作，在等待一天（无操作）后，将变为不持有股票的状态，即解除了冷冻，可以正常购买股票。</p>
+<h3 id="递推式-1"><a href="#递推式-1" class="headerlink" title="递推式"></a>递推式</h3><p>dp[i][0]：第 i 天之后，不持有股票，并且不在冷冻期中（状态 s0），对应的累计最大收益<br>dp[i][1]：第 i 天之后，持有股票（状态 s1），对应的累计最大收益；<br>dp[i][2]：第 i 天之后，不持有股票，并且处于冷冻期中（状态 s2），对应的累计最大收益；</p>
+<p>递推式如下：</p>
+<script type="math/tex; mode=display">
+\begin{align*}
+dp[i][0] &= max(dp[i - 1][2],\ dp[i - 1][0])\\
+dp[i][1] &= max(dp[i - 1][1],\ dp[i - 1][0] - prices[i])\\
+dp[i][2] &= dp[i - 1][1] + prices[i]
+\end{align*}</script><h2 id="买卖股票的最佳时机-III"><a href="#买卖股票的最佳时机-III" class="headerlink" title="买卖股票的最佳时机 III"></a>买卖股票的最佳时机 III</h2><p>给定一个数组，它的第 i 个元素是一支给定的股票在第 i 天的价格。</p>
+<p>设计一个算法来计算你所能获取的最大利润。你最多可以完成 两笔 交易。</p>
+<p>注意：你不能同时参与多笔交易（你必须在再次购买前出售掉之前的股票）。</p>
+<h3 id="状态分析-2"><a href="#状态分析-2" class="headerlink" title="状态分析"></a>状态分析</h3><p>每一天有 3 种可能的操作：买股票、卖股票、什么都不做。</p>
+<p>初始状态为：不持有股票</p>
+<p>状态转移图为：</p>
+<p><img src="/2022/04/07/dp/image-20220429160655404.png" alt></p>
+<p>一开始，处于不持有股票的状态，可以买、不操作，进行买操作，变为持有股票的状态；</p>
+<p>由于不能同时参与多笔交易，因此只能卖、不操作，选择卖，将处于不持有股票的状态（第一次卖股票），需要将该状态与初始状态区分，因为该状态下至多再进行一笔交易；</p>
+<p>在不持有股票的状态（第一次卖股票），只能买、不操作，进行买操作，变为持有股票的状态（第二次持有），同理需要与状态 s1 区分；</p>
+<p>只能卖、不操作，选择卖，将处于不持有股票的状态（第二次卖股票），同理需要将该状态与初始状态区分，因为该状态之后无法进行任何交易；</p>
+<p>当状态为 s4，即处于不持有股票的状态（第二次卖股票），无法再进行任何操作。</p>
+<h3 id="递推式-2"><a href="#递推式-2" class="headerlink" title="递推式"></a>递推式</h3><p>在任意一天结束之后，我们会处于以上五个状态中的一种。由于不持有股票（不曾买过）利润始终为 0，不需要考虑，因此实际上只需要考虑剩余四个状态</p>
+<p>dp[i][0]：第 i 天之后，第一次持有这支股票，对应的累计最大收益；<br>dp[i][1]：第 i 天之后，不持有股票（第一次卖这支股票），对应的累计最大收益；<br>dp[i][2]：第 i 天之后，第二次持有这支股票，对应的累计最大收益；<br>dp[i][3]：第 i 天之后，不持有股票（第二次卖这支股票），对应的累计最大收益；</p>
+<p>递推式如下：</p>
+<script type="math/tex; mode=display">
+\begin{align*}
+dp[i][0] &= max(dp[i-1][0],\ -prices[i]) \\
+dp[i][1] &= max(dp[i-1][0] + prices[i],\ dp[i-1][1])\\
+dp[i][2] &= max(dp[i-1][1] -prices[i],\ dp[i-1][2])\\
+dp[i][3] &= max(dp[i-1][2] + prices[i],\ dp[i-1][3])\\
+
+\end{align*}</script><p>初始状态：dp[0][0] = dp[0][2] = -prices[0]， dp[0][2] 也初始化为 -prices[0] 。</p>
+<h2 id="买卖股票的最佳时机-IV"><a href="#买卖股票的最佳时机-IV" class="headerlink" title="买卖股票的最佳时机 IV"></a>买卖股票的最佳时机 IV</h2><p>将题目：买卖股票的最佳时机 III 中的交易数限制推广为 k 次，观察递推式规律易知：</p>
+<p>递推式如下：</p>
+<script type="math/tex; mode=display">
+\begin{align*}
+\left\{\begin{matrix}
+dp[i][j] &= max(dp[i-1][ j-1] + prices[i],\ dp[i-1][ j]),\ \ \ j\%2==1\\ 
+dp[i][j] &= max(dp[i-1][ j-1] -prices[i],\ dp[i-1][ j]),\ \ \ j\%2==0
+\end{matrix}\right.
+
+\end{align*}</script><p>注意初始状态： dp[0][偶数]  = -prices[0] 。 </p>
+<h1 id="递归转化为递推"><a href="#递归转化为递推" class="headerlink" title="递归转化为递推"></a>递归转化为递推</h1><p>扰乱字符串</p>
+<p>题目说明的是生成扰乱字符串的方法，在生成过程中，每次都会选择一个随机下标进行变换。</p>
+<p>我们要做的是判断s2是否为s1的扰乱字符串，由于我们不知道在生成过程中选择的下标是哪个，因此我们要穷举它。</p>
+<p>每次穷举下标，对拆分出的四个子串，递归判断。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="type">boolean</span> <span class="title function_">isScramble</span><span class="params">(String s1, String s2)</span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 分裂的最小长度为 1，返回</span></span><br><span class="line">    <span class="keyword">if</span> (s1.equals(s2)) <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    <span class="keyword">if</span> (!check(s1, s2)) <span class="keyword">return</span> <span class="literal">false</span>; <span class="comment">// 检查 s1 和 s2 词频是否相同</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 穷举分裂的位置</span></span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">1</span>;i&lt;s1.length();++i)&#123; <span class="comment">// s1 和 s2 长度相等</span></span><br><span class="line">        <span class="comment">// s1 的 [0,i) 和 [i,n)</span></span><br><span class="line">        <span class="type">String</span> <span class="variable">a</span> <span class="operator">=</span> s1.substring(<span class="number">0</span>, i), b = s1.substring(i);</span><br><span class="line">        <span class="comment">// s2 的 [0,i) 和 [i,n)</span></span><br><span class="line">        <span class="type">String</span> <span class="variable">c</span> <span class="operator">=</span> s2.substring(<span class="number">0</span>, i), d = s2.substring(i);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (isScramble(a, c) &amp;&amp; isScramble(b, d)) <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// s2 的 [0,n-i) 和 [n-i,n)</span></span><br><span class="line">        c = s2.substring(<span class="number">0</span>, n - i), d = s2.substring(n - i);</span><br><span class="line">        <span class="keyword">if</span> (isScramble(a, c) &amp;&amp; isScramble(b, d)) <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>优化：递归过程有重复计算，记忆化搜索。首先，把递归过程抽象为搜索图。每个结点的属性是：两个字符串，布尔结果。由于用字符串不好作为结点的索引，因此用它的等效，即 s1 的 [起始索引, 终止索引) 和 s2 的 [起始索引, 终止索引)，由于两个字符串长度必须一致，又可以简化为 s1 的 起始索引和 s2 的 起始索引，子串长度 len。因此，结点属性为：s1 的 起始索引和 s2 的 起始索引，子串长度 len，布尔结果。</p>
+<p>设状态为：f(i, j, len) ，即以s1 的 起始索引和s2 的 起始索引，子串长度len为结点的索引，布尔结果为结点的值。</p>
+<p>递推式为：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 对于 f[i][j][len]</span></span><br><span class="line"><span class="keyword">for</span> (<span class="type">int</span> <span class="variable">k</span> <span class="operator">=</span> <span class="number">1</span>; k &lt; len; k++)&#123;</span><br><span class="line">    <span class="type">boolean</span> <span class="variable">a</span> <span class="operator">=</span> f[i][j][k] &amp;&amp; f[i + k][j + k][len - k];</span><br><span class="line">    <span class="type">boolean</span> <span class="variable">b</span> <span class="operator">=</span> f[i][j + len - k][k] &amp;&amp; f[i + k][j][len - k];</span><br><span class="line">    f[i][j][len] = a || b;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>边界：当 len=1 时，s1.charAt(i)==s2.charAt(j)</p>
+]]></content>
       <categories>
         <category>算法</category>
       </categories>
@@ -3947,6 +4024,7 @@ dp[i][j] = dp[i-1][(j-1+length)\%length] + dp[i-1][(j+1)\%length]</script><figur
 <figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">sortColors</span><span class="params">(<span class="type">int</span>[] nums)</span> &#123;</span><br><span class="line">    <span class="type">int</span> <span class="variable">n</span> <span class="operator">=</span> nums.length;</span><br><span class="line">    <span class="type">int</span> <span class="variable">p0</span> <span class="operator">=</span> <span class="number">0</span>, p1 = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> <span class="number">0</span>; i &lt; n; ++i) &#123;</span><br><span class="line">        <span class="keyword">if</span> (nums[i] == <span class="number">1</span>) &#123;</span><br><span class="line">            swap(nums, i, p1);</span><br><span class="line">            ++p1;</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (nums[i] == <span class="number">0</span>) &#123;</span><br><span class="line">            swap(nums, i, p0);</span><br><span class="line">            <span class="keyword">if</span> (p0 &lt; p1) &#123;</span><br><span class="line">                swap(nums, i, p1);</span><br><span class="line">            &#125;</span><br><span class="line">            ++p0;</span><br><span class="line">            ++p1;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>法3：一次 partition，需要维护的循环不变量为三段：0、其他、2。过程略</p>
 <p><a href="https://leetcode-cn.com/problems/kth-largest-element-in-an-array/">数组中的第k大元素</a></p>
+<p>需要注意到，使用 partition 实际上可以直接求出<strong>前 k 大的数</strong>，当然，使用优先队列也可以</p>
 <figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="type">int</span> <span class="title function_">myFindKth</span><span class="params">(<span class="type">int</span>[] a, <span class="type">int</span> l, <span class="type">int</span> r, <span class="type">int</span> K)</span>&#123;</span><br><span class="line">    <span class="type">int</span> <span class="variable">x</span> <span class="operator">=</span> partition(a, l, r);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span>(x == a.length-K) <span class="keyword">return</span> a[x];</span><br><span class="line">    <span class="comment">// 注意 x-1，这是因为如果选择 [l,x]，主元 a[x] 不会被移动，partition 不生效</span></span><br><span class="line">    <span class="comment">// 并且x位置的元素也肯定不可能是解</span></span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span>(x &gt; a.length-K) <span class="keyword">return</span> myFindKth(a, l, x-<span class="number">1</span>, K);</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">return</span> myFindKth(a, x+<span class="number">1</span>, r, K);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <h1 id="堆排序"><a href="#堆排序" class="headerlink" title="堆排序"></a>堆排序</h1><p>堆排序用数据结构“堆”来存放数据，数据结构“堆”不仅用在堆排序，同时也用于构造优先队列。</p>
 <h2 id="二叉堆"><a href="#二叉堆" class="headerlink" title="二叉堆"></a>二叉堆</h2><p>如图，二叉堆是一个<strong>完全二叉树</strong>，除了最底层不保证填满外，该树是完全充满的。二叉堆使用数组存储元素，树上的每个节点对应数组中的一个元素，节点与数组中元素的对应关系是从根节点开始，每层从左至右填充到数组当中。</p>
@@ -4040,7 +4118,7 @@ right(i)=2i+2</script><p>通过对二叉堆结点关系进行限制，我们可�
 <h3 id="MAX-HEAP-INSERT"><a href="#MAX-HEAP-INSERT" class="headerlink" title="MAX-HEAP-INSERT"></a>MAX-HEAP-INSERT</h3><p><img src="/2022/04/20/sort/image-20220426100552407.png" alt></p>
 <h3 id="优先队列的应用"><a href="#优先队列的应用" class="headerlink" title="优先队列的应用"></a>优先队列的应用</h3><p>Java 已经写好了优先队列的类，不需要自己实现。默认是最小优先队列。</p>
 <figure class="highlight java"><table><tr><td class="code"><pre><span class="line">PriorityQueue&lt;Integer&gt; pq = <span class="keyword">new</span> <span class="title class_">PriorityQueue</span>&lt;&gt;();</span><br></pre></td></tr></table></figure>
-<p>求<strong>第 k 大的数</strong>，第 k 大表示从最大的数往小的数看第 k 个，使用<strong>最小优先队列</strong>，最小优先队列存储的是当前扫描到的前 k 大的数</p>
+<p>求<strong>第 k 大的数</strong>，第 k 大表示从最大的数往小的数看第 k 个，使用<strong>最小优先队列</strong>，最小优先队列存储的是当前扫描到的前 k 大的数。<strong>实际上，队列里面的元素表示：当前所扫描的元素里，前 k 大的数</strong></p>
 <figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span>(<span class="type">int</span> x:arr)&#123;</span><br><span class="line">	<span class="keyword">if</span>(pq.size() &lt; k)</span><br><span class="line">		pq.offer(x);</span><br><span class="line">	<span class="keyword">else</span> <span class="keyword">if</span>(x &gt; pq.peek())&#123;</span><br><span class="line">		pq.poll();</span><br><span class="line">		pq.offer(x);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>会议室 II</p>
 <p>给你一个会议时间安排的数组 intervals ，每个会议时间都会包括开始和结束的时间 intervals[i] = [starti, endi] ，为避免会议冲突，同时要考虑充分利用会议室资源，请你计算至少需要多少间会议室，才能满足这些会议安排。</p>
@@ -4472,6 +4550,35 @@ right(i)=2i+2</script><p>通过对二叉堆结点关系进行限制，我们可�
 <p>按照每个位累加结果。每个二进制位的结果计算如下：</p>
 <p>若长度为 n 的数组 nums 的所有元素二进制的第 i 位共有 c 个 1，n−c 个 0，这些元素在二进制的第 i 位上的汉明距离之和为 c*(n-c)，即(n-c)个0不重复地与c个1配对</p>
 ]]></content>
+      <categories>
+        <category>算法</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>递归处理字符串</title>
+    <url>/2022/04/29/%E9%80%92%E5%BD%92%E5%A4%84%E7%90%86%E5%AD%97%E7%AC%A6%E4%B8%B2/</url>
+    <content><![CDATA[<p>计算字符串算术表达式、括号的递归特性<br><span id="more"></span></p>
+<h1 id="字符串算术表达式"><a href="#字符串算术表达式" class="headerlink" title="字符串算术表达式"></a>字符串算术表达式</h1><h2 id="逆波兰表达式"><a href="#逆波兰表达式" class="headerlink" title="逆波兰表达式"></a>逆波兰表达式</h2><h2 id="通用解法"><a href="#通用解法" class="headerlink" title="通用解法"></a>通用解法</h2><h2 id="基本计算器"><a href="#基本计算器" class="headerlink" title="基本计算器"></a>基本计算器</h2><p>给你一个字符串表达式 s ，请你实现一个基本计算器来计算并返回它的值。只包含括号、加减运算。如果不含括号，见基本计算器 II 小节。</p>
+<p>由于字符串除了数字与括号外，只有加号和减号两种运算符。因此，如果展开表达式中所有的括号，则得到的新表达式中，数字本身不会发生变化，只是每个数字前面的符号会发生变化。</p>
+<p>对于这个新表达式，我们只需要每次看一个符号和它后面的那个数字，然后更新结果即可。</p>
+<p>表达式展开的关键在于，展开之后，各个数字前面的正负号会发生变化。令 sign 代表展开后，某个数字（<strong>或者左括号</strong>）前面的正负号。根据括号表达式的性质，它的取值：</p>
+<ul>
+<li>与当前数字前面的运算符有关，记为 op1；</li>
+<li>如果当前位置处于一系列括号之内，则也与这些括号前面的运算符有关，记为 op2。</li>
+</ul>
+<p>例：(1 – (2 – (3 + 4))) ，可将其看作 +(1 + (2 – (3 + 4))) ，则当前数字为 3 时，它前面的运算符展开之后相当于 + ：</p>
+<ul>
+<li>3 前面的运算符是减号</li>
+<li>3 处于三个括号内，第一个括号前面运算符为 + ，第二个括号前面运算符为 －，第三个括号前面运算符为 －， 因此这三个括号共同形成的运算符为 + </li>
+</ul>
+<p>最终展开后，表示加 3。</p>
+<p>op2 随着嵌套括号的增加和减少会相应地发生变化，括号的特性决定了它可以用栈来处理，因此可以用栈来维护 op2，而 op1 在扫描过程中更新即可。令展开后的运算符为 op，扫描字符串，维护 op、op1 和 op2</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span>(c == <span class="string">&#x27;+&#x27;</span>) <span class="comment">// op1 为 +</span></span><br><span class="line">    op = op2s.peek();</span><br><span class="line"><span class="keyword">else</span> <span class="keyword">if</span>(c = -)</span><br><span class="line">    op = -op2s.peek();</span><br><span class="line"><span class="keyword">else</span> <span class="keyword">if</span>(c == <span class="string">&#x27;(&#x27;</span>)</span><br><span class="line">    op2s.push(op);<span class="comment">// 当前扫描到的字符为左括号，该左括号前面的展开后运算符为 op</span></span><br><span class="line"><span class="keyword">else</span> <span class="keyword">if</span>(c == <span class="string">&#x27;)&#x27;</span>)</span><br><span class="line">    op2s.pop(); <span class="comment">// 弹出</span></span><br></pre></td></tr></table></figure>
+<p>可以归纳法证明按以上代码所写的方式维护 op，能保证其满足：op 为展开之后，当前扫描到的字符对应的它前面那个运算符。</p>
+<h2 id="基本计算器-Ⅱ"><a href="#基本计算器-Ⅱ" class="headerlink" title="基本计算器 Ⅱ"></a>基本计算器 Ⅱ</h2><p>给你一个字符串表达式 s ，请你实现一个基本计算器来计算并返回它的值。只包含加减乘除运算，整数除法仅保留整数部分。</p>
+<h3 id="只有加减运算"><a href="#只有加减运算" class="headerlink" title="只有加减运算"></a>只有加减运算</h3><p>如果表达式只包含加减运算，没有括号。</p>
+<h2 id="基本计算器-III"><a href="#基本计算器-III" class="headerlink" title="基本计算器 III"></a>基本计算器 III</h2><p>给你一个字符串表达式 s ，请你实现一个基本计算器来计算并返回它的值。包含加减乘除运算和括号，整数除法仅保留整数部分。</p>
+<h1 id="括号问题"><a href="#括号问题" class="headerlink" title="括号问题"></a>括号问题</h1>]]></content>
       <categories>
         <category>算法</category>
       </categories>
