@@ -28,7 +28,8 @@
 <blockquote>
 <p>存在的问题：如果一个线程调用了多次 unlock()？这是可以的</p>
 </blockquote>
-<h2 id="自旋锁的性能"><a href="#自旋锁的性能" class="headerlink" title="自旋锁的性能"></a>自旋锁的性能</h2><p>自旋等待其他线程释放锁的时候会浪费时间。尤其是在单处理器上，一个等待线程等待的目标线程甚至无法运行（至少在上下文切换之前）（处于自旋等待的线程占用 CPU，导致目标线程根本无法运行，也不可能释放锁，一个线程会一直自旋检查一个不会改变的值，浪费掉整个时间片）</p>
+<h2 id="自旋锁的性能"><a href="#自旋锁的性能" class="headerlink" title="自旋锁的性能"></a>自旋锁的性能</h2><p><strong>CPU 占用时间</strong></p>
+<p>自旋等待其他线程释放锁的时候会浪费时间。尤其是在单处理器上，一个等待线程等待的目标线程甚至无法运行（至少在上下文切换之前）（处于自旋等待的线程占用 CPU，导致目标线程根本无法运行，也不可能释放锁，一个线程会一直自旋检查一个不会改变的值，浪费掉整个时间片）</p>
 <p>以两个线程运行在单处理器上为例，当一个线程（线程0）持有锁时，被中断。第二个线程（线程1）去获取锁，发现锁已经被持有。因此，它就开始自旋，直到，时钟中断产生，操作系统切换线程，线程 0 重新运行，它释放锁。下一次轮到线程1 时，线程 1 不需要继续自旋了，它获取了锁。</p>
 <p>也就是说，一个线程会一直自旋检查一个不会改变的值，浪费掉整个时间片。如果有 N个线程去竞争一个锁，情<br>况会更糟糕。同样的场景下，会浪费 N−1 个时间片。</p>
 <p>如果有多个处理器：</p>
@@ -36,6 +37,9 @@
 <li>持有锁的线程被中断后没有迅速被重新调度运行，也会有这个问题。</li>
 <li>持有锁的线程并没有因为 CPU 时钟中断切换线程而暂停，由于临界区代码通常较短，它可能被迅速执行完，然后释放锁。其他 CPU 上等待的线程在一个时间片内获得了锁。</li>
 </ul>
+<p><strong>线程切换时间</strong></p>
+<p>每个线程切换需要考虑挂起和恢复，即两次切换。自旋锁可以避免两次的线程切换。</p>
+<p><strong>综上</strong>，<strong>CPU 占用时间不稳定</strong>是自旋锁的一个<strong>本质缺点</strong>，在<strong>多核环境中</strong>，由于可以多核<strong>并发执行不同线程</strong>，因此，可以通过<strong>比较线程切换时间和临界区代码的运行时间</strong>，从而决定是否使用自旋锁</p>
 <h2 id="自旋锁的优化"><a href="#自旋锁的优化" class="headerlink" title="自旋锁的优化"></a>自旋锁的优化</h2><h3 id="在要自旋的时候，放弃CPU"><a href="#在要自旋的时候，放弃CPU" class="headerlink" title="在要自旋的时候，放弃CPU"></a>在要自旋的时候，放弃CPU</h3><p>如下是测试并设置指令结合让出 CPU 实现的锁</p>
 <figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="type">void</span> <span class="title function_">init</span><span class="params">()</span> &#123; </span><br><span class="line">	flag = <span class="number">0</span>; </span><br><span class="line">&#125; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">lock</span><span class="params">()</span> &#123; </span><br><span class="line">    <span class="keyword">while</span> (TestAndSet(&amp;flag, <span class="number">1</span>) == <span class="number">1</span>) </span><br><span class="line">    	yield(); <span class="comment">// give up the CPU </span></span><br><span class="line">&#125; </span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">unlock</span><span class="params">()</span> &#123; </span><br><span class="line">	flag = <span class="number">0</span>; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>这种方法中，我们假定操作系统提供<strong>原语</strong> yield()，线程可以调用它主动放弃 CPU，让其他线程运行。线程可以处于 3 种状态之一（运行、就绪和阻塞）。yield() 系统调用能够让运行（running）态变为就绪（ready）态，从而允许其他线程运行。因此，让出线程本质上取消调度（deschedules）了它自己。</p>
@@ -97,10 +101,8 @@
 <figure class="highlight c"><table><tr><td class="code"><pre><span class="line">queue_add(m-&gt;q, gettid()); </span><br><span class="line">setpark(); </span><br><span class="line">m-&gt;guard = <span class="number">0</span>; </span><br></pre></td></tr></table></figure>
 <h2 id="锁的分类"><a href="#锁的分类" class="headerlink" title="锁的分类"></a>锁的分类</h2><p><img src="/2022/04/07/Concurrency/1647569931834-e7d0bf33-43a6-4c34-8a33-8be6345076d0.jpeg" alt="思维导图"></p>
 <h3 id="1-乐观锁-VS-悲观锁"><a href="#1-乐观锁-VS-悲观锁" class="headerlink" title="1 乐观锁 VS 悲观锁"></a>1 乐观锁 VS 悲观锁</h3><p>悲观锁适合写操作多的场景，先加锁可以保证写操作时数据正确。</p>
-<p>乐观锁适合读操作多的场景，不加锁的特点能够使其读操作的性能大幅提升。</p>
-<h3 id="2-自旋锁-VS-适应性自旋锁"><a href="#2-自旋锁-VS-适应性自旋锁" class="headerlink" title="2 自旋锁 VS 适应性自旋锁"></a>2 自旋锁 VS 适应性自旋锁</h3><p>在许多场景中，同步资源的锁定时间很短（同步代码块执行需要的时间很短），为了这一小段时间去切换线程，线程挂起和恢复现场的花费可能会让系统得不偿失。</p>
-<p>如果有<strong>多个处理器</strong>，能够让两个或以上的线程同时执行，我们就可以让后面那个请求锁的线程不放弃 CPU 的执行时间，看看持有锁的线程是否很快就会释放锁。而为了让当前线程“稍等一下”，我们需让当前线程进行自旋，如果在自旋完成后前面锁定同步资源的线程已经释放了锁，那么当前线程就可以不必阻塞而是直接获取同步资源，从而避免切换线程的开销。这就是自旋锁。</p>
-<p>自旋锁本身是有缺点的，它不能代替阻塞。自旋等待虽然避免了线程切换的开销，但它要占用处理器时间。</p>
+<p>乐观锁适合读操作多的场景，不加锁的特点能够使其<strong>读操作的性能大幅提升</strong>。（读操作，临界区占用时间短）</p>
+<h3 id="2-自旋锁-VS-适应性自旋锁"><a href="#2-自旋锁-VS-适应性自旋锁" class="headerlink" title="2 自旋锁 VS 适应性自旋锁"></a>2 自旋锁 VS 适应性自旋锁</h3><p>自旋不能代替阻塞。自旋等待虽然避免了线程切换的开销，但它要占用处理器时间。</p>
 <p>自适应意味着自旋的时间（次数）不再固定，而是由前一次在同一个锁上的自旋时间及锁的拥有者的状态来决定。如果在同一个锁对象上，自旋等待刚刚成功获得过锁，并且持有锁的线程正在运行中，那么虚拟机就会认为这次自旋也是很有可能再次成功，进而它将允许自旋等待持续相对更长的时间。如果对于某个锁，自旋很少成功获得过，那在以后尝试获取这个锁时将可能省略掉自旋过程，直接阻塞线程，避免浪费处理器资源。</p>
 <h3 id="3-公平锁-VS-非公平锁"><a href="#3-公平锁-VS-非公平锁" class="headerlink" title="3 公平锁 VS 非公平锁"></a>3 公平锁 VS 非公平锁</h3><p>公平锁：多个线程按照申请锁的顺序来获取锁，线程直接进入队列中排队，每次唤醒队头线程，让它获得锁。</p>
 <ul>
@@ -1045,7 +1047,7 @@
 <p>当且仅当 V 的值等于 A 时，用新值 B 来更新 V 的值（“比较+更新”整体是一个原子操作），否则不会执行任何操作。一般情况下，“更新”是一个不断重试的操作（自旋）。</p>
 <h2 id="CAS-存在的问题"><a href="#CAS-存在的问题" class="headerlink" title="CAS 存在的问题"></a>CAS 存在的问题</h2><p>CAS虽然很高效，但是它也存在三大问题：</p>
 <ul>
-<li><p>ABA 问题。CAS 需要在操作值的时候检查内存值是否发生变化，没有发生变化才会更新内存值。但是如果内存值原来是 A，后来变成了 B，然后又变成了 A，那么CAS 进行检查时会发现值没有发生变化，但是实际上是有变化的。ABA 问题的解决思路就是在变量前面添加版本号，每次变量更新的时候都把版本号加一，这样变化过程就从“A－B－A”变成了“1A－2B－3A”。</p>
+<li><p>ABA 问题。CAS 需要在操作值的时候检查内存值是否发生变化，没有发生变化才会更新内存值。但是如果内存值原来是 A，后来变成了 B，然后又变成了 A，那么CAS 进行检查时会发现值没有发生变化，但是实际上是有变化的。ABA 问题的解决思路就是在变量前面添加<strong>版本号</strong>，每次变量更新的时候都把版本号加一，这样变化过程就从“A－B－A”变成了“1A－2B－3A”。</p>
 <blockquote>
 <p>JDK 从 1.5 开始提供了 AtomicStampedReference 类来解决 ABA 问题，具体操作封装在compareAndSet() 中。compareAndSet() 首先检查当前引用和当前标志与预期引用和预期标志是否相等，如果都相等，则以原子方式将引用值和标志的值设置为给定的更新值。</p>
 </blockquote>
@@ -1387,6 +1389,11 @@ cap\geq  \lceil \frac{initialCapacity}{ssize} \rceil</script><h4 id="数组索�
     <title>Java 基础知识</title>
     <url>/2022/04/17/Java-basis/</url>
     <content><![CDATA[<p>Java 语言使用 final 关键字来定义一个常量</p>
+<p>创建一个存储对象的线性数据结构，例如使用数组和 List 的比较。</p>
+<ul>
+<li>创建对象数组时，每个元素已经调用默认构造函数初始化。在之后再调用构造函数则是新建一个对象实例，改变引用</li>
+<li>用 List 存储对象，只需要创建一次实例</li>
+</ul>
 ]]></content>
       <categories>
         <category>Java</category>
@@ -3435,6 +3442,7 @@ dp[i][j] &= max(dp[i-1][ j-1] -prices[i],\ dp[i-1][ j]),\ \ \ j\%2==0
 <li>邻接矩阵，对于存在的边，令存储元素为边的权值，对于不存在的边，根据场景，选择 0 或无穷值</li>
 </ul>
 <p>需要注意到，邻接链表和邻接矩阵存储的是边的信息，可以拓展到边的权重等各种信息，而非存储节点的信息。</p>
+<p>通常推荐使用邻接表存储图，主要原因是，<strong>不需要约定用哪一个值来表示两个节点没有边</strong>。</p>
 <h1 id="图的搜索遍历方式"><a href="#图的搜索遍历方式" class="headerlink" title="图的搜索遍历方式"></a>图的搜索遍历方式</h1><p>为了便于对图进行遍历，首先定义节点属性：每个节点具有的属性，例如<strong>节点编号、节点状态和节点对应的某个特定输出</strong>（当图的节点作为函数的状态节点时）</p>
 <p>对于图中的任意一个节点，它在搜索的过程中有<strong>三种状态</strong>，即：</p>
 <p><strong>「未搜索」</strong>：我们还没有搜索到这个节点；</p>
@@ -3593,7 +3601,7 @@ dp[i][j] &= max(dp[i-1][ j-1] -prices[i],\ dp[i-1][ j]),\ \ \ j\%2==0
 </ul>
 <p>常见的一些实现方式中，并没有维护最小优先队列，而是遍历剩余未添加到树 A 的节点，并查看其 key 属性，找到符合条件的节点。</p>
 <p><strong>Prim 算法的 Java 实现</strong></p>
-<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Node</span>&#123;</span><br><span class="line">    <span class="type">int</span> key;</span><br><span class="line">    <span class="type">int</span> parent; <span class="comment">// 标记本节点的父结点，-1 表示不存在</span></span><br><span class="line">    <span class="type">int</span> val; <span class="comment">// 标记本节点</span></span><br><span class="line">    <span class="type">boolean</span> inQueue; <span class="comment">// true 表示该节点在队列中</span></span><br><span class="line"></span><br><span class="line">    Node(<span class="type">int</span> k, <span class="type">int</span> p, <span class="type">int</span> v, <span class="type">boolean</span> iQ)&#123;</span><br><span class="line">        <span class="built_in">this</span>.key = k;</span><br><span class="line">        <span class="built_in">this</span>.parent = p;</span><br><span class="line">        <span class="built_in">this</span>.val = v;</span><br><span class="line">        <span class="built_in">this</span>.inQueue = iQ;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 邻接矩阵存储图，0 表示无连接</span></span><br><span class="line"><span class="keyword">public</span> List&lt;Node&gt; <span class="title function_">mstPrim</span><span class="params">(<span class="type">int</span>[][] graph)</span>&#123;</span><br><span class="line">    PriorityQueue&lt;Node&gt; q = <span class="keyword">new</span> <span class="title class_">PriorityQueue</span>&lt;&gt;(<span class="keyword">new</span> <span class="title class_">Comparator</span>&lt;Node&gt;() &#123;</span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="keyword">public</span> <span class="type">int</span> <span class="title function_">compare</span><span class="params">(Node e1, Node e2)</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> e1.key - e2.key;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">    List&lt;Node&gt; nodes = <span class="keyword">new</span> <span class="title class_">ArrayList</span>&lt;&gt;(); <span class="comment">// nodes 中 inQueue 属性为 false 的节点即为树 A 中的节点</span></span><br><span class="line">    <span class="type">int</span> <span class="variable">N</span> <span class="operator">=</span> graph.length;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;N;++i)&#123;</span><br><span class="line">        <span class="type">Node</span> <span class="variable">n</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Node</span>(Integer.MAX_VALUE, -<span class="number">1</span>, i, <span class="literal">true</span>);</span><br><span class="line">        <span class="keyword">if</span>(i == <span class="number">0</span>)</span><br><span class="line">            n.key = <span class="number">0</span>; <span class="comment">// 保证一开始的队头元素符合要求</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">// 传递引用</span></span><br><span class="line">        q.offer(n); </span><br><span class="line">        nodes.add(n);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span>(!q.isEmpty())&#123;</span><br><span class="line">        <span class="type">Node</span> <span class="variable">u</span> <span class="operator">=</span> q.poll();</span><br><span class="line">        u.inQueue = <span class="literal">false</span>;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;N;++i)&#123;</span><br><span class="line">            <span class="keyword">if</span>(graph[u.val][i] != <span class="number">0</span>)&#123;</span><br><span class="line">                <span class="type">Node</span> <span class="variable">v</span> <span class="operator">=</span> nodes.get(i);</span><br><span class="line"></span><br><span class="line">                <span class="keyword">if</span>(v.inQueue &amp;&amp; graph[u.val][i] &lt; v.key)&#123;</span><br><span class="line">                    v.parent = u.val;</span><br><span class="line">                    v.key = graph[u.val][i];</span><br><span class="line"></span><br><span class="line">                    <span class="comment">// 删除再加入，维护队列性质</span></span><br><span class="line">                    q.remove(v);</span><br><span class="line">                    q.offer(v);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> nodes; <span class="comment">// 通过节点的 parent 属性得到树结构</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Node</span>&#123;</span><br><span class="line">    <span class="type">int</span> key;</span><br><span class="line">    <span class="type">int</span> parent; <span class="comment">// 标记本节点的父结点，-1 表示不存在</span></span><br><span class="line">    <span class="type">int</span> val; <span class="comment">// 标记本节点</span></span><br><span class="line">    <span class="type">boolean</span> inQueue; <span class="comment">// true 表示该节点在队列中，false 表示该节点在最小生成树中</span></span><br><span class="line"></span><br><span class="line">    Node(<span class="type">int</span> k, <span class="type">int</span> p, <span class="type">int</span> v, <span class="type">boolean</span> iQ)&#123;</span><br><span class="line">        <span class="built_in">this</span>.key = k;</span><br><span class="line">        <span class="built_in">this</span>.parent = p;</span><br><span class="line">        <span class="built_in">this</span>.val = v;</span><br><span class="line">        <span class="built_in">this</span>.inQueue = iQ;</span><br><span class="line">    &#125;</span><br><span class="line">    Node()&#123;&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 邻接矩阵存储图，0 表示无连接</span></span><br><span class="line"><span class="comment">// 最小生成树不限制边的权重，建议使用邻接表，否则每次都用 0 表示无连接很可能出错</span></span><br><span class="line"><span class="keyword">public</span> List&lt;Node&gt; <span class="title function_">mstPrim</span><span class="params">(<span class="type">int</span>[][] graph)</span>&#123;</span><br><span class="line">    <span class="comment">// 节点存放到优先队列中，会乱序，因此需要知道每个节点自身的标记，即 val 属性</span></span><br><span class="line">    PriorityQueue&lt;Node&gt; q = <span class="keyword">new</span> <span class="title class_">PriorityQueue</span>&lt;&gt;(<span class="keyword">new</span> <span class="title class_">Comparator</span>&lt;Node&gt;() &#123;</span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="keyword">public</span> <span class="type">int</span> <span class="title function_">compare</span><span class="params">(Node e1, Node e2)</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> e1.key - e2.key;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">    </span><br><span class="line">    List&lt;Node&gt; nodes = <span class="keyword">new</span> <span class="title class_">ArrayList</span>&lt;&gt;(); </span><br><span class="line">    <span class="type">int</span> <span class="variable">N</span> <span class="operator">=</span> graph.length;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;N;++i)&#123;</span><br><span class="line">        <span class="type">Node</span> <span class="variable">n</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Node</span>(Integer.MAX_VALUE, -<span class="number">1</span>, i, <span class="literal">true</span>);</span><br><span class="line">        <span class="keyword">if</span>(i == <span class="number">0</span>)</span><br><span class="line">            n.key = <span class="number">0</span>; <span class="comment">// 保证一开始的队头元素符合要求</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">// 传递引用</span></span><br><span class="line">        q.offer(n); </span><br><span class="line">        nodes.add(n);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span>(!q.isEmpty())&#123;</span><br><span class="line">        <span class="type">Node</span> <span class="variable">u</span> <span class="operator">=</span> q.poll();</span><br><span class="line">        u.inQueue = <span class="literal">false</span>;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;N;++i)&#123;</span><br><span class="line">            <span class="keyword">if</span>(graph[u.val][i] != <span class="number">0</span>)&#123;</span><br><span class="line">                <span class="type">Node</span> <span class="variable">v</span> <span class="operator">=</span> nodes.get(i);</span><br><span class="line"></span><br><span class="line">                <span class="keyword">if</span>(v.inQueue &amp;&amp; graph[u.val][i] &lt; v.key)&#123;</span><br><span class="line">                    v.parent = u.val;</span><br><span class="line">                    v.key = graph[u.val][i];</span><br><span class="line"></span><br><span class="line">                    <span class="comment">// 删除再加入，维护队列性质</span></span><br><span class="line">                    q.remove(v);</span><br><span class="line">                    q.offer(v);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> nodes; <span class="comment">// 通过节点的 parent 属性得到树结构</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <h1 id="单源最短路径"><a href="#单源最短路径" class="headerlink" title="单源最短路径"></a>单源最短路径</h1><p><strong>单源最短路径问题</strong>：给定一个图 G=(V, E)，我们希望找到从给定源结点 s 到每个节点的最短路径。</p>
 <p><strong>最短路径的表示</strong>：在通常情况下，我们不但希望计算出最短路径的权重，还希望知道路径上的结点。因此，对于每个节点，维护属性 p，它并不表示在有向图中的父结点，而用于存储从源结点到本节点的最短路径中，自己的父结点。在一开始，所有节点的属性 p 为 NULL</p>
 <h2 id="松弛操作"><a href="#松弛操作" class="headerlink" title="松弛操作"></a>松弛操作</h2><p>对每个结点 v 来说，我们维持一个属性 v.d，v.d 为源结点 s 到结点 v 的<strong>最短路径估计</strong>，使用以下初始化算法对各个结点的最短路径估计和前驱结点进行初始化。</p>
@@ -3622,29 +3630,70 @@ dp[i][j] &= max(dp[i-1][ j-1] -prices[i],\ dp[i-1][ j]),\ \ \ j\%2==0
 δ(s,v)≤δ(s,u)+w(u,v)</script><p>这条性质提出的目的是为了将最短路径进行抽象化简单描述。简单地作图时，可以把最短路径画成直接连接 s 和 v 的线段，结点 u 的位置只能在这线段上或者线段外，形如三角形，因此叫做三角不等式性质。</p>
 <p>5、<strong>收敛性质</strong>：设 s -&gt; u -&gt; … -&gt; v 是图 G 中源 s 到 节点 v 的一条最短路径。假定图 G 由 INITIALIZE—SINGLE—SOURCE(G, s) 算法进行初始化，并在之后进行了一系列的松弛操作。如果在对边 (u, v) 进行松弛之前的任意时刻有 u.d=δ(s, u)，即已经找到源结点 s 到结点 u 的最短路径，则在对边 (u, v) 进行松弛操作后，有 v.d=δ(s, v)，也就是说，找到了源结点 s 到结点 v 的最短路径</p>
 <p><img src="/2022/04/27/graph-alg/image-20220426165344733.png" alt></p>
-<h2 id="单源最短路径的变体问题"><a href="#单源最短路径的变体问题" class="headerlink" title="单源最短路径的变体问题"></a>单源最短路径的变体问题</h2><p><strong>单源最短路径问题</strong>：给定一个图 G=(V, E)，我们希望找到从给定源结点 s 到每个节点的最短路径。</p>
+<h2 id="单源最短路径的变体问题"><a href="#单源最短路径的变体问题" class="headerlink" title="单源最短路径的变体问题"></a>单源最短路径的变体问题</h2><p><strong>单源最短路径问题</strong>：给定一个图 G=(V, E)，我们希望找到从给定源结点 s <strong>到每个节点的</strong>最短路径。</p>
+<blockquote>
+<p>注意是到每个节点的最短路径，因此，对于以下各种最短路径算法，如果是单源且单目的地，则当对目的节点进行松弛操作后，即可结束计算。</p>
+</blockquote>
 <p><strong>单目的地最短路径问题</strong>：<strong>将源结点设为目的结点，将图的每条边的方向翻转</strong>，该问题即成为了单源最短路径问题。</p>
 <p>所有结点对最短路径问题：要求得到所有结点对的最短路径。虽然可以对所有节点对运行一遍单源最短路径算法，但存在更快的解决方法。</p>
-<h2 id="单源最短路径算法"><a href="#单源最短路径算法" class="headerlink" title="单源最短路径算法"></a>单源最短路径算法</h2><p>Bellman-Ford 算法解决的是一般情况下的单源最短路径问题。在这里，边的权值可以为负数。Bellman-Ford 算法返回一个布尔值，用来表明是否存在一个从源结点可以到达的权重为负值的环路。</p>
-<p>有向无环图的单源最短路径算法 Dag-Shortest-Paths 算法。在有向无环图中，即使存在权重为负值的边，但因为没有权重为负值的环路，满足最短路径的存在性充要条件。</p>
-<p>Dijkstra 算法可以解决单源最短路径问题，它要求所有边的权重不为负数，因此一定不存在权重为负值的环路。</p>
+<h2 id="单源最短路径算法"><a href="#单源最短路径算法" class="headerlink" title="单源最短路径算法"></a>单源最短路径算法</h2><p><strong>Bellman-Ford 算法</strong>解决的是一般情况下的单源最短路径问题。在这里，边的权值可以为负数。Bellman-Ford 算法返回一个布尔值，用来表明是否存在一个从源结点可以到达的权重为负值的环路。</p>
+<p><strong>Dag-Shortest-Paths 算法</strong>要求<strong>图没有环路，允许负权值的边</strong>。在有向无环图中，即使存在权重为负值的边，但因为没有权重为负值的环路，满足最短路径的存在性充要条件。</p>
+<p><strong>Dijkstra 算法</strong>要求<strong>所有边的权重不为负数</strong>，因此一定不存在权重为负值的环路。</p>
 <p>广度优先搜索：只能用于求解<strong>无权重</strong>的图的单源最短路径问题。路径的长度为访问过的节点个数。结点同样具有属性 d 和属性 p，但是结点的属性 d 不再是用权值衡量</p>
 <p>深度优先搜索：本质上应该是 Dag-Shortest-Paths 算法？dfs 的参数即为结点的两个属性。</p>
 <h3 id="BELLMAN-FORD-算法"><a href="#BELLMAN-FORD-算法" class="headerlink" title="BELLMAN-FORD 算法"></a>BELLMAN-FORD 算法</h3><p>Bellman-Ford 算法实现如下：</p>
 <p><img src="/2022/04/27/graph-alg/image-20220426171511348.png" alt></p>
 <p>首先对所有节点的 d 值和 p 值进行初始化，然后对图的每条边进行 |V|-1 次松弛操作。执行完松弛操作后，算法第 5~8 行检查图中是否存在权重为负值的环路。</p>
 <p>Bellman-Ford 算法基于路径松弛性质运行。正确性的证明见算法导论。</p>
+<h3 id="Shortest-Path-Faster-算法"><a href="#Shortest-Path-Faster-算法" class="headerlink" title="Shortest Path Faster 算法"></a>Shortest Path Faster 算法</h3><p>SPFA</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">ProcedureSPFA;</span><br><span class="line">Begin</span><br><span class="line">    initialize-single-source(G,s);</span><br><span class="line">    initialize-queue(Q);</span><br><span class="line">    enqueue(Q,s);</span><br><span class="line">    while not empty(Q) do begin</span><br><span class="line">        u:=dequeue(Q);</span><br><span class="line">        for each v∈adj[u] do begin</span><br><span class="line">            tmp:=d[v];</span><br><span class="line">            relax(u,v);</span><br><span class="line">            if(tmp&lt;&gt;d[v])and(not v in Q)then enqueue(Q,v); // 如果 v 在 Q 中，v 的 d已经被松弛操作影响，不需要再入队</span><br><span class="line">        end;</span><br><span class="line">    end;</span><br><span class="line">End; </span><br></pre></td></tr></table></figure>
+<p>设立一个先进先出的队列用来保存待优化的结点，优化时每次取出队首结点u，并且用u点当前的最短路径估计值对离开u点所指向的结点v进行松弛操作，如果v点的最短路径估计值有所调整，且v点不在当前的队列中，就将v点放入队尾。这样不断从队列中取出结点来进行松弛操作，直至队列空为止</p>
+<p> 对SPFA的一个很直观的理解就是由无权图的BFS转化而来。在无权图中，BFS首先到达的顶点所经历的路径一定是最短路(也就是经过的最少顶点数)，所以此时利用数组记录节点访问可以使每个顶点只进队一次，但在带权图中，最先到达的顶点所计算出来的路径不一定是最短路。一个解决方法是放弃数组，此时所需时间自然就是指数级的，所以我们不能放弃数组，而是在处理一个已经在队列中且当前所得的路径比原来更好的顶点时，直接更新最优解。</p>
+<p>与 dijkstra 的区别：dijkstra 不能负权，非 Q 的节点（S中的节点）已经找到最短路径；SPFA 可以负权，非 Q 的节点可能还没找到最短路径。实际上，如果有负权，dijkstra 无法保证非 Q 的节点（S中的节点）已经找到最短路径）</p>
 <h3 id="Dag-Shortest-Paths-算法"><a href="#Dag-Shortest-Paths-算法" class="headerlink" title="Dag-Shortest-Paths 算法"></a>Dag-Shortest-Paths 算法</h3><p>Dag-Shortest-Paths 算法实现如下：</p>
 <p><img src="/2022/04/27/graph-alg/image-20220426192722448.png" alt></p>
 <p>首先对有向无环图进行拓扑排序，根据节点的拓扑排序次序访问每个节点，对于任意一个节点，对从该节点出发的所有边进行松弛操作</p>
 <h3 id="Dijkstra-算法"><a href="#Dijkstra-算法" class="headerlink" title="Dijkstra 算法"></a>Dijkstra 算法</h3><p>Dijkstra 算法实现如下：</p>
 <p><img src="/2022/04/27/graph-alg/image-20220426195639361.png" alt></p>
-<p>Dijkstra 算法的关键在于维持循环不变量：节点集合 S，从源结点 s 到该集合中每个节点的最短路径已被找到。算法不断从节点集合 Q=V-S 中选择最短路径估计最小的结点 u，将 u 加入到集合 s，然后对所有从 u 出发的边进行松弛。</p>
-<p>在一开始，Q 中只有源结点 s 的 s.d = 0，它将被选出。使用最小优先队列保存 Q，Q 的每个元素是一个结点，包含 d 和 p 属性，按照结点的 d 属性进行排序。具体实现方法可以参考 Prim 算法。</p>
+<p>Dijkstra 算法的关键在于维持循环不变量：节点集合 S，从源结点 s 到该集合中每个节点的最短路径已被找到。</p>
+<p>算法不断从节点集合 Q=V-S 中选择最短路径估计最小的结点 u，将 u 加入到集合 s，然后对所有从 u 出发的边进行松弛。并且，上述伪代码中没有体现的是，由于节点集合 S 表示从源结点 s 到该集合中每个节点的最短路径已被找到，因此松弛操作不需要包含 S 中的节点。</p>
+<p><img src="/2022/04/27/graph-alg/image-20220509155207223.png" alt></p>
+<p>在一开始，Q 中只有源结点 s 的 s.d = 0，它将被选出。使用最小优先队列保存 Q，Q 的每个元素是一个结点，包含 d 和 p 属性，按照结点的 d 属性进行排序。</p>
+<p>算法结构与 Prim 算法十分相似，类似 Prim 算法，将伪代码进行转化。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Node</span>&#123;</span><br><span class="line">    <span class="type">int</span> dis;</span><br><span class="line">    <span class="type">int</span> parent; <span class="comment">// 标记本节点的父结点，-1 表示不存在</span></span><br><span class="line">    <span class="type">int</span> val; <span class="comment">// 标记本节点</span></span><br><span class="line">    <span class="type">boolean</span> inQueue; <span class="comment">// true 表示该节点在队列 Q 中。类似 prim 算法，用来区分处于伪代码中的 S 还是 Q</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">public</span> <span class="title function_">Node</span><span class="params">(<span class="type">int</span> d, <span class="type">int</span> p, <span class="type">int</span> v, <span class="type">boolean</span> iQ)</span>&#123;</span><br><span class="line">    	<span class="built_in">this</span>.dis = d;</span><br><span class="line">        <span class="built_in">this</span>.parent = p;</span><br><span class="line">        <span class="built_in">this</span>.val = v;</span><br><span class="line">        <span class="built_in">this</span>.inQueue = iQ;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">public</span> <span class="title function_">Node</span><span class="params">()</span>&#123;&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 邻接矩阵存储图</span></span><br><span class="line"><span class="comment">// 由于 dijkstra 算法适用于无负权值的图，因此用 -1 表示无连接，不能用 0</span></span><br><span class="line">List&lt;Node&gt; <span class="title function_">dijkstra</span><span class="params">(<span class="type">int</span>[][] graph, <span class="type">int</span> s)</span>&#123;</span><br><span class="line">    PriorityQueue&lt;Node&gt; q = <span class="keyword">new</span> <span class="title class_">PriorityQueue</span>&lt;&gt;(<span class="keyword">new</span> <span class="title class_">Comparator</span>&lt;Node&gt;() &#123;</span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="keyword">public</span> <span class="type">int</span> <span class="title function_">compare</span><span class="params">(Node e1, Node e2)</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> e1.dis - e2.dis;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// INITIALIZE-SINGLE-SOURCE(G, s)</span></span><br><span class="line">    List&lt;Node&gt; nodes = <span class="keyword">new</span> <span class="title class_">ArrayList</span>&lt;&gt;(); </span><br><span class="line">    <span class="type">int</span> <span class="variable">N</span> <span class="operator">=</span> graph.length;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;N;++i)&#123;</span><br><span class="line">        <span class="type">Node</span> <span class="variable">n</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Node</span>(Integer.MAX_VALUE, -<span class="number">1</span>, i, <span class="literal">true</span>);</span><br><span class="line">        <span class="keyword">if</span>(i == s)</span><br><span class="line">            n.dis = <span class="number">0</span>; <span class="comment">// 源结点 s，初始化后它会处于队头</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">// 传递引用</span></span><br><span class="line">        q.offer(n); </span><br><span class="line">        nodes.add(n);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">while</span>(!q.isEmpty())&#123;</span><br><span class="line">        <span class="type">Node</span> <span class="variable">u</span> <span class="operator">=</span> q.poll();</span><br><span class="line">        u.inQueue = <span class="literal">false</span>;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;N;++i)&#123;</span><br><span class="line">            <span class="keyword">if</span>(graph[u.val][i] != -<span class="number">1</span>)&#123;</span><br><span class="line">                <span class="type">Node</span> <span class="variable">v</span> <span class="operator">=</span> nodes.get(i);</span><br><span class="line">                </span><br><span class="line">                <span class="comment">// relax(u, v)</span></span><br><span class="line">				<span class="keyword">if</span>(v.inQueue &amp;&amp; v.dis &gt; u.dis + graph[u.val][i])&#123;</span><br><span class="line">                    v.dis = u.dis + graph[u.val][i];</span><br><span class="line">                    v.parent = u.val;</span><br><span class="line">                    </span><br><span class="line">                    <span class="comment">// 删除再加入，维护队列性质</span></span><br><span class="line">                    q.remove(v);</span><br><span class="line">                    q.offer(v);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> nodes; <span class="comment">// 通过节点的 parent 属性得到路径结构</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <blockquote>
 <p>Dijkstra 算法是一种贪心算法，在《算法导论》中证明了它的正确性。</p>
 </blockquote>
-<h3 id="广度优先搜索-1"><a href="#广度优先搜索-1" class="headerlink" title="广度优先搜索"></a>广度优先搜索</h3><h4 id="相关题目-1"><a href="#相关题目-1" class="headerlink" title="相关题目"></a>相关题目</h4><p><a href="https://leetcode-cn.com/problems/snakes-and-ladders/">909. 蛇梯棋</a></p>
+<h4 id="相关题目-1"><a href="#相关题目-1" class="headerlink" title="相关题目"></a>相关题目</h4><p><a href="https://leetcode.cn/circle/discuss/4gGyon/">单源最短路题目总结 - 力扣（LeetCode）</a></p>
+<p>基于上面三种经典的权重图最短路径算法，某些问题的最短路径或是有所限制，或是更加抽象。无论是什么题目，我们只需要关注一个东西，即<strong>我们为每个节点维护的最短路径估计是什么</strong>？</p>
+<p><a href="https://leetcode-cn.com/problems/cheapest-flights-within-k-stops/">787. K 站中转内最便宜的航班</a></p>
+<p>最短路径应该考虑两个方面：经过的节点个数、价格。</p>
+<ul>
+<li><p>经过的节点个数相同的情况下，保留价格更小的路径。</p>
+</li>
+<li><p>在相同价格的情况下，保留节点数更少的路径。</p>
+</li>
+</ul>
+<p>我们可以按这两条规则对源结点到当前节点的路径代价进行排序。设源结点到当前节点有 n=6 条路径，它们可能有如下排序：</p>
+<p><img src="/2022/04/27/graph-alg/image-20220503210522310.png" alt></p>
+<p>进一步地，我们只需要记录 (1, 1)、 (2, 1) 和 (3, 1)，不需要记录 (1, 2)、(1, 3) 和 (2, 2)。</p>
+<p>如果节点个数为 1 时，花费的时间没有 1 这一项，那么对于 (1, 2) 和 (2, 1)，哪一条是最短路径就很难说了，因为有可能走节点个数为 2 这一条不会超过上限，而花费的时间又少，那么它是最短路径，也有可能节点个数超过上限，那就不行了。</p>
+<p>更进一步地，可以对 (1, 1)、 (2, 1) 和 (3, 1)，如果第二维度相同，其实只需要留下 (1, 1)。相当于又建了一个先按第二列排序再第一列排序，与上面的反过来了。复杂不好理解，算了</p>
+<p>实际上也就是说，路径不满足最优子结构性质。</p>
+<p>关于这点，可以进一步从动态规划那里理解。动态规划告诉我们，假设 k 为 2，其实上面的图我们只需要记录：</p>
+<p>(1, 1) 和 (2, 1)</p>
+<p>这称为：<strong>分层图最短路。层：节点个数来度量，最短路：仍旧是权值度量</strong>。<strong>实际上就是把动态规划的二维数组画成了图</strong>，然后用图的最短路径算法优化数组的递推过程。（spfa 算法、dijkstra 算法）</p>
+<p>本质上，经典的松弛操作中最短路径估计只有一个值是因为它满足最优子结构性质，这也是 dijkstra 算法得以提出的原因，而值得注意的是，另外两种算法并非贪心的，它们需要看所有的边，但是它们需要维护的最短路径估计仍旧只有一个值。</p>
+<p>对于另外两个算法，实际上遍历了源结点到当前节点所有路径，然后维护最小值为最短路径，容易修改为<strong>记录所有路径，而不是只记录最小值。</strong></p>
+<p>P1144 最短路计数 ，类似上面，从遍历所有路径的角度入手，而不是只记录一条最短路径，先构造递推图，对递推图看能否用最短路径算法</p>
+<p><a href="https://book.douban.com/subject/30136932/">算法竞赛进阶指南 (豆瓣) (douban.com)</a></p>
+<h4 id="1489-找到最小生成树里的关键边和伪关键边"><a href="#1489-找到最小生成树里的关键边和伪关键边" class="headerlink" title="1489. 找到最小生成树里的关键边和伪关键边"></a><a href="https://leetcode-cn.com/problems/find-critical-and-pseudo-critical-edges-in-minimum-spanning-tree/">1489. 找到最小生成树里的关键边和伪关键边</a></h4><p>最短路拆点问题（注意 点权、边权 的概念）</p>
+<p><a href="https://www.cnblogs.com/tweetuzki/p/10422496.html">拆点和拆边 - Tweetuzki - 博客园 (cnblogs.com)</a></p>
+<p><a href="https://oi-wiki.org/graph/node/">拆点 - OI Wiki (oi-wiki.org)</a></p>
+<p><a href="https://blog.csdn.net/acm_cxq/article/details/52704823">(5条消息) CSU 1808 地铁（拆点最短路）_acm_cxq的博客-CSDN博客</a></p>
+<p>公交路线问题</p>
+<p><a href="https://www.codeleading.com/article/17523484706/">AcWing 383. 观光 ( dijkstra拆点求最短路数) - 代码先锋网 (codeleading.com)</a></p>
+<h4 id="LCP-35-电动车游城市"><a href="#LCP-35-电动车游城市" class="headerlink" title="LCP 35. 电动车游城市"></a><a href="https://leetcode-cn.com/problems/DFPeFJ/">LCP 35. 电动车游城市</a></h4><h3 id="广度优先搜索-1"><a href="#广度优先搜索-1" class="headerlink" title="广度优先搜索"></a>广度优先搜索</h3><h4 id="相关题目-2"><a href="#相关题目-2" class="headerlink" title="相关题目"></a>相关题目</h4><h4 id="847-访问所有节点的最短路径"><a href="#847-访问所有节点的最短路径" class="headerlink" title="847. 访问所有节点的最短路径"></a><a href="https://leetcode.cn/problems/shortest-path-visiting-all-nodes/">847. 访问所有节点的最短路径</a></h4><p><a href="https://leetcode-cn.com/problems/snakes-and-ladders/">909. 蛇梯棋</a></p>
 <p><a href="https://mp.weixin.qq.com/s?__biz=MzU4NDE3MTEyMA==&amp;mid=2247487179&amp;idx=1&amp;sn=e30a662c03fba3861254dbcf3fb9d6f2&amp;chksm=fd9ca5d4caeb2cc205804fd17a2ce86b25d0408adc3417e73154f59d37e7cb17e02374f5122c&amp;scene=178&amp;cur_album_id=1917113998693449732#rd">1162. 地图分析</a> </p>
 <p>对于本题，如果用「单源最短路径」的方法，我们需要对每个「海洋」位置做一次 BFS：求得每个「海洋」的最近陆地距离，然后在所有的距离中取最大值作为答案。</p>
 <p>以本题为例，题面要我们求每个「海洋」区域到最近的「陆地」区域的最大值。</p>
@@ -3654,7 +3703,59 @@ dp[i][j] &= max(dp[i-1][ j-1] -prices[i],\ dp[i-1][ j]),\ \ \ j\%2==0
 <li>于是，可以根据单目的地最短路径问题的思路进行解决，把「虚拟源点」当作源节点，所有海洋位置当作目的节点。</li>
 </ul>
 <p>值得注意的是，实现上，我们并不需要真的将这个「虚拟源点」建立出来，因为，从该节点出发能够等距地到达所有陆地节点，因为我们可以略去「源结点入队列」这步初始操作，而直接到下一步操作「源结点能到达的子节点入队列」，也就是，在一开始让所有的「陆地」节点入队列。</p>
-<h3 id="深度优先搜索-1"><a href="#深度优先搜索-1" class="headerlink" title="深度优先搜索"></a>深度优先搜索</h3>]]></content>
+<h3 id="深度优先搜索-1"><a href="#深度优先搜索-1" class="headerlink" title="深度优先搜索"></a>深度优先搜索</h3><h1 id="所有节点对的最短路径"><a href="#所有节点对的最短路径" class="headerlink" title="所有节点对的最短路径"></a>所有节点对的最短路径</h1><p>|V|次单源最短路径，每次选择新的源点。</p>
+<p>值得注意的是，如果是无向图，设一开始源点为 a，a 到 b 的最短路径都已找到，则 b 到 a 的最短路径是相同的，因此，以 b 为源点时，不需要再求 b 到 a 的最短路径</p>
+<p><strong>以下两种算法本质上是基于动态规划的算法</strong>。</p>
+<p>第一节讨论如何用基于矩阵乘法的动态规划算法进行求解，如果使用二分优化，时间复杂度为 O(V^3^logV)；第二节给出另外一种动态规划算法 Floyd-Warshall 算法，其时间复杂度为 O(V^3^)，同时还讨论如何在有向图中找出传递闭包的问题。</p>
+<blockquote>
+<p>Johnson 算法的时间复杂度为 O(V^2^logV+VE)，适用于大型稀疏图，见《算法导论》</p>
+</blockquote>
+<p>本章的图仍旧用邻接矩阵表示。在开始前，给出邻接矩阵表示的一些约定。设图 G=(V, E)，记节点个数 n=|V|。其次，用带有括号的上标表示递推关系。</p>
+<h2 id="最短路径和矩阵乘法"><a href="#最短路径和矩阵乘法" class="headerlink" title="最短路径和矩阵乘法"></a>最短路径和矩阵乘法</h2><h4 id="1334-阈值距离内邻居最少的城市"><a href="#1334-阈值距离内邻居最少的城市" class="headerlink" title="1334. 阈值距离内邻居最少的城市"></a><a href="https://leetcode.cn/problems/find-the-city-with-the-smallest-number-of-neighbors-at-a-threshold-distance/">1334. 阈值距离内邻居最少的城市</a></h4><h3 id="递推式分析"><a href="#递推式分析" class="headerlink" title="递推式分析"></a>递推式分析</h3><p>设 $l_{ij}^{(m)}$ 为从节点 i 到节点 j 的<strong>至多</strong>包含 m 条边的任意路径中的最小权重。也就是说，比较这几个权重：包含 0 条边的最短路径权重、包含 1 条边的最短路径权重、…、包含 m 条边的最短路径权重.</p>
+<p>易知，当 m=0 时，</p>
+<script type="math/tex; mode=display">
+l_{ij}^{(0)}=\left\{\begin{matrix}
+0 & if \ i==j\\ 
+INF & else
+\end{matrix}\right.</script><p>对于 m&gt;=1，我们需要计算的是 $l_{ij}^{(m-1)}$，即从 i 到 j 最多由 m-1 条边组成的任意路径中的最小权重；和从 i 到 j 最多由 m 条边组成的任意路径的最小权重</p>
+<script type="math/tex; mode=display">
+l_{ij}^{(m)}=\left \{l_{ij}^{(m-1)},\ \underset{1<=k<=n}{min}\left \{l_{ik}^{(m-1)}+w_{kj}  \right \}\right \}=\underset{1<=k<=n}{min}\left \{l_{ik}^{(m-1)}+w_{kj}  \right \}</script><p>可以这样理解这个式子，我们已经有了 $l<em>{ij}^{(m-1)}$，即已经比较了这几个权重：包含 0 条边的最短路径权重、包含 1 条边的最短路径权重、…、包含 m-1 条边的最短路径权重，因此我们实际上只需要从节点 i 到节点 j 包含 m 条边的最短路径权重，这个值包含在第二项中，即包含在这一项 $\underset{1&lt;=k&lt;=n}{min}\left {l</em>{ik}^{(m-1)}+w<em>{kj}  \right }$ 当中，不仅如此，这一项也包含了 $l</em>{ij}^{(m-1)}$。</p>
+<h3 id="最短路径分析"><a href="#最短路径分析" class="headerlink" title="最短路径分析"></a>最短路径分析</h3><p>当图不包含权重为负值的环路，满足</p>
+<script type="math/tex; mode=display">
+\begin{align*}
+\delta (i,j)&=l_{ij}^{n-1} \\
+l_{ij}^{n-1}&=l_{ij}^{n}=l_{ij}^{n+1}=...
+\end{align*}</script><p>式1，对于最短路径，最短路径是简单路径，其包含的边最多为 n-1 条</p>
+<p>式2，当包含 n 条边以上时，一定不是最短路径，因此，也就是说，$l<em>{ij}^{n}$ 比 $l</em>{ij}^{n-1}$ 多出来的项都比 $l_{ij}^{n-1}$ 小（根据其递推式）</p>
+<p>由单个元素的递推式容易推广到矩阵的递推式</p>
+<script type="math/tex; mode=display">
+l_{ij}^{(m)}=\underset{1<=k<=n}{min}\left \{l_{ik}^{(m-1)}+w_{kj}  \right \}</script><p>设节点编号从 1 开始，一共 n 个节点，可以用  $L^{(m-1)}==(l<em>{ij}^{(m-1)})$ 得到 $L^{(m)}=(l</em>{ij}^{(m)})$，其中 $i,j\epsilon [1,n]$</p>
+<p><img src="/2022/04/27/graph-alg/image-20220510163533803.png" alt="image-20220510163533803"></p>
+<p>代码中，输入参数 L 即表示 $L^{(m-1)}$，返回值 L^’^ 即表示 $L^{(m)}$</p>
+<p>现在来观察单个元素的递推式，我们将它与矩阵乘法的递推式进行比较，矩阵乘法递推式为：</p>
+<script type="math/tex; mode=display">
+c_{ij}=\sum_{k=1}^{n}a_{ik}\cdot b_{kj}</script><p>可以从向量的角度来描述，设矩阵 A 是行向量集合 ${α<em>{1},α</em>{2},…,α<em>{n}}$，矩阵 B 是列向量集合 ${β</em>{1},β<em>{2},…,β</em>{n}}$，则 $c<em>{ij}=α</em>{i}β_{j}$</p>
+<p>容易发现，为了得到下标为 ij 的元素，两个递推式需要遍历的情况是一样的，即 (ik, kj)，于是，可以令向量乘法表示一个新的计算，即</p>
+<script type="math/tex; mode=display">
+c_{ij}=α_{i}β_{j}={min}\left \{a_{ik}+b_{kj}  \right \}</script><p>式中，把上标 m 和 m-1 略去，不影响。或者可以定义一个新的符号，用来表示两个向量的这种计算。</p>
+<p>于是，可以用矩阵乘法来等效对 $L^{(m)}$ 的计算，定义：</p>
+<script type="math/tex; mode=display">
+L^{(m)}=L^{(m-1)}\cdot W</script><p>于是有：</p>
+<script type="math/tex; mode=display">
+\begin{align*}
+L^{(1)}&=L^{(0)}\cdot W=W \\
+L^{(2)}&=L^{(1)}\cdot W=W^{2} \\
+...\\
+L^{(n-1)}&=L^{(n-2)}\cdot W=W^{n-1}
+
+\end{align*}</script><p>实际上，我们需要求的只有 $L^{(n-1)}=W^{n-1}$，因此可以二分递归求解：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 求解 W^&#123;k&#125;</span></span><br><span class="line"><span class="type">int</span>[][] getL(W, k)&#123;</span><br><span class="line">	<span class="keyword">if</span>(k%<span class="number">2</span> == <span class="number">0</span>)&#123;</span><br><span class="line">        <span class="type">int</span>[][] tmp = getL(W, k/<span class="number">2</span>);</span><br><span class="line">        <span class="keyword">return</span> tmp dot tmp; <span class="comment">// 矩阵乘法，注意这里的 dot 运算是等效运算，而非原本的矩阵乘法</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        <span class="keyword">return</span> getL(W, k-<span class="number">1</span>) dot W; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>参考对快速幂算法的优化，容易将上述递归过程转化为递推。</p>
+<p><img src="/2022/04/27/graph-alg/image-20220511144236814.png" alt="image-20220511144236814"></p>
+<p>Floyd-Warshall</p>
+<p><img src="/2022/04/27/graph-alg/image-20220511144529287.png" alt="image-20220511144529287"></p>
+<p><img src="/2022/04/27/graph-alg/image-20220511165156848.png" alt="image-20220511165156848"></p>
+<h1 id="最大流"><a href="#最大流" class="headerlink" title="最大流"></a>最大流</h1>]]></content>
       <categories>
         <category>算法</category>
       </categories>
