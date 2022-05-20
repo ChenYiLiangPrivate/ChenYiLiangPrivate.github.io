@@ -3764,6 +3764,112 @@ L^{(n-1)}&=L^{(n-2)}\cdot W=W^{n-1}
       </categories>
   </entry>
   <entry>
+    <title>数学相关的算法题</title>
+    <url>/2022/04/24/math-related-problems/</url>
+    <content><![CDATA[<p>基于数学推导的算法题</p>
+<span id="more"></span>
+<p><a href="https://leetcode-cn.com/problems/maximum-swap/">670. 最大交换</a></p>
+<p>给定一个长度为 n 的数字序列「D0 D1 D2…Dn-1」，只做一次交换，问能得到的最大数字。</p>
+<p>左边的一个小的数与右边一个大的数交换，对这一次交换的要求：左边的数字尽可能靠前，</p>
+<p>与之交换的右边数字尽可能大。</p>
+<p>因此，设f(i)为i往后的最大数，从左往右扫描找第一个 f(i) &gt; Di 的对子，交换两个数即可。</p>
+<p>本题实际上是「下一个排列」的另一个版本，求的是下一个最大排列。</p>
+<p>下一个排列</p>
+<p>给定若干个数字的一个排列。如何将这些数字重新排列，以得到下一个更大的整数。如 123 下一个更大的数为 132。如果没有更大的整数，则输出最小的整数。</p>
+<ol>
+<li>我们希望下一个数比当前数大，这样才满足“下一个排列”的定义。将 后面的「大数」与 前面的 「小数」交换，就能得到一个更大的数。</li>
+<li>我们还希望下一个数<strong>增加的幅度尽可能的小</strong>，这样才满足“下一个排列与当前排列紧邻“的要求。为了满足这个要求，我们需要保证：<strong>交换的大数尽可能小，大数交换到的位置尽可能为高位</strong>（指数字字符串靠近右边）。</li>
+</ol>
+<p>比如 123465，</p>
+<p>1 大数交换到的位置尽可能为高位——交换5、4，而非5、3。该条规则需要优先满足</p>
+<p>2 交换的大数尽可能小——交换5、4，而非6、4</p>
+<p>将「大数」换到前面后，需要将「大数」后面的所有数重置为升序，升序排列就是最小的排列。</p>
+<p>以 123465 为例：首先按照上一步，交换 5 和 4，得到 123564；然后需要将 5 之后的数重置为升序，得到 123546。显然 123546 比 123564 更小，123546 就是 123465 的下一个排列</p>
+<p>求解满足要求的 「大数」与「小数」的方法：</p>
+<p>(1)  从后向前（数字字符串右往左）查找第一个相邻升序的元素对 (i,j)，满足 A[i] &lt; A[j]。优先满足了规则1，易知此时 [j,end) 必然是降序。——存在性：是否存在下一个排列</p>
+<p><img src="/2022/04/24/math-related-problems/image-20220427093727458.png" alt></p>
+<p>如果没有升序部分，就不可能存在后面的数小于前面的数的情况。当前排列是最大排列，没有下一个更大排列。依照题意，最大排列的下一个排列应该输出最小排列，即只有升序。</p>
+<p>(2)  在 [j,end) 从后向前查找第一个满足 A[i] &lt; A[k] 的 k。A[i]、A[k] 分别就是上文所说的「小数」、「大数</p>
+<p>(3)  将 A[i] 与 A[k] 交换</p>
+<p>(4)  可以断定这时 [j,end) 必然是降序（对调过去后下半部分一定比A[i]小，上半部分一定比A[i]大，即整段仍旧是递减的。容易证明），因此只需要反转 [j,end)，即可使其升序，不需要调用排序方法。注意 j 是最高点位置。</p>
+<blockquote>
+<p>可以从后往前遍历，维护一个单调栈，栈底到栈顶递增。第一次弹出时可以找到firstIndex和secondIndex</p>
+<p>但是实际上没有必要，因为只要一组firstIndex和secondIndex</p>
+</blockquote>
+<p><a href="https://leetcode-cn.com/problems/remove-k-digits/">402. 移掉 K 位数字</a></p>
+<p>给你一个以字符串表示的非负整数 num 和一个整数 k ，移除这个数中的 k 位数字，使得剩下的数字最小。请你以字符串形式返回这个最小的数字。</p>
+<p>区别于 下一个排列，这里是 移除 而非 移动</p>
+<p>对于两个相同长度的数字序列，最左边不同的数字决定了这两个数字的大小，例如，对于 A = 1axxx，B = 1bxxx，如果 a &gt; b 则 A&gt;B。</p>
+<p>「删除一个数字」</p>
+<p>让我们从一个简单的例子开始。给定一个数字序列，例如 425，如果要求我们只删除一个数字，那么从左到右，我们有 4、2 和 5 三个选择。我们将每一个数字和它的左邻居进行比较。从 2 开始，2 小于它的左邻居 4。假设我们保留数字 4，那么所有可能的组合都是以数字 4（即 42，45）开头的。相反，如果移掉 4，留下 2，我们得到的是以 2 开头的组合（即 25），这明显小于任何留下数字 4 的组合。因此我们应该移掉数字 4。如果不移掉数字 4，则之后无论移掉什么数字，都不会得到最小数。</p>
+<p>「删除一个数字」的贪心策略：</p>
+<p>给定一个长度为 n 的数字序列「D0 D1 D2…Dn-1」，，从左往右找到第一个位置 i（i&gt;0）使得 Di &gt; Di+1，并删去Di ；如果不存在，说明整个数字序列单调不降，删去最后一个数字即可。从而，我们能得到 删除一个数字后 的最小数字。</p>
+<p>「删除k个数字」</p>
+<p>自然的想法，k次删除一个数字，每次都要扫描一遍，复杂度最大可能O(N)</p>
+<p>优化：前面之前看过了，后面其实不用看。对于上述过程，其实等价于维护一个单调递增栈，只不过限制了 pop 的次数。</p>
+<p>例如，对于[1,2,3,4,5,2,6,4,3]，k=4的情况，维护一个单调递增栈。则元素2入栈时，弹出5、4、3，即顺序删除了5、4、3，k变成1，然后6入栈，4入栈，弹出6，k变成0.当单调栈建立完毕而k还没有到0，说明后面没有找到 下坡 ，因此把栈顶最后几个元素删除/弹出。</p>
+<p>最终，从栈底到栈顶的答案序列即为最小数。</p>
+<p>考虑到栈的特点是后进先出，如果通过栈实现，则需要将栈内元素依次弹出然后进行翻转才能得到最小数。为了避免翻转操作，可以使用双端队列代替栈的实现。</p>
+<p>更好的方法是使用 StringBuffer 作为栈。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Solution</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> String <span class="title function_">removeKdigits</span><span class="params">(String num, <span class="type">int</span> k)</span> &#123;</span><br><span class="line">        <span class="comment">// 区别于 下一个排列，这里是 移除 而非  移动</span></span><br><span class="line"></span><br><span class="line">        <span class="type">StringBuilder</span> <span class="variable">ret</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">StringBuilder</span>();</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;num.length();++i)&#123;</span><br><span class="line">            <span class="type">char</span> <span class="variable">digit</span> <span class="operator">=</span> num.charAt(i);</span><br><span class="line"></span><br><span class="line">            <span class="keyword">while</span>(ret.length() &gt; <span class="number">0</span> &amp;&amp; k &gt; <span class="number">0</span> &amp;&amp; ret.charAt(ret.length()-<span class="number">1</span>) &gt; digit)&#123;</span><br><span class="line">                ret.deleteCharAt(ret.length()-<span class="number">1</span>);</span><br><span class="line">                --k;</span><br><span class="line">            &#125;</span><br><span class="line">            ret.append(digit);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> <span class="number">0</span>; i &lt; k; ++i) &#123;</span><br><span class="line">            ret.deleteCharAt(ret.length()-<span class="number">1</span>);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 删除前导0</span></span><br><span class="line">        <span class="keyword">while</span>(ret.length() &gt; <span class="number">0</span> &amp;&amp; ret.charAt(<span class="number">0</span>) == <span class="string">&#x27;0&#x27;</span>)&#123;</span><br><span class="line">            ret.deleteCharAt(<span class="number">0</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> ret.length() == <span class="number">0</span>? <span class="string">&quot;0&quot;</span>:ret.toString();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>两数之和</p>
+<p>给定一个整数数组 nums 和一个整数目标值 target，请你在该数组中找出 和为目标值 target 的那 两个 整数，并返回它们的数组下标。</p>
+<p>法1：遍历每个数，对于每个数，再遍历一次数组看是否满足要求 O(N^2)</p>
+<p>法1的初步优化：无重复地遍历所有二元组，每次只需要看 i 后面或前面的数就能 无重复地 遍历所有整数对。</p>
+<p>法1的进一步优化：把数存到哈希表里，保证每次只会看有效的二元组。</p>
+<p>法2：先将数组递增排序，假设对于nums[i]，如果找到nums[j]，j&gt;i，使得它们之和等于target。那么对于nums[q]，k&gt;i，符合条件的nums[n]一定满足n&lt;j。例如如下排序后的数组 [1 2 3 4 5]，target=5，对于1，找到对应的4，对于2，因为它比1更大，那么满足条件的另一个数必定比4小，由于数组递增，容易确定索引比nums[3]=4小</p>
+<p>于是，可以优化为 排序+双指针 复杂度O(nlogn)+O(n) = O(nlogn) 注意这里是加。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 具体实现在三数之和那里</span></span><br><span class="line"><span class="comment">// 双指针法：对于left和right指针，每次找nums[left]的对应数字，因此要移动right，</span></span><br><span class="line"><span class="keyword">while</span>(left &lt; right &amp;&amp; nums[left]+nums[right] &gt; target) –right;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 如果指针重合，随着 b 后续的增加，就不会有满足 a+b+c=0 并且 b&lt;c 的 c 了，可以退出循环</span></span><br><span class="line"><span class="keyword">if</span> (second == third) 结束;</span><br><span class="line"><span class="keyword">if</span> (nums[second] + nums[third] == target) <span class="comment">//记录结果，这里nums[left]+nums[right] &lt;=target，若不相等，再右移right也不可能</span></span><br></pre></td></tr></table></figure>
+<p><a href="https://leetcode-cn.com/problems/boats-to-save-people/">881. 救生艇</a></p>
+<p>三数之和</p>
+<p>法1：三重遍历 O(N^3)</p>
+<p>法2：基于 两数之和 法2，先排序，第一个数a遍历，第二个数b和第三个数c相当于两数之和问题，且索引关系：a.index &lt; b.index &lt; c.index，复杂度O(NlogN)+O(N*N)=O(N^2)</p>
+<p>在遍历三个数时，跳过重复的a、b、c</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span>(<span class="type">int</span> first=<span class="number">0</span>;first&lt;nums.length;++first)&#123;</span><br><span class="line">    <span class="keyword">if</span>(first &gt; <span class="number">0</span> &amp;&amp; nums[first] == nums[first-<span class="number">1</span>]) <span class="comment">// first &gt; 0</span></span><br><span class="line">        <span class="keyword">continue</span>; </span><br><span class="line"></span><br><span class="line">    <span class="type">int</span> <span class="variable">third</span> <span class="operator">=</span> nums.length-<span class="number">1</span>; <span class="comment">// 不同的start对应不同两数之和的target，third要重置</span></span><br><span class="line">    <span class="comment">// 遍历 second，找到second对应的third</span></span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> <span class="variable">second</span> <span class="operator">=</span> first+<span class="number">1</span>;second&lt;nums.length;++second)&#123;</span><br><span class="line">        <span class="keyword">if</span>(second &gt; first+<span class="number">1</span> &amp;&amp; nums[second] == nums[second-<span class="number">1</span>]) <span class="comment">// second &gt; first+1</span></span><br><span class="line">            <span class="keyword">continue</span>;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">while</span>(second &lt; third &amp;&amp; nums[first]+nums[second]+nums[third] &gt; <span class="number">0</span>)</span><br><span class="line">            --third;</span><br><span class="line">        <span class="keyword">if</span>(second == third) <span class="comment">// 不可能找到两数之和为 target</span></span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">if</span>(nums[first]+nums[second]+nums[third] == <span class="number">0</span>)&#123;</span><br><span class="line">            <span class="comment">// 添加结果</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>跳过升序数组相同元素的方法</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">//只使用 for</span></span><br><span class="line"><span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;nums.length;++i)</span><br><span class="line">    <span class="keyword">if</span>(i &gt; <span class="number">0</span> &amp;&amp; nums[i] == nums[i-<span class="number">1</span>]) <span class="comment">// first &gt; 0</span></span><br><span class="line">        <span class="keyword">continue</span>; </span><br><span class="line"></span><br><span class="line"><span class="comment">//while 和 ++i 会比较麻烦</span></span><br><span class="line"><span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;nums.length;++i)</span><br><span class="line">    <span class="keyword">while</span>(i&gt;<span class="number">0</span> &amp;&amp; i &lt;nums.length &amp;&amp; nums[i]==nums[i-<span class="number">1</span>])</span><br><span class="line">        ++i;</span><br><span class="line">	--i; <span class="comment">// 让for的++i能正确地到下一个不同元素的位置</span></span><br></pre></td></tr></table></figure>
+<p><a href="https://leetcode-cn.com/problems/3sum-closest/">16. 最接近的三数之和</a></p>
+<p>枚举第一个元素 <em>a</em>，对于剩下的两个元素 <em>b</em> 和 <em>c</em>，令它们的和最接近 <em>target</em>−<em>a</em>。</p>
+<p>于是问题转化为：最接近target的两数之和</p>
+<p>先将数组升序排序，双指针找 [<em>i</em>+1,<em>n</em>) 区间中最接近target的两数之和</p>
+<p>双指针。用 pb和 pc分别表示指向 b 和 c 的指针，初始时， pb指向位置 i+1，即左边界；pc指向位置 n−1，即右边界。在每一步枚举的过程中，用 a+b+c 来更新答案，并且：</p>
+<p>保证 pb &lt; pc，对每次的b和c，记录a+b+c，并与ans比较</p>
+<ul>
+<li>如果 a+b+c ≥ target，将 pc向左移动一个位置；</li>
+<li>如果 a+b+c &lt; target，将 pb向右移动一个位置。</li>
+</ul>
+<p>pb只能向右移动，pc只能向左移动，不能跃出区间。</p>
+<p>比特位计数</p>
+<p>数字可分为：</p>
+<p>奇数：设<em>x</em>为奇数，<em>x</em>&gt;=1，则<em>x</em>-1为偶数。二进制表示中，<em>x</em>（奇数）比<em>x</em>-1（偶数）多最低位的 1，并且，大于等于1的奇数的第0位都是1（这是因为奇数相当于用1一直加2得到）</p>
+<p>​     举例： </p>
+<p>​     0 = 00    1 = 01</p>
+<p>​     2 = 10   3 = 11</p>
+<p>偶数：设<em>x</em>为偶数，且<em>x</em>&gt;=2，则<em>x</em>/2仍为偶数，<em>x</em>/2&gt;=1。二进制表示中，<em>x</em>中 1 的个数一定和<em>x</em>/2的二进制1 的个数一样多。这是因为除以 2 相当于右移一位。</p>
+<p>​      举例：</p>
+<p>​     1 = 01  2 = 10   4 = 100    </p>
+<p>​     3 = 11  6 = 110   12 = 1100</p>
+<p>0:易知二进制数。</p>
+<p>因此，为了获得数字<em>num</em>的比特位1的个数，可以根据奇偶性不断进行-1 / 除以2的操作，最终递归 / 递推 出数字<em>num</em>的比特位1的个数。递推过程需要数字0~num所有的结果。</p>
+<p>若只要求一个数字的结果，而不需要比它小的数字的比特位1个数：<br>不断令 n= <em>n</em> &amp; (<em>n</em>−1)，其运算结果恰为把 <em>n</em> 的二进制位中的 最低位的 1  变为 0 之后的结果。每做一次<em>n</em> &amp; (<em>n</em>-1)，就把最低位1去掉，若<em>k</em>次运算后<em>n</em>变为0，<em>n</em>中二进制1的个数就是<em>k</em></p>
+<p>证明：</p>
+<p>当<em>n</em>为奇数，如上所说，<em>n</em>（奇数）比<em>n</em>-1（偶数）多最低位的 1，<em>n</em> &amp; (<em>n</em>−1)容易知道=<em>n</em>-1，即将第0位置零（翻转），第0位刚好是<em>n</em>的最低位的 1 </p>
+<p>当<em>n</em>为偶数，其第0位必为0，因为大于等于2的偶数相当于0+高比特1得到，不可能加0位比特1。偶数最低两位有两种可能10 00</p>
+<p>当最低两位为 10，减1操作只影响最低两位，如10-01=01, 110-001=101，<em>n</em> &amp; (<em>n</em>-1) ，最高位不变，最低两位=10&amp; 01=00；</p>
+<p>当最低两位为 00，减1操作需要往高位借位，如100-001=011, 1000 – 0001 = 0111，<em>n</em> &amp; (<em>n</em>-1)=0。</p>
+<p>综上，都满足<em>n</em> &amp; (<em>n</em>-1)=把 <em>n</em> 的二进制位中的最低位的 1 变为 0</p>
+<p><a href="https://leetcode-cn.com/problems/power-of-two/">231. 2 的幂</a></p>
+<p>判断x是否为2的幂次方，即x二进制是否有且只有一个1。那么把x最低位的 1 变为 0</p>
+<p>判断它是否为0即可</p>
+<p><a href="https://leetcode-cn.com/problems/total-hamming-distance/">汉明距离总和</a></p>
+<p>按照每个位累加结果。每个二进制位的结果计算如下：</p>
+<p>若长度为 n 的数组 nums 的所有元素二进制的第 i 位共有 c 个 1，n−c 个 0，这些元素在二进制的第 i 位上的汉明距离之和为 c*(n-c)，即(n-c)个0不重复地与c个1配对</p>
+]]></content>
+      <categories>
+        <category>算法</category>
+      </categories>
+  </entry>
+  <entry>
     <title>网络层</title>
     <url>/2022/04/21/network-layer/</url>
     <content><![CDATA[<p>网络层：为主机之间的逻辑通信（IP寻址）提供服务，选择合适的路由和交换结点，数据单位称为数据报</p>
@@ -4550,112 +4656,6 @@ right(i)=2i+2</script><p>通过对二叉堆结点关系进行限制，我们可�
 ]]></content>
       <categories>
         <category>计算机网络</category>
-      </categories>
-  </entry>
-  <entry>
-    <title>数学相关的算法题</title>
-    <url>/2022/04/24/math-related-problems/</url>
-    <content><![CDATA[<p>基于数学推导的算法题</p>
-<span id="more"></span>
-<p><a href="https://leetcode-cn.com/problems/maximum-swap/">670. 最大交换</a></p>
-<p>给定一个长度为 n 的数字序列「D0 D1 D2…Dn-1」，只做一次交换，问能得到的最大数字。</p>
-<p>左边的一个小的数与右边一个大的数交换，对这一次交换的要求：左边的数字尽可能靠前，</p>
-<p>与之交换的右边数字尽可能大。</p>
-<p>因此，设f(i)为i往后的最大数，从左往右扫描找第一个 f(i) &gt; Di 的对子，交换两个数即可。</p>
-<p>本题实际上是「下一个排列」的另一个版本，求的是下一个最大排列。</p>
-<p>下一个排列</p>
-<p>给定若干个数字的一个排列。如何将这些数字重新排列，以得到下一个更大的整数。如 123 下一个更大的数为 132。如果没有更大的整数，则输出最小的整数。</p>
-<ol>
-<li>我们希望下一个数比当前数大，这样才满足“下一个排列”的定义。将 后面的「大数」与 前面的 「小数」交换，就能得到一个更大的数。</li>
-<li>我们还希望下一个数<strong>增加的幅度尽可能的小</strong>，这样才满足“下一个排列与当前排列紧邻“的要求。为了满足这个要求，我们需要保证：<strong>交换的大数尽可能小，大数交换到的位置尽可能为高位</strong>（指数字字符串靠近右边）。</li>
-</ol>
-<p>比如 123465，</p>
-<p>1 大数交换到的位置尽可能为高位——交换5、4，而非5、3。该条规则需要优先满足</p>
-<p>2 交换的大数尽可能小——交换5、4，而非6、4</p>
-<p>将「大数」换到前面后，需要将「大数」后面的所有数重置为升序，升序排列就是最小的排列。</p>
-<p>以 123465 为例：首先按照上一步，交换 5 和 4，得到 123564；然后需要将 5 之后的数重置为升序，得到 123546。显然 123546 比 123564 更小，123546 就是 123465 的下一个排列</p>
-<p>求解满足要求的 「大数」与「小数」的方法：</p>
-<p>(1)  从后向前（数字字符串右往左）查找第一个相邻升序的元素对 (i,j)，满足 A[i] &lt; A[j]。优先满足了规则1，易知此时 [j,end) 必然是降序。——存在性：是否存在下一个排列</p>
-<p><img src="/2022/04/24/math-related-problems/image-20220427093727458.png" alt></p>
-<p>如果没有升序部分，就不可能存在后面的数小于前面的数的情况。当前排列是最大排列，没有下一个更大排列。依照题意，最大排列的下一个排列应该输出最小排列，即只有升序。</p>
-<p>(2)  在 [j,end) 从后向前查找第一个满足 A[i] &lt; A[k] 的 k。A[i]、A[k] 分别就是上文所说的「小数」、「大数</p>
-<p>(3)  将 A[i] 与 A[k] 交换</p>
-<p>(4)  可以断定这时 [j,end) 必然是降序（对调过去后下半部分一定比A[i]小，上半部分一定比A[i]大，即整段仍旧是递减的。容易证明），因此只需要反转 [j,end)，即可使其升序，不需要调用排序方法。注意 j 是最高点位置。</p>
-<blockquote>
-<p>可以从后往前遍历，维护一个单调栈，栈底到栈顶递增。第一次弹出时可以找到firstIndex和secondIndex</p>
-<p>但是实际上没有必要，因为只要一组firstIndex和secondIndex</p>
-</blockquote>
-<p><a href="https://leetcode-cn.com/problems/remove-k-digits/">402. 移掉 K 位数字</a></p>
-<p>给你一个以字符串表示的非负整数 num 和一个整数 k ，移除这个数中的 k 位数字，使得剩下的数字最小。请你以字符串形式返回这个最小的数字。</p>
-<p>区别于 下一个排列，这里是 移除 而非 移动</p>
-<p>对于两个相同长度的数字序列，最左边不同的数字决定了这两个数字的大小，例如，对于 A = 1axxx，B = 1bxxx，如果 a &gt; b 则 A&gt;B。</p>
-<p>「删除一个数字」</p>
-<p>让我们从一个简单的例子开始。给定一个数字序列，例如 425，如果要求我们只删除一个数字，那么从左到右，我们有 4、2 和 5 三个选择。我们将每一个数字和它的左邻居进行比较。从 2 开始，2 小于它的左邻居 4。假设我们保留数字 4，那么所有可能的组合都是以数字 4（即 42，45）开头的。相反，如果移掉 4，留下 2，我们得到的是以 2 开头的组合（即 25），这明显小于任何留下数字 4 的组合。因此我们应该移掉数字 4。如果不移掉数字 4，则之后无论移掉什么数字，都不会得到最小数。</p>
-<p>「删除一个数字」的贪心策略：</p>
-<p>给定一个长度为 n 的数字序列「D0 D1 D2…Dn-1」，，从左往右找到第一个位置 i（i&gt;0）使得 Di &gt; Di+1，并删去Di ；如果不存在，说明整个数字序列单调不降，删去最后一个数字即可。从而，我们能得到 删除一个数字后 的最小数字。</p>
-<p>「删除k个数字」</p>
-<p>自然的想法，k次删除一个数字，每次都要扫描一遍，复杂度最大可能O(N)</p>
-<p>优化：前面之前看过了，后面其实不用看。对于上述过程，其实等价于维护一个单调递增栈，只不过限制了 pop 的次数。</p>
-<p>例如，对于[1,2,3,4,5,2,6,4,3]，k=4的情况，维护一个单调递增栈。则元素2入栈时，弹出5、4、3，即顺序删除了5、4、3，k变成1，然后6入栈，4入栈，弹出6，k变成0.当单调栈建立完毕而k还没有到0，说明后面没有找到 下坡 ，因此把栈顶最后几个元素删除/弹出。</p>
-<p>最终，从栈底到栈顶的答案序列即为最小数。</p>
-<p>考虑到栈的特点是后进先出，如果通过栈实现，则需要将栈内元素依次弹出然后进行翻转才能得到最小数。为了避免翻转操作，可以使用双端队列代替栈的实现。</p>
-<p>更好的方法是使用 StringBuffer 作为栈。</p>
-<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Solution</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> String <span class="title function_">removeKdigits</span><span class="params">(String num, <span class="type">int</span> k)</span> &#123;</span><br><span class="line">        <span class="comment">// 区别于 下一个排列，这里是 移除 而非  移动</span></span><br><span class="line"></span><br><span class="line">        <span class="type">StringBuilder</span> <span class="variable">ret</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">StringBuilder</span>();</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;num.length();++i)&#123;</span><br><span class="line">            <span class="type">char</span> <span class="variable">digit</span> <span class="operator">=</span> num.charAt(i);</span><br><span class="line"></span><br><span class="line">            <span class="keyword">while</span>(ret.length() &gt; <span class="number">0</span> &amp;&amp; k &gt; <span class="number">0</span> &amp;&amp; ret.charAt(ret.length()-<span class="number">1</span>) &gt; digit)&#123;</span><br><span class="line">                ret.deleteCharAt(ret.length()-<span class="number">1</span>);</span><br><span class="line">                --k;</span><br><span class="line">            &#125;</span><br><span class="line">            ret.append(digit);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> <span class="number">0</span>; i &lt; k; ++i) &#123;</span><br><span class="line">            ret.deleteCharAt(ret.length()-<span class="number">1</span>);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 删除前导0</span></span><br><span class="line">        <span class="keyword">while</span>(ret.length() &gt; <span class="number">0</span> &amp;&amp; ret.charAt(<span class="number">0</span>) == <span class="string">&#x27;0&#x27;</span>)&#123;</span><br><span class="line">            ret.deleteCharAt(<span class="number">0</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> ret.length() == <span class="number">0</span>? <span class="string">&quot;0&quot;</span>:ret.toString();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>两数之和</p>
-<p>给定一个整数数组 nums 和一个整数目标值 target，请你在该数组中找出 和为目标值 target 的那 两个 整数，并返回它们的数组下标。</p>
-<p>法1：遍历每个数，对于每个数，再遍历一次数组看是否满足要求 O(N^2)</p>
-<p>法1的初步优化：无重复地遍历所有二元组，每次只需要看 i 后面或前面的数就能 无重复地 遍历所有整数对。</p>
-<p>法1的进一步优化：把数存到哈希表里，保证每次只会看有效的二元组。</p>
-<p>法2：先将数组递增排序，假设对于nums[i]，如果找到nums[j]，j&gt;i，使得它们之和等于target。那么对于nums[q]，k&gt;i，符合条件的nums[n]一定满足n&lt;j。例如如下排序后的数组 [1 2 3 4 5]，target=5，对于1，找到对应的4，对于2，因为它比1更大，那么满足条件的另一个数必定比4小，由于数组递增，容易确定索引比nums[3]=4小</p>
-<p>于是，可以优化为 排序+双指针 复杂度O(nlogn)+O(n) = O(nlogn) 注意这里是加。</p>
-<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 具体实现在三数之和那里</span></span><br><span class="line"><span class="comment">// 双指针法：对于left和right指针，每次找nums[left]的对应数字，因此要移动right，</span></span><br><span class="line"><span class="keyword">while</span>(left &lt; right &amp;&amp; nums[left]+nums[right] &gt; target) –right;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 如果指针重合，随着 b 后续的增加，就不会有满足 a+b+c=0 并且 b&lt;c 的 c 了，可以退出循环</span></span><br><span class="line"><span class="keyword">if</span> (second == third) 结束;</span><br><span class="line"><span class="keyword">if</span> (nums[second] + nums[third] == target) <span class="comment">//记录结果，这里nums[left]+nums[right] &lt;=target，若不相等，再右移right也不可能</span></span><br></pre></td></tr></table></figure>
-<p><a href="https://leetcode-cn.com/problems/boats-to-save-people/">881. 救生艇</a></p>
-<p>三数之和</p>
-<p>法1：三重遍历 O(N^3)</p>
-<p>法2：基于 两数之和 法2，先排序，第一个数a遍历，第二个数b和第三个数c相当于两数之和问题，且索引关系：a.index &lt; b.index &lt; c.index，复杂度O(NlogN)+O(N*N)=O(N^2)</p>
-<p>在遍历三个数时，跳过重复的a、b、c</p>
-<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span>(<span class="type">int</span> first=<span class="number">0</span>;first&lt;nums.length;++first)&#123;</span><br><span class="line">    <span class="keyword">if</span>(first &gt; <span class="number">0</span> &amp;&amp; nums[first] == nums[first-<span class="number">1</span>]) <span class="comment">// first &gt; 0</span></span><br><span class="line">        <span class="keyword">continue</span>; </span><br><span class="line"></span><br><span class="line">    <span class="type">int</span> <span class="variable">third</span> <span class="operator">=</span> nums.length-<span class="number">1</span>; <span class="comment">// 不同的start对应不同两数之和的target，third要重置</span></span><br><span class="line">    <span class="comment">// 遍历 second，找到second对应的third</span></span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> <span class="variable">second</span> <span class="operator">=</span> first+<span class="number">1</span>;second&lt;nums.length;++second)&#123;</span><br><span class="line">        <span class="keyword">if</span>(second &gt; first+<span class="number">1</span> &amp;&amp; nums[second] == nums[second-<span class="number">1</span>]) <span class="comment">// second &gt; first+1</span></span><br><span class="line">            <span class="keyword">continue</span>;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">while</span>(second &lt; third &amp;&amp; nums[first]+nums[second]+nums[third] &gt; <span class="number">0</span>)</span><br><span class="line">            --third;</span><br><span class="line">        <span class="keyword">if</span>(second == third) <span class="comment">// 不可能找到两数之和为 target</span></span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">if</span>(nums[first]+nums[second]+nums[third] == <span class="number">0</span>)&#123;</span><br><span class="line">            <span class="comment">// 添加结果</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p>跳过升序数组相同元素的方法</p>
-<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">//只使用 for</span></span><br><span class="line"><span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;nums.length;++i)</span><br><span class="line">    <span class="keyword">if</span>(i &gt; <span class="number">0</span> &amp;&amp; nums[i] == nums[i-<span class="number">1</span>]) <span class="comment">// first &gt; 0</span></span><br><span class="line">        <span class="keyword">continue</span>; </span><br><span class="line"></span><br><span class="line"><span class="comment">//while 和 ++i 会比较麻烦</span></span><br><span class="line"><span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;nums.length;++i)</span><br><span class="line">    <span class="keyword">while</span>(i&gt;<span class="number">0</span> &amp;&amp; i &lt;nums.length &amp;&amp; nums[i]==nums[i-<span class="number">1</span>])</span><br><span class="line">        ++i;</span><br><span class="line">	--i; <span class="comment">// 让for的++i能正确地到下一个不同元素的位置</span></span><br></pre></td></tr></table></figure>
-<p><a href="https://leetcode-cn.com/problems/3sum-closest/">16. 最接近的三数之和</a></p>
-<p>枚举第一个元素 <em>a</em>，对于剩下的两个元素 <em>b</em> 和 <em>c</em>，令它们的和最接近 <em>target</em>−<em>a</em>。</p>
-<p>于是问题转化为：最接近target的两数之和</p>
-<p>先将数组升序排序，双指针找 [<em>i</em>+1,<em>n</em>) 区间中最接近target的两数之和</p>
-<p>双指针。用 pb和 pc分别表示指向 b 和 c 的指针，初始时， pb指向位置 i+1，即左边界；pc指向位置 n−1，即右边界。在每一步枚举的过程中，用 a+b+c 来更新答案，并且：</p>
-<p>保证 pb &lt; pc，对每次的b和c，记录a+b+c，并与ans比较</p>
-<ul>
-<li>如果 a+b+c ≥ target，将 pc向左移动一个位置；</li>
-<li>如果 a+b+c &lt; target，将 pb向右移动一个位置。</li>
-</ul>
-<p>pb只能向右移动，pc只能向左移动，不能跃出区间。</p>
-<p>比特位计数</p>
-<p>数字可分为：</p>
-<p>奇数：设<em>x</em>为奇数，<em>x</em>&gt;=1，则<em>x</em>-1为偶数。二进制表示中，<em>x</em>（奇数）比<em>x</em>-1（偶数）多最低位的 1，并且，大于等于1的奇数的第0位都是1（这是因为奇数相当于用1一直加2得到）</p>
-<p>​     举例： </p>
-<p>​     0 = 00    1 = 01</p>
-<p>​     2 = 10   3 = 11</p>
-<p>偶数：设<em>x</em>为偶数，且<em>x</em>&gt;=2，则<em>x</em>/2仍为偶数，<em>x</em>/2&gt;=1。二进制表示中，<em>x</em>中 1 的个数一定和<em>x</em>/2的二进制1 的个数一样多。这是因为除以 2 相当于右移一位。</p>
-<p>​      举例：</p>
-<p>​     1 = 01  2 = 10   4 = 100    </p>
-<p>​     3 = 11  6 = 110   12 = 1100</p>
-<p>0:易知二进制数。</p>
-<p>因此，为了获得数字<em>num</em>的比特位1的个数，可以根据奇偶性不断进行-1 / 除以2的操作，最终递归 / 递推 出数字<em>num</em>的比特位1的个数。递推过程需要数字0~num所有的结果。</p>
-<p>若只要求一个数字的结果，而不需要比它小的数字的比特位1个数：<br>不断令 n= <em>n</em> &amp; (<em>n</em>−1)，其运算结果恰为把 <em>n</em> 的二进制位中的 最低位的 1  变为 0 之后的结果。每做一次<em>n</em> &amp; (<em>n</em>-1)，就把最低位1去掉，若<em>k</em>次运算后<em>n</em>变为0，<em>n</em>中二进制1的个数就是<em>k</em></p>
-<p>证明：</p>
-<p>当<em>n</em>为奇数，如上所说，<em>n</em>（奇数）比<em>n</em>-1（偶数）多最低位的 1，<em>n</em> &amp; (<em>n</em>−1)容易知道=<em>n</em>-1，即将第0位置零（翻转），第0位刚好是<em>n</em>的最低位的 1 </p>
-<p>当<em>n</em>为偶数，其第0位必为0，因为大于等于2的偶数相当于0+高比特1得到，不可能加0位比特1。偶数最低两位有两种可能10 00</p>
-<p>当最低两位为 10，减1操作只影响最低两位，如10-01=01, 110-001=101，<em>n</em> &amp; (<em>n</em>-1) ，最高位不变，最低两位=10&amp; 01=00；</p>
-<p>当最低两位为 00，减1操作需要往高位借位，如100-001=011, 1000 – 0001 = 0111，<em>n</em> &amp; (<em>n</em>-1)=0。</p>
-<p>综上，都满足<em>n</em> &amp; (<em>n</em>-1)=把 <em>n</em> 的二进制位中的最低位的 1 变为 0</p>
-<p><a href="https://leetcode-cn.com/problems/power-of-two/">231. 2 的幂</a></p>
-<p>判断x是否为2的幂次方，即x二进制是否有且只有一个1。那么把x最低位的 1 变为 0</p>
-<p>判断它是否为0即可</p>
-<p><a href="https://leetcode-cn.com/problems/total-hamming-distance/">汉明距离总和</a></p>
-<p>按照每个位累加结果。每个二进制位的结果计算如下：</p>
-<p>若长度为 n 的数组 nums 的所有元素二进制的第 i 位共有 c 个 1，n−c 个 0，这些元素在二进制的第 i 位上的汉明距离之和为 c*(n-c)，即(n-c)个0不重复地与c个1配对</p>
-]]></content>
-      <categories>
-        <category>算法</category>
       </categories>
   </entry>
   <entry>
