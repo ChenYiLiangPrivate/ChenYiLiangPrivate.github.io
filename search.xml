@@ -3747,7 +3747,7 @@ L^{(2)}&=L^{(1)}\cdot W=W^{2} \\
 ...\\
 L^{(n-1)}&=L^{(n-2)}\cdot W=W^{n-1}
 
-\end{align*}</script><h4 id="最短路径求解"><a href="#最短路径求解" class="headerlink" title="最短路径求解"></a>最短路径求解</h4><p>本节中，用 dot 作为运算符，等效表示 EXTEND-SHORTEST-PATHS(L, W) 函数。</p>
+\end{align*}</script><h4 id="最短路径权重矩阵求解"><a href="#最短路径权重矩阵求解" class="headerlink" title="最短路径权重矩阵求解"></a>最短路径权重矩阵求解</h4><p>本节中，用 dot 作为运算符，等效表示 EXTEND-SHORTEST-PATHS(L, W) 函数。</p>
 <p>实际上，我们需要求的只有 $L^{(n-1)}=W^{n-1}$，因此可以二分递归求解：</p>
 <figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 求解 W^&#123;k&#125;</span></span><br><span class="line"><span class="type">int</span>[][] getL(W, k)&#123;</span><br><span class="line">	<span class="keyword">if</span>(k%<span class="number">2</span> == <span class="number">0</span>)&#123;</span><br><span class="line">        <span class="type">int</span>[][] tmp = getL(W, k/<span class="number">2</span>);</span><br><span class="line">        <span class="keyword">return</span> tmp dot tmp; <span class="comment">// 矩阵乘法，注意这里的 dot 运算是等效运算，而非原本的矩阵乘法</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        <span class="keyword">return</span> getL(W, k-<span class="number">1</span>) dot W; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>参考对快速幂算法的优化，容易将上述递归过程转化为递推。</p>
@@ -3756,8 +3756,43 @@ L^{(n-1)}&=L^{(n-2)}\cdot W=W^{n-1}
 <p><img src="/2022/04/27/graph-alg/image-20220513210039959.png" alt></p>
 <p><img src="/2022/04/27/graph-alg/image-20220511144236814.png" alt="image-20220511144236814"></p>
 <p><a href="https://leetcode.cn/problems/find-the-city-with-the-smallest-number-of-neighbors-at-a-threshold-distance/">1334. 阈值距离内邻居最少的城市</a></p>
-<h2 id="Floyd-Warshall"><a href="#Floyd-Warshall" class="headerlink" title="Floyd-Warshall"></a>Floyd-Warshall</h2><p><img src="/2022/04/27/graph-alg/image-20220511144529287.png" alt="image-20220511144529287"></p>
-<p><img src="/2022/04/27/graph-alg/image-20220511165156848.png" alt="image-20220511165156848"></p>
+<h4 id="最短路径树"><a href="#最短路径树" class="headerlink" title="最短路径树"></a>最短路径树</h4><h2 id="Floyd-Warshall"><a href="#Floyd-Warshall" class="headerlink" title="Floyd-Warshall"></a>Floyd-Warshall</h2><p>假定图 G 的结点索引从 1 到 n，考虑一个节点的子集 {1, 2, …, k}，这里的 k 是某个小于 n 的整数。</p>
+<h3 id="递推式分析-1"><a href="#递推式分析-1" class="headerlink" title="递推式分析"></a>递推式分析</h3><p>对于任意结点对 (i, j)，考虑从结点 i 到结点 j 的所有⌊中间结点均取自集合 {1, 2, …, k} 的路径⌉，并且设 p 为其中权重最小的路径（易知路径p 是简单路径）</p>
+<ul>
+<li><p>如果结点 k 不是路径 p 上的中间结点，则路径 p 上的所有中间结点都属于集合 {1, 2, …, k-1}。因此，从结点 i 到结点 j 的⌊中间结点均取自集合 {1, 2, …, k} 的<strong>一条最短</strong>路径⌉也是从结点 i 到结点 j 的⌊中间结点均取自集合 {1, 2, …, k-1} 的一条<strong>最短</strong>路径⌉</p>
+<blockquote>
+<p>注意到是 一条 最短路径，因为这里我们只关心最短路径的权重，不关心路径结构</p>
+</blockquote>
+</li>
+<li><p>如果结点 k 是路径 p 上的中间结点，则将路径 p 分解为 $i\overset{p1}{\rightarrow}k\overset{p2}{\rightarrow}j$，其中，</p>
+<ul>
+<li>p1 表示从结点 i 到结点 k 的⌊中间结点均取自集合 {1, 2, …, k} 的一条<strong>最短</strong>路径⌉</li>
+<li><p>p2 表示从结点 k  到结点 j 的⌊中间结点均取自集合 {1, 2, …, k} 的一条<strong>最短</strong>路径⌉</p>
+<p>事实上，可以进一步得出结论。因为结点 k 不是路径 p1 上的中间结点，即路径 p1 上所有中间结点属于集合 {1, 2, …, k-1}，因此，</p>
+</li>
+<li><p>p1 是从结点 i 到结点 k 的⌊中间结点均取自集合 {1, 2, …, k-1} 的一条<strong>最短</strong>路径⌉。</p>
+</li>
+<li>同理有，p2 是从结点 k 到结点 j 的⌊中间结点均取自集合 {1, 2, …, k-1} 的一条<strong>最短</strong>路径⌉</li>
+</ul>
+<p><img src="/2022/04/27/graph-alg/image-20220520204358385.png" alt></p>
+</li>
+</ul>
+<p>综上，我们可以给出最短路径估计的递归公式。设 $d_{ij}^{(k)}$ 为从结点 i 到结点 j 的 ⌊中间结点均取自集合 {1, 2, …, k} 的一条<strong>最短</strong>路径⌉ 的权重，则：</p>
+<script type="math/tex; mode=display">
+d_{ij}^{(k)}=\left\{\begin{matrix}
+w_{ij} & if\ k==0\\ 
+min(d_{ij}^{(k-1)},\ d_{ik}^{(k-1)}+d_{kj}^{(k-1)}) & if\ k\geq 1 
+\end{matrix}\right.</script><blockquote>
+<p>这里说递归而非递推，因为公式的输入上标是 k-1，输出上标是 k</p>
+</blockquote>
+<p>对于任何路径来说，所有的中间结点都属于集合 {1, 2, …, n}，因此，矩阵 $D^{(n)}=(d<em>{ij}^{(n)})$ 就是最终的答案，对于所有的结点 i，j，$d</em>{ij}^{(n)}$ 就是结点 i 和结点 j 的最短路径权重 $\delta (i,j)$</p>
+<h3 id="算法实现-1"><a href="#算法实现-1" class="headerlink" title="算法实现"></a>算法实现</h3><h4 id="最短路径权重矩阵求解-1"><a href="#最短路径权重矩阵求解-1" class="headerlink" title="最短路径权重矩阵求解"></a>最短路径权重矩阵求解</h4><p>将上述递归公式用递推的方式实现，伪代码如下，算法返回的是最短路径权重矩阵 $D^{(n)}$</p>
+<p><img src="/2022/04/27/graph-alg/image-20220511165156848.png" alt></p>
+<p>算法的时间复杂度为 O(N^3)</p>
+<h4 id="最短路径树-1"><a href="#最短路径树-1" class="headerlink" title="最短路径树"></a>最短路径树</h4><p>某些值得注意的点</p>
+<p>由最短路径权重构造最短路径树的方法</p>
+<p>导论中构造最短路径的方法似乎对于两个结点只能求得一条最短路径，而不能求出所有最短路径</p>
+<p>上述两种方法如何稍作修改求出所有最短路径</p>
 <h1 id="最大流"><a href="#最大流" class="headerlink" title="最大流"></a>最大流</h1>]]></content>
       <categories>
         <category>算法</category>
